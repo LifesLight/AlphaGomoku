@@ -14,6 +14,8 @@ Tensor of shape `[HistoryDepth(HD) * 2 + 1, BoardSize, BoardSize]`, where axis 0
 `[HD+1 - HD*2]: Black stone history`
 
 
+The human datasets have following naming convention: `HD(HistoryDepth),[AUG (is augmented)],TS(TrainsplitFraction),Rulesets(All rulesets in the dataset)`
+
 Each history entry stores all stones of said color on the board at given time.
 The larger the indecies the older the position.
 
