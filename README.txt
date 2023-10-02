@@ -1,6 +1,6 @@
-Self learning Gomoku AI
+# Self learning Gomoku AI
 
-Basics:
+**Basics:**
 In Gomoku black starts.
 Black is represented as 1, white as 0.
 
