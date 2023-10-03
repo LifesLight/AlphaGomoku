@@ -17,89 +17,59 @@
 #define MAX_SIMULATIONS 250000000
 typedef float PREC;
 
-
 std::random_device rand_device;
 std::mt19937 rng(rand_device());
 PREC log_table[MAX_SIMULATIONS];
 uint64_t log_table_size = 0;
-
-class NODE;
-class STATISTICS;
-
-class STATISTICS
-{
-public:
-    State state;
-    uint32_t visits;
-    uint32_t results[3];
-
-    STATISTICS()
-        : visits(0), state(new State())
-    {
-        memset(results, 0, sizeof(uint32_t) * 3);
-    }
-
-    STATISTICS(State state)
-        : visits(0), state(state)
-    {
-        memset(results, 0, sizeof(uint32_t) * 3);
-    }
-
-    STATISTICS(STATISTICS* source)
-        : state(State(source->state)), visits(source->visits)
-    {
-        memcpy(results, source->results, sizeof(uint32_t) * 3);
-    }
-};
 
 class NODE
 {
 public:
     NODE* parent;
     uint16_t parent_action;
-    STATISTICS* data;
+    State state;
+    uint32_t visits;
+    uint32_t results[3];
     std::list<NODE*> children;
     std::vector<uint16_t> untried_actions;
 
     NODE()
-        : parent(nullptr), data(new STATISTICS())
+        : parent(nullptr), state(new State()), visits(0)
     {
-        untried_actions = data->state.getPossible();
+        memset(results, 0, sizeof(uint32_t) * 3);
+        untried_actions = state.getPossible();
         std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
     }
 
     NODE(State state)
-        : parent(nullptr), data(new STATISTICS(state))
+        : parent(nullptr), state(state), visits(0)
     {
-        untried_actions = data->state.getPossible();
+        memset(results, 0, sizeof(uint32_t) * 3);
+        untried_actions = state.getPossible();
         std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
     }
 
     NODE(State state, NODE* parent, uint16_t parent_action)
-        : parent(parent), parent_action(parent_action), data(new STATISTICS(state))
+        : parent(parent), parent_action(parent_action), state(state), visits(0)
     {
-        untried_actions = data->state.getPossible();
-        std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
-    }
-
-    NODE(STATISTICS* data, NODE* parent, uint16_t parent_action)
-        : parent(parent), parent_action(parent_action), data(data)
-    {
-        untried_actions = data->state.getPossible();
+        memset(results, 0, sizeof(uint32_t) * 3);
+        untried_actions = state.getPossible();
         std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
     }
 
     NODE(NODE* source)
-        : parent(source->parent), parent_action(source->parent_action), data(new STATISTICS(source->data))
+        : parent(source->parent), parent_action(source->parent_action), state(source->state), visits(source->visits)
     {
+        memcpy(results, source->results, sizeof(uint32_t) * 3);
         untried_actions.reserve(source->untried_actions.size());
         untried_actions.assign(source->untried_actions.begin(), source->untried_actions.end());
         for (NODE* child : source->children) children.push_back(new NODE(child));
     }
 
     NODE(NODE* source, NODE* parent)
-        : parent(parent), parent_action(source->parent_action), data(new STATISTICS(source->data))
+        : parent(parent), parent_action(source->parent_action), state(source->state), visits(source->visits)
     {
+        memcpy(results, source->results, sizeof(uint32_t) * 3);
         untried_actions.reserve(source->untried_actions.size());
         untried_actions.assign(source->untried_actions.begin(), source->untried_actions.end());
         for (NODE* child : source->children) children.push_back(new NODE(child));
@@ -115,14 +85,10 @@ public:
         uint16_t index = untried_actions.back();
         untried_actions.pop_back();
 
-        State resulting_state(data->state);
+        State resulting_state(state);
         resulting_state.makeMove(index);
 
-        NODE* child;
-        STATISTICS* child_stats;
-
-        child_stats = new STATISTICS(resulting_state);
-        child = new NODE(child_stats, this, index);
+        NODE* child = new NODE(resulting_state, this, index);
         children.push_back(child);
 
         return child;
@@ -130,7 +96,7 @@ public:
 
     void rollout()
     {
-        State simulation_state = State(data->state);
+        State simulation_state = State(state);
         std::uniform_int_distribution<std::mt19937::result_type> distribution(0, untried_actions.size());
         uint16_t index = distribution(rng);
 
@@ -144,16 +110,16 @@ public:
 
     void backpropagate(uint8_t value)
     {
-        data->visits++;
-        data->results[value]++;
+        visits++;
+        results[value]++;
         if (parent)
             parent->backpropagate(value);
     }
 
     int32_t Q_delta(bool turn)
     {
-        if (turn)   return data->results[0] - data->results[1];
-        else        return data->results[1] - data->results[0];
+        if (turn)   return results[0] - results[1];
+        else        return results[1] - results[0];
     }
 
     NODE* best_child()
@@ -162,8 +128,8 @@ public:
         PREC best_result = -100.0;
 
         // Precompute
-        PREC log_visits = 2 * log_table[data->visits];
-        bool turn = data->state.empty % 2;
+        PREC log_visits = 2 * log_table[visits];
+        bool turn = state.empty % 2;
 
         PREC Q_value;
 
@@ -171,8 +137,8 @@ public:
         for (NODE* child : children)
         {
 
-            Q_value = PREC(child->Q_delta(turn)) / PREC(child->data->visits);
-            result = Q_value + BIAS * std::sqrt(log_visits / PREC(child->data->visits));
+            Q_value = PREC(child->Q_delta(turn)) / PREC(child->visits);
+            result = Q_value + BIAS * std::sqrt(log_visits / PREC(child->visits));
             if (result > best_result)
             {
                 best_result = result;
@@ -185,7 +151,7 @@ public:
     NODE* policy()
     {
         NODE* current = this;
-        while (!current->data->state.isTerminal())
+        while (!current->state.isTerminal())
             if (current->untried_actions.size() > 0)
                 return current->expand();
             else
@@ -309,8 +275,8 @@ public:
 
         PREC max_visits = 0;
         for (NODE* child : root->children)
-            if (child->data->visits > max_visits)
-                max_visits = child->data->visits;
+            if (child->visits > max_visits)
+                max_visits = child->visits;
 
         std::cout << "    ";
         for (uint16_t i = 0; i < BoardSize; i++)
@@ -325,21 +291,21 @@ public:
             for (uint16_t x = 0; x < BoardSize; x++)
             {
                 std::cout << "|";
-                if (!(root->data->state.m_array[y] & (BLOCK(1) << x)))
+                if (!(root->state.m_array[y] & (BLOCK(1) << x)))
                 {
                     for (NODE* child : root->children)
                         if (child->parent_action == (y * BoardSize + x))
-                            std::printf("%3d", int(PREC(child->data->visits) / max_visits * 100));
+                            std::printf("%3d", int(PREC(child->visits) / max_visits * 100));
                 }
 
-                else if (root->data->state.c_array[y] & (BLOCK(1) << x))
+                else if (root->state.c_array[y] & (BLOCK(1) << x))
                 {
-                    if (!(root->data->state.empty % 2))   std::cout << "\033[1;34m o \033[0m";
+                    if (!(root->state.empty % 2))   std::cout << "\033[1;34m o \033[0m";
                     else                std::cout << "\033[1;31m o \033[0m";
                 }
-                else if (!(root->data->state.c_array[y] & (BLOCK(1) << x)))
+                else if (!(root->state.c_array[y] & (BLOCK(1) << x)))
                 {
-                    if (root->data->state.empty % 2)      std::cout << "\033[1;34m o \033[0m";
+                    if (root->state.empty % 2)      std::cout << "\033[1;34m o \033[0m";
                     else                std::cout << "\033[1;31m o \033[0m";
                 }
             }
@@ -379,21 +345,21 @@ public:
             for (uint16_t x = 0; x < BoardSize; x++)
             {
                 std::cout << "|";
-                if (!(root->data->state.m_array[y] & (BLOCK(1) << x)))
+                if (!(root->state.m_array[y] & (BLOCK(1) << x)))
                 {
                     for (NODE* child : root->children)
                         if (child->parent_action == (y * BoardSize + x))
-                            std::printf("%+3d", int(PREC(child->Q_delta(root->data->state.empty % 2)) / PREC(child->data->visits) * 100));
+                            std::printf("%+3d", int(PREC(child->Q_delta(root->state.empty % 2)) / PREC(child->visits) * 100));
                 }
 
-                else if (root->data->state.c_array[y] & (BLOCK(1) << x))
+                else if (root->state.c_array[y] & (BLOCK(1) << x))
                 {
-                    if (!(root->data->state.empty % 2))   std::cout << "\033[1;34m o \033[0m";
+                    if (!(root->state.empty % 2))   std::cout << "\033[1;34m o \033[0m";
                     else                std::cout << "\033[1;31m o \033[0m";
                 }
-                else if (!(root->data->state.c_array[y] & (BLOCK(1) << x)))
+                else if (!(root->state.c_array[y] & (BLOCK(1) << x)))
                 {
-                    if (root->data->state.empty % 2)      std::cout << "\033[1;34m o \033[0m";
+                    if (root->state.empty % 2)      std::cout << "\033[1;34m o \033[0m";
                     else                std::cout << "\033[1;31m o \033[0m";
                 }
             }
@@ -430,7 +396,7 @@ private:
         for (uint16_t i = 0; i < children_count; i++)
         {
             NODE* child = best_child_final(root);
-            if (PREC(child->data->visits) / PREC(root->data->visits) > confidence_bound)
+            if (PREC(child->visits) / PREC(root->visits) > confidence_bound)
             {
                 best = child;
                 break;
@@ -453,7 +419,7 @@ private:
 
         print_evaluation(best);
 
-        State* best_state = new State(best->data->state);
+        State* best_state = new State(best->state);
         root_state->makeMove(best->parent_action);
 
         delete root;
@@ -462,12 +428,12 @@ private:
     static void print_evaluation(NODE* best)
     {
         std::cout << "Action:      " << int32_t(best->parent_action) % BoardSize << "," << int32_t(best->parent_action) / BoardSize << "\n";
-        std::cout << "Simulations: " << PREC(int32_t(best->parent->data->visits) / 1000) / 1000 << "M";
-        std::cout << " (W:" << int(best->parent->data->results[best->parent->data->state.empty % 2 ? 0 : 1]) << " L:" << int(best->parent->data->results[best->parent->data->state.empty % 2 ? 1 : 0]) << " D:" << int(best->parent->data->results[2]) << ")\n";
-        std::cout << "Evaluation:  " << PREC(PREC(best->Q_delta(best->parent->data->state.empty % 2)) / PREC(best->data->visits));
-        std::cout << " (W:" << int(best->data->results[best->parent->data->state.empty % 2 ? 0 : 1]) << " L:" << int(best->data->results[best->parent->data->state.empty % 2 ? 1 : 0]) << " D:" << int(best->data->results[2]) << ")\n";
-        std::cout << "Confidence:  " << PREC(best->data->visits * 100) / PREC(best->parent->data->visits) << "%\n";
-        std::printf("Draw:        %.2f%%\n", PREC(best->data->results[2] * 100) / PREC(best->data->visits));
+        std::cout << "Simulations: " << PREC(int32_t(best->parent->visits) / 1000) / 1000 << "M";
+        std::cout << " (W:" << int(best->parent->results[best->parent->state.empty % 2 ? 0 : 1]) << " L:" << int(best->parent->results[best->parent->state.empty % 2 ? 1 : 0]) << " D:" << int(best->parent->results[2]) << ")\n";
+        std::cout << "Evaluation:  " << PREC(PREC(best->Q_delta(best->parent->state.empty % 2)) / PREC(best->visits));
+        std::cout << " (W:" << int(best->results[best->parent->state.empty % 2 ? 0 : 1]) << " L:" << int(best->results[best->parent->state.empty % 2 ? 1 : 0]) << " D:" << int(best->results[2]) << ")\n";
+        std::cout << "Confidence:  " << PREC(best->visits * 100) / PREC(best->parent->visits) << "%\n";
+        std::printf("Draw:        %.2f%%\n", PREC(best->results[2] * 100) / PREC(best->visits));
 
         std::cout << "    <";
         for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
@@ -482,11 +448,11 @@ private:
         PREC best_result = -100.0;
 
         // Precompute
-        bool turn = node->data->state.empty % 2;
+        bool turn = node->state.empty % 2;
 
         for (NODE* child : node->children)
         {
-            PREC Q_value = PREC(child->Q_delta(turn)) / PREC(child->data->visits);
+            PREC Q_value = PREC(child->Q_delta(turn)) / PREC(child->visits);
             result = Q_value;
             if (result > best_result)
             {
