@@ -8,6 +8,7 @@
 #include "string"
 #include "chrono"
 #include "cstring"
+#include "torch/torch.h"
 
 #define BoardSize 15
 #define ExplorationBias 1.41421356237
