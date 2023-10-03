@@ -1,7 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
+#include "Config.h"
 
 // Optimized Gomoku game state interface for MCTS
 
@@ -16,8 +15,6 @@ oooo            xxoo            xooo            xxxo
                                 xxoo            xxoo
                                 xooo            xooo
 ----------------------------------------------------------- */
-
-#define BoardSize 15
 
 #if BoardSize > 32
 typedef int64_t BLOCK;

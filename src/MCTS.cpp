@@ -1,164 +1,9 @@
+#include "Config.h"
+#include "Node.h"
 #include "State.h"
 
-#include <iostream>
-#include <iomanip>
-#include <vector>
-#include <list>
-#include <string>
-#include <chrono>
-#include <random>
-#include <string>
-#include <algorithm>
-#include <unordered_map>
-#include <cstring>
-
-#define BIAS 1.4142
-#define BATCH_BoardSize 1000
-#define MAX_SIMULATIONS 250000000
-typedef float PREC;
-
-std::random_device rand_device;
-std::mt19937 rng(rand_device());
-PREC log_table[MAX_SIMULATIONS];
-uint64_t log_table_size = 0;
-
-class NODE
-{
-public:
-    NODE* parent;
-    uint16_t parent_action;
-    State state;
-    uint32_t visits;
-    uint32_t results[3];
-    std::list<NODE*> children;
-    std::vector<uint16_t> untried_actions;
-
-    NODE()
-        : parent(nullptr), state(new State()), visits(0)
-    {
-        memset(results, 0, sizeof(uint32_t) * 3);
-        untried_actions = state.getPossible();
-        std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
-    }
-
-    NODE(State state)
-        : parent(nullptr), state(state), visits(0)
-    {
-        memset(results, 0, sizeof(uint32_t) * 3);
-        untried_actions = state.getPossible();
-        std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
-    }
-
-    NODE(State state, NODE* parent, uint16_t parent_action)
-        : parent(parent), parent_action(parent_action), state(state), visits(0)
-    {
-        memset(results, 0, sizeof(uint32_t) * 3);
-        untried_actions = state.getPossible();
-        std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
-    }
-
-    NODE(NODE* source)
-        : parent(source->parent), parent_action(source->parent_action), state(source->state), visits(source->visits)
-    {
-        memcpy(results, source->results, sizeof(uint32_t) * 3);
-        untried_actions.reserve(source->untried_actions.size());
-        untried_actions.assign(source->untried_actions.begin(), source->untried_actions.end());
-        for (NODE* child : source->children) children.push_back(new NODE(child));
-    }
-
-    NODE(NODE* source, NODE* parent)
-        : parent(parent), parent_action(source->parent_action), state(source->state), visits(source->visits)
-    {
-        memcpy(results, source->results, sizeof(uint32_t) * 3);
-        untried_actions.reserve(source->untried_actions.size());
-        untried_actions.assign(source->untried_actions.begin(), source->untried_actions.end());
-        for (NODE* child : source->children) children.push_back(new NODE(child));
-    }
-
-    ~NODE()
-    {
-        for (NODE* child : children) delete child;
-    }
-
-    NODE* expand()
-    {
-        uint16_t index = untried_actions.back();
-        untried_actions.pop_back();
-
-        State resulting_state(state);
-        resulting_state.makeMove(index);
-
-        NODE* child = new NODE(resulting_state, this, index);
-        children.push_back(child);
-
-        return child;
-    }
-
-    void rollout()
-    {
-        State simulation_state = State(state);
-        std::uniform_int_distribution<std::mt19937::result_type> distribution(0, untried_actions.size());
-        uint16_t index = distribution(rng);
-
-        while (!simulation_state.isTerminal())
-        {
-            simulation_state.makeMove(untried_actions[index % untried_actions.size()]);
-            index++;
-        }
-        backpropagate(simulation_state.result);
-    }
-
-    void backpropagate(uint8_t value)
-    {
-        visits++;
-        results[value]++;
-        if (parent)
-            parent->backpropagate(value);
-    }
-
-    int32_t Q_delta(bool turn)
-    {
-        if (turn)   return results[0] - results[1];
-        else        return results[1] - results[0];
-    }
-
-    NODE* best_child()
-    {
-        NODE* best_child = nullptr;
-        PREC best_result = -100.0;
-
-        // Precompute
-        PREC log_visits = 2 * log_table[visits];
-        bool turn = state.empty % 2;
-
-        PREC Q_value;
-
-        PREC result;
-        for (NODE* child : children)
-        {
-
-            Q_value = PREC(child->Q_delta(turn)) / PREC(child->visits);
-            result = Q_value + BIAS * std::sqrt(log_visits / PREC(child->visits));
-            if (result > best_result)
-            {
-                best_result = result;
-                best_child = child;
-            }
-        }
-        return best_child;
-    }
-
-    NODE* policy()
-    {
-        NODE* current = this;
-        while (!current->state.isTerminal())
-            if (current->untried_actions.size() > 0)
-                return current->expand();
-            else
-                current = current->best_child();
-        return current;
-    }
-};
+#define TEMPTHING 1000
+int log_table_size = 0;
 
 class HOST
 {
@@ -166,9 +11,9 @@ public:
 
     static void init()
     {
-        for (uint32_t i = 1; i < BATCH_BoardSize; i++)
+        for (uint32_t i = 1; i < TEMPTHING; i++)
             log_table[i] = std::log(i);
-        log_table_size = BATCH_BoardSize;
+        log_table_size = TEMPTHING;
     }
 
     static State* create()
@@ -226,18 +71,18 @@ public:
         state->makeMove(index);
     }
 
-    static void MCTS_move(State* root_state, std::chrono::milliseconds time, PREC confidence_bound, bool analytics)
+    static void MCTS_move(State* root_state, std::chrono::milliseconds time, FloatPrecision confidence_bound, bool analytics)
     {
-        NODE* root = new NODE(root_state);
+        Node* root = new Node(root_state);
         // Build Tree
         uint64_t i;
         uint64_t ix = 0;
         auto start = std::chrono::high_resolution_clock::now();
         while (std::chrono::high_resolution_clock::now() - start < time)
         {
-            for (i = 0; i < BATCH_BoardSize; i++)
+            for (i = 0; i < TEMPTHING; i++)
             {
-                NODE* node = root->policy();
+                Node* node = root->policy();
                 node->rollout();
             }
             ix++;
@@ -246,9 +91,9 @@ public:
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
 
-    static void MCTS_move(State* root_state, uint64_t simulations, PREC confidence_bound, bool analytics)
+    static void MCTS_move(State* root_state, uint64_t simulations, FloatPrecision confidence_bound, bool analytics)
     {
-        NODE* root = new NODE(root_state);
+        Node* root = new Node(root_state);
         for (uint64_t i = log_table_size; i < simulations; i++)
             log_table[i] = std::log(i);
         if (log_table_size < simulations)
@@ -256,13 +101,13 @@ public:
         // Build Tree
         for (uint64_t i = 0; i < simulations; i++)
         {
-            NODE* node = root->policy();
+            Node* node = root->policy();
             node->rollout();
         }
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
 
-    static void render_sim_distribution(NODE* root)
+    static void render_sim_distribution(Node* root)
     {
         std::cout << "\n    <";
         for (uint16_t i = 0; i < BoardSize; i++)
@@ -273,8 +118,8 @@ public:
             std::cout << "-";
         std::cout << ">\n";
 
-        PREC max_visits = 0;
-        for (NODE* child : root->children)
+        FloatPrecision max_visits = 0;
+        for (Node* child : root->children)
             if (child->visits > max_visits)
                 max_visits = child->visits;
 
@@ -293,9 +138,9 @@ public:
                 std::cout << "|";
                 if (!(root->state.m_array[y] & (BLOCK(1) << x)))
                 {
-                    for (NODE* child : root->children)
+                    for (Node* child : root->children)
                         if (child->parent_action == (y * BoardSize + x))
-                            std::printf("%3d", int(PREC(child->visits) / max_visits * 100));
+                            std::printf("%3d", int(FloatPrecision(child->visits) / max_visits * 100));
                 }
 
                 else if (root->state.c_array[y] & (BLOCK(1) << x))
@@ -321,7 +166,7 @@ public:
         std::cout << ">\n";
     }
 
-    static void render_ucb_distribution(NODE* root)
+    static void render_ucb_distribution(Node* root)
     {
         std::cout << "\n    <";
         for (uint16_t i = 0; i < BoardSize; i++)
@@ -347,9 +192,9 @@ public:
                 std::cout << "|";
                 if (!(root->state.m_array[y] & (BLOCK(1) << x)))
                 {
-                    for (NODE* child : root->children)
+                    for (Node* child : root->children)
                         if (child->parent_action == (y * BoardSize + x))
-                            std::printf("%+3d", int(PREC(child->Q_delta(root->state.empty % 2)) / PREC(child->visits) * 100));
+                            std::printf("%+3d", int(FloatPrecision(child->qDelta(root->state.empty % 2)) / FloatPrecision(child->visits) * 100));
                 }
 
                 else if (root->state.c_array[y] & (BLOCK(1) << x))
@@ -380,23 +225,23 @@ private:
     {
 
         uint64_t i = log_table_size;
-        for (; i < (ix + 1) * BATCH_BoardSize; i++)
+        for (; i < (ix + 1) * TEMPTHING; i++)
             log_table[i] = std::log(i);
         if (i > log_table_size)
             log_table_size = i;
     }
 
-    static void MCTS_master(NODE* root, State* root_state, PREC confidence_bound, bool analytics)
+    static void MCTS_master(Node* root, State* root_state, FloatPrecision confidence_bound, bool analytics)
     {
         // Select best child
-        NODE* best = nullptr;
-        std::list<NODE*> children;
-        for (NODE* child : root->children) children.push_back(child);
+        Node* best = nullptr;
+        std::list<Node*> children;
+        for (Node* child : root->children) children.push_back(child);
         uint16_t children_count = root->children.size();
         for (uint16_t i = 0; i < children_count; i++)
         {
-            NODE* child = best_child_final(root);
-            if (PREC(child->visits) / PREC(root->visits) > confidence_bound)
+            Node* child = best_child_final(root);
+            if (FloatPrecision(child->visits) / FloatPrecision(root->visits) > confidence_bound)
             {
                 best = child;
                 break;
@@ -425,15 +270,15 @@ private:
         delete root;
     }
 
-    static void print_evaluation(NODE* best)
+    static void print_evaluation(Node* best)
     {
         std::cout << "Action:      " << int32_t(best->parent_action) % BoardSize << "," << int32_t(best->parent_action) / BoardSize << "\n";
-        std::cout << "Simulations: " << PREC(int32_t(best->parent->visits) / 1000) / 1000 << "M";
+        std::cout << "Simulations: " << FloatPrecision(int32_t(best->parent->visits) / 1000) / 1000 << "M";
         std::cout << " (W:" << int(best->parent->results[best->parent->state.empty % 2 ? 0 : 1]) << " L:" << int(best->parent->results[best->parent->state.empty % 2 ? 1 : 0]) << " D:" << int(best->parent->results[2]) << ")\n";
-        std::cout << "Evaluation:  " << PREC(PREC(best->Q_delta(best->parent->state.empty % 2)) / PREC(best->visits));
+        std::cout << "Evaluation:  " << FloatPrecision(FloatPrecision(best->qDelta(best->parent->state.empty % 2)) / FloatPrecision(best->visits));
         std::cout << " (W:" << int(best->results[best->parent->state.empty % 2 ? 0 : 1]) << " L:" << int(best->results[best->parent->state.empty % 2 ? 1 : 0]) << " D:" << int(best->results[2]) << ")\n";
-        std::cout << "Confidence:  " << PREC(best->visits * 100) / PREC(best->parent->visits) << "%\n";
-        std::printf("Draw:        %.2f%%\n", PREC(best->results[2] * 100) / PREC(best->visits));
+        std::cout << "Confidence:  " << FloatPrecision(best->visits * 100) / FloatPrecision(best->parent->visits) << "%\n";
+        std::printf("Draw:        %.2f%%\n", FloatPrecision(best->results[2] * 100) / FloatPrecision(best->visits));
 
         std::cout << "    <";
         for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
@@ -441,18 +286,18 @@ private:
         std::cout << ">\n";
     }
 
-    static NODE* best_child_final(NODE* node)
+    static Node* best_child_final(Node* node)
     {
-        NODE* best_child = nullptr;
-        PREC result;
-        PREC best_result = -100.0;
+        Node* best_child = nullptr;
+        FloatPrecision result;
+        FloatPrecision best_result = -100.0;
 
         // Precompute
         bool turn = node->state.empty % 2;
 
-        for (NODE* child : node->children)
+        for (Node* child : node->children)
         {
-            PREC Q_value = PREC(child->Q_delta(turn)) / PREC(child->visits);
+            FloatPrecision Q_value = FloatPrecision(child->qDelta(turn)) / FloatPrecision(child->visits);
             result = Q_value;
             if (result > best_result)
             {
