@@ -8,7 +8,7 @@ file(   DOWNLOAD https://download.pytorch.org/libtorch/cu118/libtorch-win-shared
 endif (WIN32)
 
 if (UNIX)
-file(   DOWNLOAD https://download.pytorch.org/libtorch/cu118/libtorch-shared-with-deps-2.0.1%2Bcu118.zipwq
+file(   DOWNLOAD https://download.pytorch.org/libtorch/cu118/libtorch-shared-with-deps-2.0.1%2Bcu118.zip
         ${AlphaGomoku_SOURCE_DIR}/libtorch.zip
         SHOW_PROGRESS)
 endif (UNIX)
