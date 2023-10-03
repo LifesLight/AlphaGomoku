@@ -1,1 +1,0 @@
-"run CMake .." to generate build data
