@@ -7,6 +7,7 @@
 #include "algorithm"
 #include "string"
 #include "chrono"
+#include "cstring"
 
 #define BoardSize 15
 #define ExplorationBias 1.42
