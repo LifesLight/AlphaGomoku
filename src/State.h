@@ -1,0 +1,1 @@
+// Optimized board interface for MCTS
