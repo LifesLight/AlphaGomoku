@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
 project(AlphaGomoku)
 set(CMAKE_CXX_STANDARD 23)
-add_executable(AlphaGomoku.exe src/MCTS.cpp src/State.cpp src/Node.cpp src/Config.cpp)
+add_executable(AlphaGomoku src/MCTS.cpp src/State.cpp src/Node.cpp src/Config.cpp)
 set(CMAKE_CXX_FLAGS "-O3")
