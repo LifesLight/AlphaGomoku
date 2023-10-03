@@ -15,4 +15,4 @@ typedef float FloatPrecision;
 
 extern std::random_device rand_device;
 extern std::mt19937 rng;
-extern FloatPrecision log_table[MaxSimulations];
+extern FloatPrecision logTable[MaxSimulations];

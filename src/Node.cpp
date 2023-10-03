@@ -65,7 +65,7 @@ Node* Node::bestChild()
     Node* best_child = nullptr;
     FloatPrecision best_result = -100.0;
     // Precompute
-    FloatPrecision log_visits = 2 * log_table[visits];
+    FloatPrecision log_visits = 2 * logTable[visits];
     bool turn = state.empty % 2;
     FloatPrecision Q_value;
     FloatPrecision result;

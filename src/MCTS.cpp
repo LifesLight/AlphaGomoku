@@ -2,18 +2,14 @@
 #include "Node.h"
 #include "State.h"
 
-#define TEMPTHING 1000
-int log_table_size = 0;
-
 class HOST
 {
 public:
 
     static void init()
     {
-        for (uint32_t i = 1; i < TEMPTHING; i++)
-            log_table[i] = std::log(i);
-        log_table_size = TEMPTHING;
+        for (uint32_t i = 1; i < MaxSimulations; i++)
+            logTable[i] = std::log(i);
     }
 
     static State* create()
@@ -76,17 +72,14 @@ public:
         Node* root = new Node(root_state);
         // Build Tree
         uint64_t i;
-        uint64_t ix = 0;
         auto start = std::chrono::high_resolution_clock::now();
         while (std::chrono::high_resolution_clock::now() - start < time)
         {
-            for (i = 0; i < TEMPTHING; i++)
+            for (i = 0; i < 1000; i++)
             {
                 Node* node = root->policy();
                 node->rollout();
             }
-            ix++;
-            update(ix);
         }
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
@@ -94,10 +87,6 @@ public:
     static void MCTS_move(State* root_state, uint64_t simulations, FloatPrecision confidence_bound, bool analytics)
     {
         Node* root = new Node(root_state);
-        for (uint64_t i = log_table_size; i < simulations; i++)
-            log_table[i] = std::log(i);
-        if (log_table_size < simulations)
-            log_table_size = simulations;
         // Build Tree
         for (uint64_t i = 0; i < simulations; i++)
         {
@@ -221,16 +210,6 @@ public:
     }
 
 private:
-    static void update(uint64_t ix)
-    {
-
-        uint64_t i = log_table_size;
-        for (; i < (ix + 1) * TEMPTHING; i++)
-            log_table[i] = std::log(i);
-        if (i > log_table_size)
-            log_table_size = i;
-    }
-
     static void MCTS_master(Node* root, State* root_state, FloatPrecision confidence_bound, bool analytics)
     {
         // Select best child
@@ -319,7 +298,7 @@ int main()
     while (!state->isTerminal())
     {
         if (!(state->empty % 2))
-            HOST::MCTS_move(state, std::chrono::seconds(1), 0.01, true);
+            HOST::MCTS_move(state, 1000000, 0.01, true);
         //HOST::human_move(state);  
         else
             HOST::human_move(state);
