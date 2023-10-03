@@ -11,7 +11,7 @@
 
 #define BoardSize 15
 #define ExplorationBias 1.42
-#define MaxSimulations 100000000
+#define MaxSimulations 1'000'000
 typedef float FloatPrecision;
 
 extern std::random_device rand_device;
