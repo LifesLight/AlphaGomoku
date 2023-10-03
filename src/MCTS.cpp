@@ -1,3 +1,5 @@
+#include "State.h"
+
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -10,23 +12,11 @@
 #include <unordered_map>
 #include <cstring>
 
-#define SIZE 15
 #define BIAS 1.4142
-#define BATCH_SIZE 1000
+#define BATCH_BoardSize 1000
 #define MAX_SIMULATIONS 250000000
 typedef float PREC;
 
-#pragma region 
-#if SIZE > 32
-typedef int64_t BLOCK;
-#elif SIZE > 16
-typedef int32_t BLOCK;
-#elif SIZE > 8
-typedef int16_t BLOCK;
-#else
-typedef int8_t BLOCK;
-#endif
-#pragma endregion
 
 std::random_device rand_device;
 std::mt19937 rng(rand_device());
@@ -36,34 +26,27 @@ uint64_t log_table_size = 0;
 class NODE;
 class STATISTICS;
 
-const uint64_t SEED = 0x1e1700fa712fc381;
-std::vector<std::vector<int64_t> > zobrist_table(SIZE* SIZE, std::vector<int64_t>(3));
-std::unordered_map<uint64_t, STATISTICS*>* TT = new std::unordered_map<uint64_t, STATISTICS*>;
-uint32_t TT_subcheck = 0;
-uint32_t TT_hits = 0;
-
-
 class STATISTICS
 {
 public:
-    STATE state;
+    State state;
     uint32_t visits;
     uint32_t results[3];
 
     STATISTICS()
-        : visits(0), state(new STATE())
+        : visits(0), state(new State())
     {
         memset(results, 0, sizeof(uint32_t) * 3);
     }
 
-    STATISTICS(STATE state)
+    STATISTICS(State state)
         : visits(0), state(state)
     {
         memset(results, 0, sizeof(uint32_t) * 3);
     }
 
     STATISTICS(STATISTICS* source)
-        : state(STATE(source->state)), visits(source->visits)
+        : state(State(source->state)), visits(source->visits)
     {
         memcpy(results, source->results, sizeof(uint32_t) * 3);
     }
@@ -81,28 +64,28 @@ public:
     NODE()
         : parent(nullptr), data(new STATISTICS())
     {
-        untried_actions = data->state.possible();
+        untried_actions = data->state.getPossible();
         std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
     }
 
-    NODE(STATE state)
+    NODE(State state)
         : parent(nullptr), data(new STATISTICS(state))
     {
-        untried_actions = data->state.possible();
+        untried_actions = data->state.getPossible();
         std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
     }
 
-    NODE(STATE state, NODE* parent, uint16_t parent_action)
+    NODE(State state, NODE* parent, uint16_t parent_action)
         : parent(parent), parent_action(parent_action), data(new STATISTICS(state))
     {
-        untried_actions = data->state.possible();
+        untried_actions = data->state.getPossible();
         std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
     }
 
     NODE(STATISTICS* data, NODE* parent, uint16_t parent_action)
         : parent(parent), parent_action(parent_action), data(data)
     {
-        untried_actions = data->state.possible();
+        untried_actions = data->state.getPossible();
         std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
     }
 
@@ -132,35 +115,14 @@ public:
         uint16_t index = untried_actions.back();
         untried_actions.pop_back();
 
-        STATE resulting_state(data->state);
-        resulting_state.action(index);
+        State resulting_state(data->state);
+        resulting_state.makeMove(index);
 
         NODE* child;
         STATISTICS* child_stats;
-        auto TT_stats = TT->find(resulting_state.hash_value);
-
-        if (TT_stats != TT->end())
-        {
-            TT_hits++;
-            child_stats = TT_stats->second;
-            //for (uint16_t i = 0; i < SIZE; i++)
-            //    if ((child_stats->state.c_array[i] != resulting_state.c_array[i]) || (child_stats->state.m_array[i] != resulting_state.m_array[i]))
-            //    {
-            //        std::cout << "Hash collision occured\n";
-            //        child_stats->state.render();
-            //        std::cout << "vs\n";
-            //        resulting_state.render();
-            //        std::cout << "----------------------------------------\n";
-            //        throw("Hash collision occured");
-            //    }
-            child = new NODE(child_stats, this, index);
-            children.push_back(child);
-            return this->policy();
-        }
 
         child_stats = new STATISTICS(resulting_state);
         child = new NODE(child_stats, this, index);
-        TT->insert(std::make_pair(resulting_state.hash_value, child_stats));
         children.push_back(child);
 
         return child;
@@ -168,13 +130,13 @@ public:
 
     void rollout()
     {
-        STATE simulation_state = STATE(data->state);
+        State simulation_state = State(data->state);
         std::uniform_int_distribution<std::mt19937::result_type> distribution(0, untried_actions.size());
         uint16_t index = distribution(rng);
 
-        while (!simulation_state.terminal())
+        while (!simulation_state.isTerminal())
         {
-            simulation_state.action(untried_actions[index % untried_actions.size()]);
+            simulation_state.makeMove(untried_actions[index % untried_actions.size()]);
             index++;
         }
         backpropagate(simulation_state.result);
@@ -223,12 +185,11 @@ public:
     NODE* policy()
     {
         NODE* current = this;
-        while (!current->data->state.terminal())
+        while (!current->data->state.isTerminal())
             if (current->untried_actions.size() > 0)
                 return current->expand();
             else
                 current = current->best_child();
-        TT_subcheck++;
         return current;
     }
 };
@@ -239,34 +200,29 @@ public:
 
     static void init()
     {
-        for (uint32_t i = 1; i < BATCH_SIZE; i++)
+        for (uint32_t i = 1; i < BATCH_BoardSize; i++)
             log_table[i] = std::log(i);
-        log_table_size = BATCH_SIZE;
-
-        std::uniform_int_distribution<int64_t> distribution;
-        for (int i = 0; i < SIZE * SIZE; ++i)
-            for (int j = 0; j < 3; ++j)
-                zobrist_table[i][j] = distribution(rng);
+        log_table_size = BATCH_BoardSize;
     }
 
-    static STATE* create()
+    static State* create()
     {
-        return new STATE();
+        return new State();
     }
 
-    static STATE* create(std::string position)
+    static State* create(std::string position)
     {
-        STATE* state = new STATE();
+        State* state = new State();
         for (int i = 0; i < position.length(); i += 2)
         {
             uint16_t x = position[i] - '0';
             uint16_t y = position[i + 1] - '0';
-            state->action(y * SIZE + x);
+            state->makeMove(y * BoardSize + x);
         }
         return state;
     }
 
-    static void human_move(STATE* state)
+    static void human_move(State* state)
     {
         bool getting_input = true;
         std::string input_x;
@@ -290,10 +246,10 @@ public:
                 std::cout << "Invalid input format!\n";
                 continue;
             }
-            index = y * SIZE + x;
-            if ((0 <= x && x < SIZE) && (0 <= y && y < SIZE))
+            index = y * BoardSize + x;
+            if ((0 <= x && x < BoardSize) && (0 <= y && y < BoardSize))
             {
-                if (!(state->m_array[y] & (BLOCK(1) << x % SIZE)))
+                if (!(state->m_array[y] & (BLOCK(1) << x % BoardSize)))
                     getting_input = false;
                 else
                     std::cout << "Selected field is occupied!\n";
@@ -301,10 +257,10 @@ public:
             else
                 std::cout << "Selection outside the field!\n";
         }
-        state->action(index);
+        state->makeMove(index);
     }
 
-    static void MCTS_move(STATE* root_state, std::chrono::milliseconds time, PREC confidence_bound, bool analytics)
+    static void MCTS_move(State* root_state, std::chrono::milliseconds time, PREC confidence_bound, bool analytics)
     {
         NODE* root = new NODE(root_state);
         // Build Tree
@@ -313,7 +269,7 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         while (std::chrono::high_resolution_clock::now() - start < time)
         {
-            for (i = 0; i < BATCH_SIZE; i++)
+            for (i = 0; i < BATCH_BoardSize; i++)
             {
                 NODE* node = root->policy();
                 node->rollout();
@@ -324,7 +280,7 @@ public:
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
 
-    static void MCTS_move(STATE* root_state, uint64_t simulations, PREC confidence_bound, bool analytics)
+    static void MCTS_move(State* root_state, uint64_t simulations, PREC confidence_bound, bool analytics)
     {
         NODE* root = new NODE(root_state);
         for (uint64_t i = log_table_size; i < simulations; i++)
@@ -343,11 +299,11 @@ public:
     static void render_sim_distribution(NODE* root)
     {
         std::cout << "\n    <";
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << "-";
         std::cout << " SIMULATIONS DISTRIBUTION ";
 
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << "-";
         std::cout << ">\n";
 
@@ -357,22 +313,22 @@ public:
                 max_visits = child->data->visits;
 
         std::cout << "    ";
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << " " << std::to_string(i).append(3 - std::to_string(i).length(), ' ');
         std::cout << "\n   ";
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << " ---";
         std::cout << "\n";
-        for (uint16_t y = 0; y < SIZE; y++)
+        for (uint16_t y = 0; y < BoardSize; y++)
         {
             std::cout << std::to_string(y).append(3 - std::to_string(y).length(), ' ');
-            for (uint16_t x = 0; x < SIZE; x++)
+            for (uint16_t x = 0; x < BoardSize; x++)
             {
                 std::cout << "|";
                 if (!(root->data->state.m_array[y] & (BLOCK(1) << x)))
                 {
                     for (NODE* child : root->children)
-                        if (child->parent_action == (y * SIZE + x))
+                        if (child->parent_action == (y * BoardSize + x))
                             std::printf("%3d", int(PREC(child->data->visits) / max_visits * 100));
                 }
 
@@ -388,13 +344,13 @@ public:
                 }
             }
             std::cout << "|\n   ";
-            for (uint16_t i = 0; i < SIZE; i++)
+            for (uint16_t i = 0; i < BoardSize; i++)
                 std::cout << " ---";
             std::cout << "\n";
         }
 
         std::cout << "    <";
-        for (uint16_t i = 0; i < SIZE * 2 + 26; i++)
+        for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
             std::cout << "-";
         std::cout << ">\n";
     }
@@ -402,31 +358,31 @@ public:
     static void render_ucb_distribution(NODE* root)
     {
         std::cout << "\n    <";
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << "-";
         std::cout << "     UCB DISTRIBUTION     ";
 
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << "-";
         std::cout << ">\n";
 
         std::cout << "    ";
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << " " << std::to_string(i).append(3 - std::to_string(i).length(), ' ');
         std::cout << "\n   ";
-        for (uint16_t i = 0; i < SIZE; i++)
+        for (uint16_t i = 0; i < BoardSize; i++)
             std::cout << " ---";
         std::cout << "\n";
-        for (uint16_t y = 0; y < SIZE; y++)
+        for (uint16_t y = 0; y < BoardSize; y++)
         {
             std::cout << std::to_string(y).append(3 - std::to_string(y).length(), ' ');
-            for (uint16_t x = 0; x < SIZE; x++)
+            for (uint16_t x = 0; x < BoardSize; x++)
             {
                 std::cout << "|";
                 if (!(root->data->state.m_array[y] & (BLOCK(1) << x)))
                 {
                     for (NODE* child : root->children)
-                        if (child->parent_action == (y * SIZE + x))
+                        if (child->parent_action == (y * BoardSize + x))
                             std::printf("%+3d", int(PREC(child->Q_delta(root->data->state.empty % 2)) / PREC(child->data->visits) * 100));
                 }
 
@@ -442,13 +398,13 @@ public:
                 }
             }
             std::cout << "|\n   ";
-            for (uint16_t i = 0; i < SIZE; i++)
+            for (uint16_t i = 0; i < BoardSize; i++)
                 std::cout << " ---";
             std::cout << "\n";
         }
 
         std::cout << "    <";
-        for (uint16_t i = 0; i < SIZE * 2 + 26; i++)
+        for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
             std::cout << "-";
         std::cout << ">\n";
     }
@@ -458,13 +414,13 @@ private:
     {
 
         uint64_t i = log_table_size;
-        for (i; i < (ix + 1) * BATCH_SIZE; i++)
+        for (; i < (ix + 1) * BATCH_BoardSize; i++)
             log_table[i] = std::log(i);
         if (i > log_table_size)
             log_table_size = i;
     }
 
-    static void MCTS_master(NODE* root, STATE* root_state, PREC confidence_bound, bool analytics)
+    static void MCTS_master(NODE* root, State* root_state, PREC confidence_bound, bool analytics)
     {
         // Select best child
         NODE* best = nullptr;
@@ -497,34 +453,24 @@ private:
 
         print_evaluation(best);
 
-        STATE* best_state = new STATE(best->data->state);
-        root_state->action(best->parent_action);
+        State* best_state = new State(best->data->state);
+        root_state->makeMove(best->parent_action);
 
         delete root;
-        for (auto& [key, value] : (*TT))
-            delete value;
-
-        TT->clear();
-        TT_subcheck = 0;
-        TT_hits = 0;
     }
 
     static void print_evaluation(NODE* best)
     {
-        std::cout << "Action:      " << int32_t(best->parent_action) % SIZE << "," << int32_t(best->parent_action) / SIZE << "\n";
+        std::cout << "Action:      " << int32_t(best->parent_action) % BoardSize << "," << int32_t(best->parent_action) / BoardSize << "\n";
         std::cout << "Simulations: " << PREC(int32_t(best->parent->data->visits) / 1000) / 1000 << "M";
         std::cout << " (W:" << int(best->parent->data->results[best->parent->data->state.empty % 2 ? 0 : 1]) << " L:" << int(best->parent->data->results[best->parent->data->state.empty % 2 ? 1 : 0]) << " D:" << int(best->parent->data->results[2]) << ")\n";
         std::cout << "Evaluation:  " << PREC(PREC(best->Q_delta(best->parent->data->state.empty % 2)) / PREC(best->data->visits));
         std::cout << " (W:" << int(best->data->results[best->parent->data->state.empty % 2 ? 0 : 1]) << " L:" << int(best->data->results[best->parent->data->state.empty % 2 ? 1 : 0]) << " D:" << int(best->data->results[2]) << ")\n";
-        std::cout << "TT-Hitrate:  " << PREC(TT_hits * 100) / PREC(best->parent->data->visits) << "%\n";
-        int32_t TT_size = TT->size();
-        if (TT_size != (best->parent->data->visits - TT_subcheck))
-            std::cout << "[WARNING]: Hash-collision\nTT.size() -> " << TT_size << "\nExpected -> " << best->parent->data->visits - TT_subcheck << "\n";
         std::cout << "Confidence:  " << PREC(best->data->visits * 100) / PREC(best->parent->data->visits) << "%\n";
-        std::printf("Draw:        %.2f%%\n", 2, PREC(best->data->results[2] * 100) / PREC(best->data->visits));
+        std::printf("Draw:        %.2f%%\n", PREC(best->data->results[2] * 100) / PREC(best->data->visits));
 
         std::cout << "    <";
-        for (uint16_t i = 0; i < SIZE * 2 + 26; i++)
+        for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
             std::cout << "-";
         std::cout << ">\n";
     }
@@ -556,16 +502,16 @@ int main()
 {
     HOST::init();
 
-    STATE* state = HOST::create();
+    State* state = HOST::create();
 
-    state->render();
-    while (!state->terminal())
+    std::cout << state->toString();
+    while (!state->isTerminal())
     {
         if (!(state->empty % 2))
             HOST::MCTS_move(state, std::chrono::seconds(1), 0.01, true);
         //HOST::human_move(state);  
         else
             HOST::human_move(state);
-        state->render();
+        std::cout << state->toString();
     }
 }
