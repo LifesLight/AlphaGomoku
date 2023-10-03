@@ -1,9 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 project(AlphaGomoku)
 
-file(   DOWNLOAD https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
+if (WIN32)
+file(   DOWNLOAD https://download.pytorch.org/libtorch/cu118/libtorch-win-shared-with-deps-latest.zip
         ${AlphaGomoku_SOURCE_DIR}/libtorch.zip
         SHOW_PROGRESS)
+endif (WIN32)
+
+if (UNIX)
+file(   DOWNLOAD https://download.pytorch.org/libtorch/cu118/libtorch-shared-with-deps-latest.zip
+        ${AlphaGomoku_SOURCE_DIR}/libtorch.zip
+        SHOW_PROGRESS)
+endif (UNIX)
 message("Extracting...")
 file(   ARCHIVE_EXTRACT INPUT
         ${AlphaGomoku_SOURCE_DIR}/libtorch.zip
