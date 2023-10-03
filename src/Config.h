@@ -10,7 +10,7 @@
 #include "cstring"
 
 #define BoardSize 15
-#define ExplorationBias 1.42
+#define ExplorationBias 1.41421356237
 #define MaxSimulations 1'000'000
 typedef float FloatPrecision;
 
