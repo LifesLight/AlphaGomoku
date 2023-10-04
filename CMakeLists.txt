@@ -7,6 +7,6 @@ list(APPEND CMAKE_PREFIX_PATH ${AlphaGomoku_SOURCE_DIR}/libtorch/)
 find_package(Torch REQUIRED)
 
 set(CMAKE_CXX_STANDARD 23)
-add_executable(AlphaGomoku src/MCTS.cpp src/State.cpp src/Node.cpp src/Config.cpp)
+add_executable(AlphaGomoku src/TorchTesting.cpp src/State.cpp src/Node.cpp src/Config.cpp)
 target_link_libraries(AlphaGomoku "${TORCH_LIBRARIES}")
 set(CMAKE_CXX_FLAGS "-O3")
