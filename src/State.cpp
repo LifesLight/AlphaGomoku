@@ -52,11 +52,7 @@ bool State::isTerminal()
 std::string State::toString()
 {
     std::string result;
-    result += "    ";
-    
-    for (uint16_t i = 0; i < BoardSize; i++)
-        result += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
-    
+
     result += "\n   ";
     
     for (uint16_t i = 0; i < BoardSize; i++)
@@ -64,11 +60,11 @@ std::string State::toString()
     
     result += "\n";
     
-    for (uint16_t y = 0; y < BoardSize; y++)
+    for (int16_t y = BoardSize - 1; y >= 0; y--)
     {
         result += std::to_string(y) + std::string(3 - std::to_string(y).length(), ' ');
         
-        for (uint16_t x = 0; x < BoardSize; x++)
+        for (int16_t x = 0; x < BoardSize; x++)
         {
             result += "|";
             
@@ -97,6 +93,11 @@ std::string State::toString()
         result += "\n";
     }
     
+    result += "    ";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
+    result += "\n";
+
     return result;
 }
 

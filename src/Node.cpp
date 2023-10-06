@@ -82,6 +82,53 @@ Node* Node::bestChild()
     return best_child;
 }
 
+Node* Node::absBestChild()
+{
+    Node* best_child = nullptr;
+    FloatPrecision result;
+    FloatPrecision best_result = -100.0;
+    // Precompute
+    bool turn = state.empty % 2;
+    for (Node* child : children)
+    {
+        FloatPrecision Q_value = FloatPrecision(child->qDelta(turn)) / FloatPrecision(child->visits);
+        result = Q_value;
+        if (result > best_result)
+        {
+            best_result = result;
+            best_child = child;
+        }
+    }
+    return best_child;
+}
+
+Node* Node::absBestChild(float confidence_bound)
+{
+    std::list<Node*> children_copy;
+    for (Node* child : children)
+       if (FloatPrecision(child->visits) / FloatPrecision(visits) > confidence_bound)
+            children_copy.push_back(child);
+ 
+    Node* best_child = nullptr;
+    FloatPrecision result;
+    FloatPrecision best_result = -100.0;
+    // Precompute
+    bool turn = state.empty % 2;
+    
+    for (Node* child : children_copy)
+    {
+        FloatPrecision Q_value = FloatPrecision(child->qDelta(turn)) / FloatPrecision(child->visits);
+        result = Q_value;
+        if (result > best_result)
+        {
+            best_result = result;
+            best_child = child;
+        }
+    }
+
+    return best_child;
+}
+
 Node* Node::policy()
 {
     Node* current = this;
