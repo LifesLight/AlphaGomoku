@@ -1,1 +1,1 @@
-Use "DatasetGenerator" to create datasets
+Use "DatasetCreator.ipybb" to create datasets
