@@ -9,9 +9,9 @@ Tensor of shape `[HistoryDepth(HD) + 1, BoardSize, BoardSize]` where HD is a eve
 
 `[0]: Next players color`
 
-`[1 - HD/2]: White stone history`
+`[1 - HD/2]: Black stone history`
 
-`[HD/2+1 - HD]: Black stone history`
+`[HD/2+1 - HD]: White stone history`
 
 This makes it so we can go back HD - 2 played moves on the board.
 For each step back (index - 1) the last placed stone of given color is removed from that board.

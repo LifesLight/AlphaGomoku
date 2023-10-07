@@ -1,15 +1,16 @@
 class Utilities:
-    def sliceGamestate(gamestate, HD, depth):
+    def sliceGamestate(gamestate, depth):
+        HD = gamestate.shape[0] - 1
         output = ""
         halfDepth = HD // 2
         if HD == 2:
-            blackStones = gamestate[2][:][:]
-            whiteStones = gamestate[1][:][:]
+            blackStones = gamestate[1][:][:]
+            whiteStones = gamestate[2][:][:]
         else:
             tempDepth = depth // 2
 
-            whiteIndex = halfDepth - tempDepth
-            blackIndex = halfDepth * 2 - tempDepth
+            whiteIndex = halfDepth * 2 - tempDepth  
+            blackIndex = halfDepth - tempDepth
 
             if depth % 2 == 1:
                 if gamestate[0][0][0]:
@@ -35,3 +36,19 @@ class Utilities:
         output += "     0   1   2   3   4   5   6   7   8   9  10  11  12  13  14\n"
 
         return output
+    
+    def makeMove(gamestate, x, y):
+        HD = gamestate.shape[0] - 1 
+        turn = gamestate[0, 0, 0]
+        gamestate[0, :, :] = not turn
+
+        if turn:
+            for i in range(HD//2 + 1, HD):
+                gamestate[i] = gamestate[i + 1].copy()
+            gamestate[HD][x][y] = True
+        else:
+            for i in range(1, HD//2):
+                gamestate[i] = gamestate[i + 1].copy()
+            gamestate[HD//2][x][y] = True
+
+        return gamestate
