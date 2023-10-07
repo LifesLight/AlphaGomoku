@@ -40,8 +40,8 @@ class Utilities:
             blackStones = gamestate[2][:][:]
             whiteStones = gamestate[1][:][:]
         else:
-            blackStones = gamestate[HD * 2 - depth][:][:]
-            whiteStones = gamestate[HD - depth][:][:]
+            blackStones = gamestate[HD + 1 + depth][:][:]
+            whiteStones = gamestate[depth + 1][:][:]
         output += "     0   1   2   3   4   5   6   7   8   9  10  11  12  13  14\n"
         output += "   --------------------------------------------------------------\n"
         for y in range(14, -1, -1):
