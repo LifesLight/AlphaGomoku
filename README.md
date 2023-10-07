@@ -14,7 +14,7 @@ Tensor of shape `[HistoryDepth(HD) + 1, BoardSize, BoardSize]` where HD is a eve
 `[HD/2+1 - HD]: Black stone history`
 
 This makes it so we can go back HD - 2 played moves on the board.
-Each decending increment in history goes back to the absolute board state with the last placed stone removed of given color.
+For each step back (index - 1) the last placed stone of given color is removed from that board.
 A interface to the history is provided in Utilities.py.
 
 ## Datasets
