@@ -15,6 +15,7 @@ Tensor of shape `[HistoryDepth(HD) + 1, BoardSize, BoardSize]` where HD is a eve
 
 This makes it so we can go back HD - 2 played moves on the board.
 Each decending increment in history goes back to the absolute board state with the last placed stone removed of given color.
+A interface to the history is provided in Utilities.py.
 
-# Datasets
+## Datasets
 The human datasets have following naming convention: `HD(HistoryDepth),[AUG (is augmented)],TS(TrainsplitFraction),Rulesets(All rulesets in the dataset)`.
