@@ -1,16 +1,19 @@
 #include "Node.h"
 
 
-Node::Node(State state, Node* parent, uint16_t parent_action)
+Node::Node(State* state, Node* parent, uint16_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), visits(0)
 {
     memset(results, 0, sizeof(uint32_t) * 3);
-    untried_actions = state.getPossible();
-    std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
+    std::vector<uint16_t> possible_actions = state->getPossible();
+
+    // Implement model here
+    for (uint16_t possible_action : possible_actions)
+        untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, 0));
 }
 
-Node::Node(State state)
-    : Node(state, nullptr, 0)
+Node::Node(State* state)
+    : Node(new State(state), nullptr, 0)
 {   }
 
 Node::Node()
@@ -19,16 +22,23 @@ Node::Node()
 
 Node::~Node()
 {
+    delete state;
     for (Node* child : children) delete child;
 }
 
 Node* Node::expand()
 {
-    uint16_t index = untried_actions.back();
+    std::tuple<uint16_t, float> action = untried_actions.back();
+    uint16_t index = std::get<0>(action);
+    float child_value = std::get<1>(action);
+
     untried_actions.pop_back();
-    State resulting_state(state);
-    resulting_state.makeMove(index);
+    State* resulting_state = new State(state);
+    resulting_state->makeMove(index);
     Node* child = new Node(resulting_state, this, index);
+
+    // Store predicted value of child
+    child->value = child_value;
     children.push_back(child);
     return child;
 }
@@ -40,7 +50,7 @@ void Node::rollout()
     uint16_t index = distribution(rng);
     while (!simulation_state.isTerminal())
     {
-        simulation_state.makeMove(untried_actions[index % untried_actions.size()]);
+        simulation_state.makeMove(std::get<0>(untried_actions[index % untried_actions.size()]));
         index++;
     }
     backpropagate(simulation_state.result);
@@ -66,7 +76,7 @@ Node* Node::bestChild()
     FloatPrecision best_result = -100.0;
     // Precompute
     FloatPrecision log_visits = 2 * logTable[visits];
-    bool turn = state.empty % 2;
+    bool turn = state->empty % 2;
     FloatPrecision Q_value;
     FloatPrecision result;
     for (Node* child : children)
@@ -88,7 +98,7 @@ Node* Node::absBestChild()
     FloatPrecision result;
     FloatPrecision best_result = -100.0;
     // Precompute
-    bool turn = state.empty % 2;
+    bool turn = state->empty % 2;
     for (Node* child : children)
     {
         FloatPrecision Q_value = FloatPrecision(child->qDelta(turn)) / FloatPrecision(child->visits);
@@ -113,7 +123,7 @@ Node* Node::absBestChild(float confidence_bound)
     FloatPrecision result;
     FloatPrecision best_result = -100.0;
     // Precompute
-    bool turn = state.empty % 2;
+    bool turn = state->empty % 2;
     
     for (Node* child : children_copy)
     {
@@ -132,7 +142,7 @@ Node* Node::absBestChild(float confidence_bound)
 Node* Node::policy()
 {
     Node* current = this;
-    while (!current->state.isTerminal())
+    while (!current->state->isTerminal())
         if (current->untried_actions.size() > 0)
             return current->expand();
         else

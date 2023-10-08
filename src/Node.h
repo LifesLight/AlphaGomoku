@@ -7,15 +7,19 @@ class Node
 public:
     Node* parent;
     uint16_t parent_action;
-    State state;
+    State* state;
     uint32_t visits;
     uint32_t results[3];
     std::list<Node*> children;
-    std::vector<uint16_t> untried_actions;
+    std::vector<std::tuple<uint16_t, float>> untried_actions;
+
+    // Network stuff
+    float value;
+    float prior_propability;
 
     Node();
-    Node(State);
-    Node(State, Node*, uint16_t);
+    Node(State*);
+    Node(State*, Node*, uint16_t);
     Node(Node*);
     ~Node();
 

@@ -124,22 +124,22 @@ static std::string sim_distribution(Node* root)
         for (uint16_t x = 0; x < BoardSize; x++)
         {
             result << "|";
-            if (!(root->state.m_array[y] & (BLOCK(1) << x)))
+            if (!(root->state->m_array[y] & (BLOCK(1) << x)))
             {
                 for (Node* child : root->children)
                     if (child->parent_action == (y * BoardSize + x))
                         result << std::setw(3) << std::setfill(' ') << int(FloatPrecision(child->visits) / max_visits * 100);
             }
-            else if (root->state.c_array[y] & (BLOCK(1) << x))
+            else if (root->state->c_array[y] & (BLOCK(1) << x))
             {
-                if (!(root->state.empty % 2))
+                if (!(root->state->empty % 2))
                     result << "\033[1;34m o \033[0m";
                 else
                     result << "\033[1;31m o \033[0m";
             }
-            else if (!(root->state.c_array[y] & (BLOCK(1) << x)))
+            else if (!(root->state->c_array[y] & (BLOCK(1) << x)))
             {
-                if (root->state.empty % 2)
+                if (root->state->empty % 2)
                     result << "\033[1;34m o \033[0m";
                 else
                     result << "\033[1;31m o \033[0m";
@@ -187,22 +187,22 @@ static std::string ucb_distribution(Node* root)
         for (uint16_t x = 0; x < BoardSize; x++)
         {
             result << "|";
-            if (!(root->state.m_array[y] & (BLOCK(1) << x)))
+            if (!(root->state->m_array[y] & (BLOCK(1) << x)))
             {
                 for (Node* child : root->children)
                     if (child->parent_action == (y * BoardSize + x))
-                        result << std::setw(3) << std::setfill(' ') << int(FloatPrecision(child->qDelta(root->state.empty % 2)) / FloatPrecision(child->visits) * 100);
+                        result << std::setw(3) << std::setfill(' ') << int(FloatPrecision(child->qDelta(root->state->empty % 2)) / FloatPrecision(child->visits) * 100);
             }
-            else if (root->state.c_array[y] & (BLOCK(1) << x))
+            else if (root->state->c_array[y] & (BLOCK(1) << x))
             {
-                if (!(root->state.empty % 2))
+                if (!(root->state->empty % 2))
                     result << "\033[1;34m o \033[0m";
                 else
                     result << "\033[1;31m o \033[0m";
             }
-            else if (!(root->state.c_array[y] & (BLOCK(1) << x)))
+            else if (!(root->state->c_array[y] & (BLOCK(1) << x)))
             {
-                if (root->state.empty % 2)
+                if (root->state->empty % 2)
                     result << "\033[1;34m o \033[0m";
                 else
                     result << "\033[1;31m o \033[0m";
@@ -262,9 +262,9 @@ private:
         std::ostringstream result;
         result << "Action:      " << int32_t(best->parent_action) % BoardSize << "," << int32_t(best->parent_action) / BoardSize << "\n";
         result << "Simulations: " << FloatPrecision(int32_t(best->parent->visits) / 1000) / 1000 << "M";
-        result << " (W:" << int(best->parent->results[best->parent->state.empty % 2 ? 0 : 1]) << " L:" << int(best->parent->results[best->parent->state.empty % 2 ? 1 : 0]) << " D:" << int(best->parent->results[2]) << ")\n";
-        result << "Evaluation:  " << FloatPrecision(FloatPrecision(best->qDelta(best->parent->state.empty % 2)) / FloatPrecision(best->visits));
-        result << " (W:" << int(best->results[best->parent->state.empty % 2 ? 0 : 1]) << " L:" << int(best->results[best->parent->state.empty % 2 ? 1 : 0]) << " D:" << int(best->results[2]) << ")\n";
+        result << " (W:" << int(best->parent->results[best->parent->state->empty % 2 ? 0 : 1]) << " L:" << int(best->parent->results[best->parent->state->empty % 2 ? 1 : 0]) << " D:" << int(best->parent->results[2]) << ")\n";
+        result << "Evaluation:  " << FloatPrecision(FloatPrecision(best->qDelta(best->parent->state->empty % 2)) / FloatPrecision(best->visits));
+        result << " (W:" << int(best->results[best->parent->state->empty % 2 ? 0 : 1]) << " L:" << int(best->results[best->parent->state->empty % 2 ? 1 : 0]) << " D:" << int(best->results[2]) << ")\n";
         result << "Confidence:  " << FloatPrecision(best->visits * 100) / FloatPrecision(best->parent->visits) << "%\n";
         result << "Draw:        " << std::fixed << std::setprecision(2) << FloatPrecision(best->results[2] * 100) / FloatPrecision(best->visits) << "%\n";
         result << "    <";

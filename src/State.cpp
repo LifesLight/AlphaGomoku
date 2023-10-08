@@ -18,8 +18,9 @@ void State::makeMove(uint16_t index)
 {
     --empty;
     last = index;
-    BLOCK x = index % BoardSize;
-    BLOCK y = index / BoardSize;
+    BLOCK x, y;
+    Utils::indexToCords(index, x, y);
+
     // Horizontal
     m_array[y] |= (BLOCK(1) << x);
     // Vertical
@@ -35,12 +36,57 @@ void State::makeMove(uint16_t index)
     result = checkForWin() ? empty % 2 : 2;
 }
 
+bool State::isCellEmpty(uint16_t index)
+{
+    uint8_t x, y;
+    Utils::cordsToIndex(index, x, y);
+    return isCellEmpty(x, y);
+}
+
+bool State::isCellEmpty(uint8_t x, uint8_t y)
+{
+    return !(m_array[y] & (BLOCK(1) << x));
+}
+
+int8_t State::getCellValue(uint16_t index)
+{
+    uint8_t x, y;
+    Utils::indexToCords(index, x, y);
+    return getCellValue(x, y);
+}
+
+int8_t State::getCellValue(uint8_t x, uint8_t y)
+{
+    if (empty % 2)
+    {
+        if (m_array[y] & (BLOCK(1) << x))
+        {
+            if (c_array[y] & (BLOCK(1) << x))
+                return 1;
+            return 0;
+        }
+    }
+
+    if (m_array[y] & (BLOCK(1) << x))
+    {
+        if (c_array[y] & (BLOCK(1) << x))
+            return 0;
+        return 1;
+    }
+
+    return -1;
+}
+
 std::vector<uint16_t> State::getPossible()
 {
     std::vector<uint16_t> actions;
     actions.reserve(empty);
+    uint8_t x, y;
     for (uint16_t i = 0; i < BoardSize * BoardSize; i++)
-        if (!(m_array[i / BoardSize] & (BLOCK(1) << i % BoardSize))) actions.push_back(i);
+    {
+        Utils::indexToCords(i, x, y);
+        if (isCellEmpty(x, y)) actions.push_back(i);
+    }
     return actions;
 }
 
@@ -68,22 +114,13 @@ std::string State::toString()
         {
             result += "|";
             
-            if (!(m_array[y] & (BLOCK(1) << x)))
+            int8_t index_value = getCellValue(x ,y);
+            if (index_value == -1)
                 result += "   ";
-            else if (c_array[y] & (BLOCK(1) << x))
-            {
-                if (!(empty % 2))
-                    result += "\033[1;34m o \033[0m";
-                else
-                    result += "\033[1;31m o \033[0m";
-            }
-            else if (!(c_array[y] & (BLOCK(1) << x)))
-            {
-                if (empty % 2)
-                    result += "\033[1;34m o \033[0m";
-                else
-                    result += "\033[1;31m o \033[0m";
-            }
+            else if (index_value == 0)
+                result += "\033[1;34m B \033[0m";
+            else 
+                result += "\033[1;31m W \033[0m";
         }
         result += "|\n   ";
         
@@ -103,8 +140,9 @@ std::string State::toString()
 
 bool State::checkForWin()
 {
-    uint8_t x = last % BoardSize;
-    uint8_t y = last / BoardSize;
+    uint8_t x, y;
+    Utils::indexToCords(last, x, y);
+
 #if BoardSize < 16
     uint64_t m = ((uint64_t)c_array[y] << 48)
         + ((uint64_t)c_array[x + BoardSize] << 32)

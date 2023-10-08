@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "Utilities.h"
 
 // Optimized Gomoku game state interface for MCTS
 
@@ -49,6 +50,12 @@ public:
     bool isTerminal();
     // String representation of state
     std::string toString();
+    // Value of field
+    int8_t getCellValue(uint16_t index);
+    int8_t getCellValue(uint8_t x, uint8_t y);
+
+    bool isCellEmpty(uint16_t index);
+    bool isCellEmpty(uint8_t x, uint8_t y);
 
 private:
     bool checkForWin();

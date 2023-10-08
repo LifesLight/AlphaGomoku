@@ -1,8 +1,4 @@
-#include <torch/script.h>
-#include <torch/torch.h>
-
-#include <iostream>
-#include <memory>
+#include "Includes.h"
 
 int main(int argc, const char* argv[]) {
   
