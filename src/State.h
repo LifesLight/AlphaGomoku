@@ -57,6 +57,8 @@ public:
     bool isCellEmpty(uint16_t index);
     bool isCellEmpty(uint8_t x, uint8_t y);
 
+    bool nextColor();
+
 private:
     bool checkForWin();
 };

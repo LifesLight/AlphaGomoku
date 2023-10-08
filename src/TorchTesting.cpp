@@ -7,6 +7,18 @@ int main(int argc, const char* argv[]) {
     << TORCH_VERSION_MINOR << "."
     << TORCH_VERSION_PATCH << std::endl;
 
+
+  torch::Tensor original = torch::zeros({2, 2}, torch::kBool);
+  torch::Tensor jim = torch::Tensor();
+ 
+  torch::copy(jim, original);
+
+  jim[0][0] = true;
+
+  std::cout << original << std::endl;
+  std::cout << jim << std::endl;
+
+/*
   if (argc != 2) {
     std::cerr << "usage: example-app <path-to-exported-script-module>\n";
     return -1;
@@ -33,4 +45,5 @@ int main(int argc, const char* argv[]) {
   int index = result.argmax(-1).item<int>();
   std::cout << "Prediction: " << index << "(" << index / 15 << "," << index % 15 << ")" << std::endl;
   return 0;
+  */
 }

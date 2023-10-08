@@ -10,6 +10,8 @@ Node::Node(State* state, Node* parent, uint16_t parent_action)
     // Implement model here
     for (uint16_t possible_action : possible_actions)
         untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, 0));
+        
+    std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
 }
 
 Node::Node(State* state)

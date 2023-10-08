@@ -77,6 +77,11 @@ int8_t State::getCellValue(uint8_t x, uint8_t y)
     return -1;
 }
 
+bool State::nextColor()
+{
+    return !(empty % 2);
+}
+
 std::vector<uint16_t> State::getPossible()
 {
     std::vector<uint16_t> actions;
