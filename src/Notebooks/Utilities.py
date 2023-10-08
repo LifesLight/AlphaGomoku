@@ -1,6 +1,9 @@
 class Utilities:
     def sliceGamestate(gamestate, depth):
         HD = gamestate.shape[0] - 1
+        if depth > HD - 2:
+            print("[Utilities] WARNING: Gamestate sliced to deep")
+            
         output = ""
         halfDepth = HD // 2
         if HD == 2:
