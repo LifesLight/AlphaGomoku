@@ -19,3 +19,6 @@ A interface to the history is provided in Utilities.py.
 
 ## Datasets
 The human datasets have following naming convention: `HD(HistoryDepth),[AUG (is augmented)],TS(TrainsplitFraction),Rulesets(All rulesets in the dataset)`.
+
+## Compatibility
+Tested on Pytorch version 2.1.0 under Linux
