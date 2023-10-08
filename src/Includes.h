@@ -1,5 +1,6 @@
 #pragma once
 
+#include "torch/torch.h"
 #include "iostream"
 #include "vector"
 #include "list"
@@ -8,4 +9,3 @@
 #include "string"
 #include "chrono"
 #include "cstring"
-#include "torch/torch.h"
