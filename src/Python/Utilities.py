@@ -1,5 +1,5 @@
 class Utilities:
-    def sliceGamestate(gamestate, depth):
+    def sliceGamestate(gamestate, depth = 0):
         HD = gamestate.shape[0] - 1
         if depth > HD - 2:
             print("[Utilities] WARNING: Gamestate sliced to deep")

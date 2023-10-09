@@ -31,6 +31,12 @@ class GameHandler:
     def __init__(self, Game):
         self.moves = Game.Moves
         self.index = 0
+        if Game.Winner == "0":
+            self.result = 1.0
+        elif Game.Winner == "1":
+            self.result = -1.0
+        else:
+            self.result = 0.0
 
     def onLastMove(self):
         return self.index >= len(self.moves) - 1
@@ -52,6 +58,7 @@ class GameHandler:
             
     def nextMove(self):
         self.index += 1
+        self.result *= -1
         if self.index >= len(self.moves):
             return None
         return (self.moves[self.index], self.index % 2)
@@ -117,6 +124,11 @@ def MoveToGamestateTarget(move):
     target = np.zeros((15, 15), dtype=bool)
     target[move] = True
     target = target.flatten()
+    return target
+
+def OutcomeToGamestateTarget(outcome):
+    target = np.zeros((1), dtype=np.int8)
+    target[0] = outcome
     return target
 
 
@@ -204,10 +216,12 @@ if AUGMENTED:
 
 print("Generating all unique Gamestates...", end=" ")
 gamestateToNextMoves = {}
+gamestateToResults = {}
 for game in datasetGames:
     gameHandler = GameHandler(game)
     
     while not gameHandler.onLastMove():
+        isWinning = gameHandler.result
         nextMove = gameHandler.nextMove()
         nextMoveString = MoveToString(nextMove)
         lastMoves = gameHandler.getMoveHistory()
@@ -216,35 +230,62 @@ for game in datasetGames:
         
         if gamestateBytes in gamestateToNextMoves.keys():
             gamestateToNextMoves[gamestateBytes].append(nextMoveString)
+            gamestateToResults[gamestateBytes].append(isWinning)
         else:
             gamestateToNextMoves[gamestateBytes] = [nextMoveString]
+            gamestateToResults[gamestateBytes] = [isWinning]
+
 print(f'({len(gamestateToNextMoves.items())})')
 
 print("Preparing Gamestates...")
 gamestateToMoveCountDict = {}
 for key, values in gamestateToNextMoves.items():
     gamestateToMoveCountDict[key] = {}
+    
+
     for value in values:
         if value in gamestateToMoveCountDict[key].keys():
             gamestateToMoveCountDict[key][value] += 1
         else:
             gamestateToMoveCountDict[key][value] = 1
+
+
+gamestateToResultCountDict = {} 
+for key, values in gamestateToResults.items():
+    gamestateToResultCountDict[key] = {} 
+    for value in values:
+        if value in gamestateToResultCountDict[key].keys():
+            gamestateToResultCountDict[key][value] += 1
+        else:
+            gamestateToResultCountDict[key][value] = 1
+
 del gamestateToNextMoves
+del gamestateToResults
 
 print("Calculating best move for each Gamestate...")
 gamestateToNextMove = {}
 for key, value in gamestateToMoveCountDict.items():
     mostPlayedMove = max(value, key=lambda k: value[k])
     gamestateToNextMove[key] = mostPlayedMove
+del gamestateToMoveCountDict
+
+print("Calculating most likely outcome for each Gamestate...")
+gamestateToResult = {}
+for key, value in gamestateToResultCountDict.items():
+    mostLikelyOutcome = max(value, key=lambda k: value[k])
+    gamestateToResult[key] = mostLikelyOutcome
+del gamestateToResultCountDict
 
 print("Formating Gamestates for export...")
 finishedDataset = []
 for key, value in gamestateToNextMove.items():
     x = gamestateFromBytes(key)
     nextMove = StringToMove(value)
-    y = MoveToGamestateTarget(nextMove)
-    finishedDataset.append((x, y))
+    yPolicy = MoveToGamestateTarget(nextMove)
+    yValue = OutcomeToGamestateTarget(gamestateToResult[key])
+    finishedDataset.append((x, yPolicy, yValue))
 del gamestateToNextMove
+del gamestateToResult
 
 trainSizePercentile = TRAINSPLIT
 outputPath = PATH
@@ -256,8 +297,10 @@ index = int(trainSizePercentile * len(finishedDataset))
 print(f'Writing {len(finishedDataset)} datapoints to disk (Train:{index}|Test:{len(finishedDataset) - index})...')
 
 np.array([x[0] for x in finishedDataset[:index]], dtype=bool).tofile(f'{outputPath}/XTrain.bin')
-np.array([x[1] for x in finishedDataset[:index]], dtype=bool).tofile(f'{outputPath}/YTrain.bin')
+np.array([x[1] for x in finishedDataset[:index]], dtype=bool).tofile(f'{outputPath}/YTrainPol.bin')
+np.array([x[2] for x in finishedDataset[:index]], dtype=np.uint8).tofile(f'{outputPath}/YTrainVal.bin')
 np.array([x[0] for x in finishedDataset[index:]], dtype=bool).tofile(f'{outputPath}/XTest.bin')
-np.array([x[1] for x in finishedDataset[index:]], dtype=bool).tofile(f'{outputPath}/YTest.bin')
+np.array([x[1] for x in finishedDataset[index:]], dtype=bool).tofile(f'{outputPath}/YTestPol.bin')
+np.array([x[2] for x in finishedDataset[index:]], dtype=bool).tofile(f'{outputPath}/YTestVal.bin')
 
 print(f'Saved Dataset to {outputPath}')
