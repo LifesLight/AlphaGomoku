@@ -298,9 +298,9 @@ print(f'Writing {len(finishedDataset)} datapoints to disk (Train:{index}|Test:{l
 
 np.array([x[0] for x in finishedDataset[:index]], dtype=bool).tofile(f'{outputPath}/XTrain.bin')
 np.array([x[1] for x in finishedDataset[:index]], dtype=bool).tofile(f'{outputPath}/YTrainPol.bin')
-np.array([x[2] for x in finishedDataset[:index]], dtype=np.uint8).tofile(f'{outputPath}/YTrainVal.bin')
+np.array([x[2] for x in finishedDataset[:index]], dtype=np.int8).tofile(f'{outputPath}/YTrainVal.bin')
 np.array([x[0] for x in finishedDataset[index:]], dtype=bool).tofile(f'{outputPath}/XTest.bin')
 np.array([x[1] for x in finishedDataset[index:]], dtype=bool).tofile(f'{outputPath}/YTestPol.bin')
-np.array([x[2] for x in finishedDataset[index:]], dtype=bool).tofile(f'{outputPath}/YTestVal.bin')
+np.array([x[2] for x in finishedDataset[index:]], dtype=np.int8).tofile(f'{outputPath}/YTestVal.bin')
 
 print(f'Saved Dataset to {outputPath}')
