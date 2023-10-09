@@ -1,6 +1,7 @@
 #include "Config.h"
 #include "Node.h"
 #include "State.h"
+#include "Model.h"
 
 class HOST
 {
@@ -68,9 +69,9 @@ public:
         state->makeMove(index);
     }
 
-    static void MCTS_move(State* root_state, std::chrono::milliseconds time, FloatPrecision confidence_bound, bool analytics)
+    static void MCTS_move(State* root_state, std::chrono::milliseconds time, FloatPrecision confidence_bound, bool analytics, Model* neural_network)
     {
-        Node* root = new Node(root_state);
+        Node* root = new Node(root_state, neural_network);
         // Build Tree
         uint64_t i;
         auto start = std::chrono::high_resolution_clock::now();
@@ -85,14 +86,13 @@ public:
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
 
-    static void MCTS_move(State* root_state, uint64_t simulations, FloatPrecision confidence_bound, bool analytics)
+    static void MCTS_move(State* root_state, uint64_t simulations, FloatPrecision confidence_bound, bool analytics, Model* neural_network)
     {
-        Node* root = new Node(root_state);
+        Node* root = new Node(root_state, neural_network);
         // Build Tree
         for (uint64_t i = 0; i < simulations; i++)
         {
             Node* node = root->policy();
-            node->rollout();
         }
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
@@ -191,7 +191,7 @@ static std::string ucb_distribution(Node* root)
             {
                 for (Node* child : root->children)
                     if (child->parent_action == (y * BoardSize + x))
-                        result << std::setw(3) << std::setfill(' ') << int(FloatPrecision(child->qDelta(!root->state->nextColor())) / FloatPrecision(child->visits) * 100);
+                        result << std::setw(3) << std::setfill(' ') << int(FloatPrecision(child->meanEvaluation(!root->state->nextColor())) * 100);
             }
             else if (root->state->c_array[y] & (BLOCK(1) << x))
             {
@@ -261,12 +261,12 @@ private:
     {
         std::ostringstream result;
         result << "Action:      " << int32_t(best->parent_action) % BoardSize << "," << int32_t(best->parent_action) / BoardSize << "\n";
-        result << "Simulations: " << FloatPrecision(int32_t(best->parent->visits) / 1000) / 1000 << "M";
-        result << " (W:" << int(best->parent->results[best->parent->state->nextColor() ? 1 : 0]) << " L:" << int(best->parent->results[best->parent->state->nextColor() ? 0 : 1]) << " D:" << int(best->parent->results[2]) << ")\n";
-        result << "Evaluation:  " << FloatPrecision(FloatPrecision(best->qDelta(!best->parent->state->nextColor())) / FloatPrecision(best->visits));
-        result << " (W:" << int(best->results[best->parent->state->nextColor() ? 1 : 0]) << " L:" << int(best->results[best->parent->state->nextColor() ? 0 : 1]) << " D:" << int(best->results[2]) << ")\n";
+        result << "Simulations: " << FloatPrecision(int32_t(best->parent->visits) / 1000) / 1000 << "M" << "\n";
+        result << "Chosen Mean Evaluation:  " << std::fixed << std::setprecision(3) << FloatPrecision(best->meanEvaluation(!best->parent->state->nextColor()))<< "\n";
+        result << "Chosen Value Evaluation:  " << std::fixed << std::setprecision(3) << FloatPrecision(best->value) << "\n";
+        result << "Chosen Policy Evaluation:  " << std::fixed << std::setprecision(3) << FloatPrecision(best->prior_propability) << "\n";
+        result << "Best Simulations:  " << int(best->visits) << "\n";
         result << "Confidence:  " << FloatPrecision(best->visits * 100) / FloatPrecision(best->parent->visits) << "%\n";
-        result << "Draw:        " << std::fixed << std::setprecision(2) << FloatPrecision(best->results[2] * 100) / FloatPrecision(best->visits) << "%\n";
         result << "    <";
         for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
             result << "-";
@@ -276,9 +276,11 @@ private:
     }
 };
 
-int main()
+int main(int argc, const char* argv[])
 {
     HOST::init();
+
+    Model* neural_network = new Model(argv[1]);
 
     State* state = HOST::create();
 
@@ -286,7 +288,7 @@ int main()
     while (!state->isTerminal())
     {
         if (state->nextColor())
-            HOST::MCTS_move(state, std::chrono::seconds(10), 0.01, true);
+            HOST::MCTS_move(state, 5000, 0.01, true, neural_network);
         else
             HOST::human_move(state);
         std::cout << state->toString();

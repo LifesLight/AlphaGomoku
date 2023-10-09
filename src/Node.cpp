@@ -1,25 +1,40 @@
 #include "Node.h"
 
 
-Node::Node(State* state, Node* parent, uint16_t parent_action)
-    : parent(parent), parent_action(parent_action), state(state), visits(0)
+Node::Node(State* state, Node* parent, uint16_t parent_action, Model* neural_network)
+    : parent(parent), parent_action(parent_action), state(state), visits(0), neural_network(neural_network)
 {
-    memset(results, 0, sizeof(uint32_t) * 3);
     std::vector<uint16_t> possible_actions = state->getPossible();
 
     // Implement model here
+    Gamestate gamestate = Gamestate(this);
+    torch::Tensor model_input = torch::empty({1, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
+    model_input[0] = gamestate.getTensor();
+
+    std::tuple<torch::Tensor, float> model_output;
+    model_output = neural_network->forward(model_input);
+
+    value = std::get<1>(model_output);
+    torch::Tensor policy_output = std::get<0>(model_output)[0];
+
     for (uint16_t possible_action : possible_actions)
-        untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, 0));
-        
-    std::shuffle(std::begin(untried_actions), std::end(untried_actions), rng);
+        untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, policy_output[possible_action].item<float>()));
+
+    std::sort(untried_actions.begin(), untried_actions.end(),
+        [](const auto& a, const auto& b) {
+            return std::get<1>(a) > std::get<1>(b);
+        }
+    );
+
+    backpropagate(value);
 }
 
-Node::Node(State* state)
-    : Node(new State(state), nullptr, 0)
+Node::Node(State* state, Model* neural_network)
+    : Node(new State(state), nullptr, uint16_t(-1), neural_network)
 {   }
 
-Node::Node()
-    : Node(new State())
+Node::Node(Model* neural_network)
+    : Node(new State(), neural_network)
 {   }
 
 Node::~Node()
@@ -30,46 +45,35 @@ Node::~Node()
 
 Node* Node::expand()
 {
-    std::tuple<uint16_t, float> action = untried_actions.back();
-    uint16_t index = std::get<0>(action);
-    float child_value = std::get<1>(action);
-
+    std::tuple<uint16_t, float> next_pair = untried_actions.back();
     untried_actions.pop_back();
+    uint16_t action = std::get<0>(next_pair);
+    float child_value = std::get<1>(next_pair);
+
     State* resulting_state = new State(state);
-    resulting_state->makeMove(index);
-    Node* child = new Node(resulting_state, this, index);
+    resulting_state->makeMove(action);
+    Node* child = new Node(resulting_state, this, action, neural_network);
 
     // Store predicted value of child
-    child->value = child_value;
+    child->prior_propability = child_value;
     children.push_back(child);
     return child;
 }
 
-void Node::rollout()
-{
-    State simulation_state = State(state);
-    std::uniform_int_distribution<std::mt19937::result_type> distribution(0, untried_actions.size());
-    uint16_t index = distribution(rng);
-    while (!simulation_state.isTerminal())
-    {
-        simulation_state.makeMove(std::get<0>(untried_actions[index % untried_actions.size()]));
-        index++;
-    }
-    backpropagate(simulation_state.result);
-}
-
-void Node::backpropagate(uint8_t value)
+void Node::backpropagate(float evaluation)
 {
     visits++;
-    results[value]++;
+    summed_evaluation += evaluation;
     if (parent)
-        parent->backpropagate(value);
+        parent->backpropagate(evaluation);
 }
 
-int32_t Node::qDelta(bool turn)
+float Node::meanEvaluation(bool turn_color)
 {
-    if (turn)   return results[0] - results[1];
-    else        return results[1] - results[0];
+    if (!turn_color)
+        return summed_evaluation / float(visits);
+    else
+        return -(summed_evaluation / float(visits));
 }
 
 Node* Node::bestChild()
@@ -78,13 +82,13 @@ Node* Node::bestChild()
     FloatPrecision best_result = -100.0;
     // Precompute
     FloatPrecision log_visits = 2 * logTable[visits];
-    bool turn = state->empty % 2;
+    bool turn = !state->nextColor();
     FloatPrecision Q_value;
     FloatPrecision result;
     for (Node* child : children)
     {
-        Q_value = FloatPrecision(child->qDelta(turn)) / FloatPrecision(child->visits);
-        result = Q_value + ExplorationBias * std::sqrt(log_visits / FloatPrecision(child->visits));
+        Q_value = FloatPrecision(child->meanEvaluation(turn));
+        result = Q_value + ExplorationBias * std::sqrt(log_visits / FloatPrecision(child->visits)) * child->prior_propability;
         if (result > best_result)
         {
             best_result = result;
@@ -100,11 +104,10 @@ Node* Node::absBestChild()
     FloatPrecision result;
     FloatPrecision best_result = -100.0;
     // Precompute
-    bool turn = state->empty % 2;
+    bool turn = !state->nextColor();
     for (Node* child : children)
     {
-        FloatPrecision Q_value = FloatPrecision(child->qDelta(turn)) / FloatPrecision(child->visits);
-        result = Q_value;
+        result = FloatPrecision(child->meanEvaluation(turn));
         if (result > best_result)
         {
             best_result = result;
@@ -125,12 +128,11 @@ Node* Node::absBestChild(float confidence_bound)
     FloatPrecision result;
     FloatPrecision best_result = -100.0;
     // Precompute
-    bool turn = state->empty % 2;
+    bool turn = !state->nextColor();
     
     for (Node* child : children_copy)
     {
-        FloatPrecision Q_value = FloatPrecision(child->qDelta(turn)) / FloatPrecision(child->visits);
-        result = Q_value;
+        result = FloatPrecision(child->meanEvaluation(turn));
         if (result > best_result)
         {
             best_result = result;

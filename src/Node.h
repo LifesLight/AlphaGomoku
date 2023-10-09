@@ -1,6 +1,8 @@
 #pragma once
 #include "Config.h"
 #include "State.h"
+#include "Model.h"
+#include "Gamestate.h"
 
 class Node
 {
@@ -9,18 +11,21 @@ public:
     uint16_t parent_action;
     State* state;
     uint32_t visits;
-    uint32_t results[3];
+    float summed_evaluation;
     std::list<Node*> children;
     std::vector<std::tuple<uint16_t, float>> untried_actions;
 
     // Network stuff
+    Model* neural_network;
     float value;
     float prior_propability;
 
-    Node();
-    Node(State*);
-    Node(State*, Node*, uint16_t);
-    Node(Node*);
+    
+    Node(State*, Node*, uint16_t, Model*);
+    Node(State*, Model*);
+    Node(Node*, Model*);
+    Node(Model*);
+
     ~Node();
 
     void rollout();
@@ -32,9 +37,9 @@ public:
     Node* absBestChild(float);
 
     Node* policy();
-    int32_t qDelta(bool);
+    float meanEvaluation(bool);
 
 private:
     Node* expand();
-    void backpropagate(uint8_t);
+    void backpropagate(float);
 };

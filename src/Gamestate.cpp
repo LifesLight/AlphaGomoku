@@ -3,7 +3,10 @@
 Gamestate::Gamestate(Node* node)
 {
     // Init main tensor
-    tensor = torch::empty({HistoryDepth + 1, 15, 15}, torch::kFloat32);
+    tensor = torch::zeros({HistoryDepth + 1, 15, 15}, torch::kFloat32);
+
+    // State at node
+    State* current_state = node->state;
 
     // Next color tensor
     torch::Tensor next_color;
@@ -14,14 +17,22 @@ Gamestate::Gamestate(Node* node)
     tensor[0] = next_color;
 
     // Get last actions from source
-    std::deque<uint16_t> move_history(HistoryDepth);
-    Node* current_node = node; 
-    for (uint16_t i = 0; i < HistoryDepth; i++)
+    std::deque<uint16_t> move_history;
+    Node* running_node = node; 
+    for (uint16_t i = 0; i < HistoryDepth - 2; i++)
     {
-        if (current_node == nullptr)
-            break;
-        move_history.push_front(current_node->parent_action);
-        current_node = current_node->parent;
+        if (running_node == nullptr)
+        {
+            //std::cout << "Found: -" << std::endl;
+            // Is max number which will never be reached
+            move_history.push_front(uint16_t(-1));
+        }
+        else
+        {
+            //std::cout << "Found: " << running_node->parent_action << std::endl;
+            move_history.push_front(running_node->parent_action);
+            running_node = running_node->parent;
+        }
     }
 
     // Oldest state
@@ -29,10 +40,10 @@ Gamestate::Gamestate(Node* node)
 
     // The oldest states of each color
     torch::Tensor history_white = torch::zeros({BoardSize, BoardSize}, torch::kFloat32);
-    torch::Tensor histroy_black = torch::zeros({BoardSize, BoardSize}, torch::kFloat32);;
-    if (current_node != nullptr)
+    torch::Tensor histroy_black = torch::zeros({BoardSize, BoardSize}, torch::kFloat32);
+    if (running_node != nullptr)
     {
-        history_state = current_node->state;
+        history_state = running_node->state;
         for (uint8_t x = 0; x < BoardSize; x++)
             for (uint8_t y = 0; y < BoardSize; y++)
             {
@@ -44,45 +55,110 @@ Gamestate::Gamestate(Node* node)
             }
     }
 
+    // Indecies into tensor for color
     uint8_t index_black = 1;
     uint8_t index_white = HistoryDepth / 2 + 1;
 
-    // Write oldest states for each color
-    tensor[index_black] = histroy_black;
-    tensor[index_white] = history_white;
+    tensor[index_black] = histroy_black.clone();
+    tensor[index_white] = history_white.clone();
 
     // Init toggle for what color did what action
-    bool color_toggle = 0;
-    if (history_state != nullptr)
-        color_toggle = history_state->nextColor();
+    bool color_toggle = current_state->nextColor();
 
-    // Increment when history is too shallow
-    for (uint8_t i = 0; i < (HistoryDepth - move_history.size() - 2) / 2; i++)
+    /*
+    std::cout << "Size: " << move_history.size() << std::endl;
+    for (uint16_t history_move : move_history)
     {
-        index_black++;
-        index_white++;
+        std::cout << int(history_move) << std::endl;
     }
+    */
 
-    for (uint8_t i = 0; i < HistoryDepth - 2; i++)
+    // Embed histroy actions
+    for (uint16_t history_move : move_history)
     {
-        // Todo cool index toggle
-
-        torch::Tensor current_board = torch::empty({BoardSize, BoardSize}, torch::kFloat32);
+        // If white did HM
         if (color_toggle)
         {
-            torch::copy(current_board, histroy_black);
-            index_black++;
-
+            index_white++;
+            //std::cout << "White: " << int(index_white) << std::endl;
+            if (history_move != uint16_t(-1))
+            {
+                uint8_t x, y;
+                Utils::indexToCords(history_move, x, y);
+                history_white[x][y] = true;
+                tensor[index_white] = history_white.clone();
+            }
         }
+        // If black did HM
         else
         {
-            torch::copy(current_board, history_white);
-            index_white++;
-
+            index_black++;
+            //std::cout << "Black: " << int(index_black) << std::endl;
+            if (history_move != uint16_t(-1))
+            {
+                uint8_t x, y;
+                Utils::indexToCords(history_move, x, y);
+                histroy_black[x][y] = true;
+                tensor[index_black] = histroy_black.clone();
+            }
         }
-
-
 
         color_toggle = !color_toggle;
     }
+}
+
+torch::Tensor Gamestate::getTensor()
+{
+    return tensor;
+}
+
+std::string Gamestate::sliceToString(uint8_t depth)
+{
+    int HD = HistoryDepth;
+    if (depth > HD - 2) {
+        std::cout << "[Utilities] WARNING: Gamestate sliced too deep" << std::endl;
+    }
+
+    std::string output = "";
+    int halfDepth = HD / 2;
+    torch::Tensor blackStones, whiteStones;
+
+    if (HD == 2) {
+        blackStones = tensor[1];
+        whiteStones = tensor[2];
+    } else {
+        int tempDepth = depth / 2;
+        int whiteIndex = halfDepth * 2 - tempDepth;
+        int blackIndex = halfDepth - tempDepth;
+
+        if (depth % 2 == 1) {
+            if (tensor[0][0][0].item<bool>() == 1) {
+                blackIndex -= 1;
+            } else {
+                whiteIndex -= 1;
+            }
+        }
+
+        blackStones = tensor[blackIndex];
+        whiteStones = tensor[whiteIndex];
+    }
+
+    output += "   --------------------------------------------------------------\n";
+    for (int y = 14; y >= 0; y--) {
+        output += std::to_string(y) + " |";
+        for (int x = 0; x < 15; x++) {
+            if (blackStones[x][y].item<bool>() == 0 && whiteStones[x][y].item<bool>() == 0) {
+                output += "   ";
+            } else if (blackStones[x][y].item<bool>() == 1) {
+                output += " B ";
+            } else if (whiteStones[x][y].item<bool>() == 1) {
+                output += " W ";
+            }
+            output += "|";
+        }
+        output += "\n   --------------------------------------------------------------\n";
+    }
+    output += "     0   1   2   3   4   5   6   7   8   9  10  11  12  13  14\n";
+
+    return output;
 }
