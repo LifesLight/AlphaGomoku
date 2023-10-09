@@ -1,3 +1,5 @@
+import torch.nn as nn
+
 # The model architecture, change with caution due to possible state loading issues
 
 class ResidualLayer(nn.Module):
