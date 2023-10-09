@@ -40,11 +40,11 @@ class PolicyHead(nn.Module):
         self.filters = filters
 
         self.head = nn.Sequential(
-            nn.Conv2d(self.filters, 1, 1),
+            nn.Conv2d(self.filters, 2, 1),
             nn.Flatten(),
-            nn.BatchNorm1d(225),
+            nn.BatchNorm1d(450),
             nn.ReLU(),
-            nn.Linear(225, 225)
+            nn.Linear(450, 225)
         )
 
     def forward(self, x):
