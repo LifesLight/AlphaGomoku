@@ -4,14 +4,14 @@ import os
 
 # -----Generation Parameters------ #
 
-DATASET_SOURCE = '../../Datasets//HumanExamples/RenjunetDatasets/renjunet_v10.xml'
+DATASET_SOURCE = '../../Datasets/HumanExamples/RenjunetDatasets/renjunet_v10.xml'
 HD = 8
 AUGMENTED = False
 # ['all'] for all
 RULESETS_WHITELIST = ['all']
 RULESETS_BLACKLIST = [7]
 TRAINSPLIT = 0.8
-TARGETFOLDER = '..//..//Datasets/HumanExamples/GeneratedDatasets'
+TARGETFOLDER = '../../Datasets/HumanExamples/GeneratedDatasets'
 
 # -------------------------------- #
 
