@@ -1,10 +1,9 @@
 #include "Model.h"
 
+
 Model::Model(torch::jit::script::Module jit_module, torch::Device device)
-    : device(device)
 {
     neural_network = jit_module;
-    neural_network.to(device);
 }
 
 Model::Model(std::string model_path, torch::Device device)
@@ -13,7 +12,6 @@ Model::Model(std::string model_path, torch::Device device)
     try 
     {
         neural_network = torch::jit::load(model_path);
-        neural_network.to(device);
     }
     catch (const c10::Error& e) 
     {
@@ -23,14 +21,18 @@ Model::Model(std::string model_path, torch::Device device)
 
 std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
 {
-    input = input.to(device);
+    //input.to(device);
+    std::cout << "Inside forward" << std::endl;
+    input = torch::zeros({1, 9, 15, 15}, torch::kFloat32);
     auto result = neural_network.forward({input});
+    std::cout << "Forwarded" << std::endl;
     std::vector<at::IValue> output_tuple = result.toTuple()->elements();
 
     // Extract policy and value outputs
     torch::Tensor policy_output = output_tuple[0].toTensor();
     torch::Tensor value_output = output_tuple[1].toTensor();
     policy_output = torch::softmax(policy_output, -1);
+    std::cout << "Softmaxed" << std::endl;
         
     return std::tuple<torch::Tensor, torch::Tensor>(policy_output, value_output);
 }

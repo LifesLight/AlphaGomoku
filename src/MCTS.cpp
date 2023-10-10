@@ -2,12 +2,13 @@
 #include "Node.h"
 #include "State.h"
 #include "Model.h"
-
+#include "Environment.h"
+/*
 class HOST
 {
 public:
 
-    static void init()
+   /* static void init()
     {
         for (uint32_t i = 1; i < MaxSimulations; i++)
             logTable[i] = std::log(i);
@@ -80,7 +81,7 @@ public:
             for (i = 0; i < 1000; i++)
             {
                 Node* node = root->simulationStep();
-                node->rollout();
+                //node->rollout();
             }
         }
         MCTS_master(root, root_state, confidence_bound, analytics);
@@ -275,22 +276,35 @@ private:
         return result.str();
     }
 };
-
+*/
 int main(int argc, const char* argv[])
 {
-    HOST::init();
+    //HOST::init();
 
-    Model* neural_network = new Model(argv[1], torch::kCUDA);
+    Model* neural_network = new Model(argv[1], torch::kCPU);
 
+
+    Environment* env = new Environment(nullptr, neural_network);
+    env->makeMove(1, 0);
+    std::cout << env->toString() << std::endl;
+
+    uint16_t aimove = env->calculateNextMove(10);
+    env->makeMove(aimove);
+    std::cout << env->toString() << std::endl;
+
+    return 1;
+
+/*
     State* state = HOST::create();
 
     std::cout << state->toString();
     while (!state->isTerminal())
     {
         if (state->nextColor())
-            HOST::MCTS_move(state, 5000, 0.01, true, neural_network);
+            HOST::MCTS_move(state, 5000, 0.01, true);
         else
             HOST::human_move(state);
         std::cout << state->toString();
     }
+    */
 }

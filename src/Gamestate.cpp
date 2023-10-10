@@ -97,6 +97,7 @@ Gamestate::Gamestate(Node* node)
 
         color_toggle = !color_toggle;
     }
+    tensor = torch::zeros({HistoryDepth + 1, 15, 15}, torch::kFloat32);
 }
 
 torch::Tensor Gamestate::getTensor()

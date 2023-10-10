@@ -1,4 +1,5 @@
 #pragma once
+#include "Includes.h"
 #include "Config.h"
 #include "State.h"
 #include "Model.h"
@@ -33,17 +34,20 @@ public:
     // Best child within confidence bound
     Node* absBestChild(float);
 
-    Node* simulationStep();
+    void simulationStep();
     float meanEvaluation(bool);
 
     // Config
     static void setNetwork(Model* neural_net);
-    static void setLogTable(float (*log_table)[MaxSimulations]);
+    static void setLogTable(float* log_table);
     static void setHeadNode(Node* head);
+
+    // Constrain children to one Node
+    void constrain(Node* valid);
 
 private:
     static Model* neural_network;
-    static float (*logTable)[MaxSimulations];
+    static float* logTable;
     static Node* head_node;
 
     Node* expand();

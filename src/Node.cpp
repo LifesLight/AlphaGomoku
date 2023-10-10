@@ -1,8 +1,11 @@
 #include "Node.h"
 
+Model* Node::neural_network = nullptr;
+float* Node::logTable = nullptr;
+Node* Node::head_node = nullptr;
 
 Node::Node(State* state, Node* parent, uint16_t parent_action)
-    : parent(parent), parent_action(parent_action), state(state), visits(0)
+    : parent(parent), parent_action(parent_action), state(state), visits(uint16_t(-1))
 {
     std::vector<uint16_t> possible_actions = state->getPossible();
 
@@ -11,22 +14,28 @@ Node::Node(State* state, Node* parent, uint16_t parent_action)
     torch::Tensor model_input = torch::empty({1, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
     model_input[0] = gamestate.getTensor();
 
+    std::cout << "Hi" << std::endl;
+    std::cout << model_input << std::endl;
+
     std::tuple<torch::Tensor, torch::Tensor> model_output;
     model_output = neural_network->forward(model_input);
+
+    std::cout << "He" << std::endl;
+
     torch::Tensor policy_output = std::get<0>(model_output)[0];
     torch::Tensor value_output = std::get<1>(model_output)[0];
     value = value_output.item<float>();
+
+    std::cout << "Ho" << std::endl;
 
     for (uint16_t possible_action : possible_actions)
         untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, policy_output[possible_action].item<float>()));
 
     std::sort(untried_actions.begin(), untried_actions.end(),
-        [](const auto& a, const auto& b) {
+    [](const auto& a, const auto& b) {
             return std::get<1>(a) > std::get<1>(b);
         }
     );
-
-    backpropagate(value);
 }
 
 Node::Node(State* state)
@@ -48,7 +57,7 @@ void Node::setNetwork(Model* neural_net)
     neural_network = neural_net;
 }
 
-void Node::setLogTable(float (*log_table)[MaxSimulations])
+void Node::setLogTable(float* log_table)
 {
     logTable = log_table;
 }
@@ -56,6 +65,19 @@ void Node::setLogTable(float (*log_table)[MaxSimulations])
 void Node::setHeadNode(Node* head)
 {
     head_node = head;
+}
+
+void Node::constrain(Node* valid)
+{
+    bool successfull = false;
+    for (Node* child : children)
+        if (child != valid)
+            delete child;
+        else
+            successfull = true;
+    children.clear();
+    if (successfull)  
+        children.push_back(valid);
 }
 
 Node* Node::expand()
@@ -98,7 +120,7 @@ Node* Node::bestChild()
     Node* best_child = nullptr;
     float best_result = -100.0;
     // Precompute
-    float log_visits = 2 * (*logTable)[visits];
+    float log_visits = 2 * logTable[visits];
     bool turn = !state->nextColor();
     float Q_value;
     float result;
@@ -160,14 +182,20 @@ Node* Node::absBestChild(float confidence_bound)
     return best_child;
 }
 
-Node* Node::simulationStep()
+void Node::simulationStep()
 {
     Node* current = this;
     while (!current->state->isTerminal())
         if (current->untried_actions.size() > 0)
-            return current->expand();
+        {
+            current = current->expand();
+            current->backpropagate(current->value);
+            return;
+        }
+            
         else
             current = current->bestChild();
-    return current;
+    current->backpropagate(current->value);
+    return;
 }
 
