@@ -23,11 +23,13 @@ Gamestate::Gamestate(Node* node)
     {
         if (running_node == nullptr)
         {
+            //std::cout << "Found: -" << std::endl;
             // Is max number which will never be reached
             move_history.push_front(uint16_t(-1));
         }
         else
         {
+            //std::cout << "Found: " << running_node->parent_action << std::endl;
             move_history.push_front(running_node->parent_action);
             running_node = running_node->parent;
         }
@@ -57,6 +59,9 @@ Gamestate::Gamestate(Node* node)
     uint8_t index_black = 1;
     uint8_t index_white = HistoryDepth / 2 + 1;
 
+    tensor[index_black] = histroy_black.clone();
+    tensor[index_white] = history_white.clone();
+
     // Init toggle for what color did what action
     bool color_toggle = current_state->nextColor();
 
@@ -70,13 +75,10 @@ Gamestate::Gamestate(Node* node)
             //std::cout << "White: " << int(index_white) << std::endl;
             if (history_move != uint16_t(-1))
             {
-                // Write version from before increment
-                tensor[index_white] = history_white.clone();
-                
                 uint8_t x, y;
                 Utils::indexToCords(history_move, x, y);
                 history_white[x][y] = true;
-                
+                tensor[index_white] = history_white.clone();
             }
         }
         // If black did HM
@@ -86,12 +88,10 @@ Gamestate::Gamestate(Node* node)
             //std::cout << "Black: " << int(index_black) << std::endl;
             if (history_move != uint16_t(-1))
             {
-                // Write version from before increment
-                tensor[index_black] = histroy_black.clone();
-                
                 uint8_t x, y;
                 Utils::indexToCords(history_move, x, y);
                 histroy_black[x][y] = true;
+                tensor[index_black] = histroy_black.clone();
             }
         }
 
