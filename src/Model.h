@@ -5,11 +5,12 @@
 class Model
 {
 public:
-    Model(torch::jit::script::Module  jit_module);
-    Model(std::string model_path);
+    Model(torch::jit::script::Module  jit_module, torch::Device device);
+    Model(std::string model_path, torch::Device device);
 
-    std::tuple<torch::Tensor, float> forward(torch::Tensor input);
+    std::tuple<torch::Tensor, torch::Tensor> forward(torch::Tensor input);
 
 private:
     torch::jit::script::Module neural_network;
+    torch::Device device;
 };

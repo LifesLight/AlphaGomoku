@@ -11,11 +11,11 @@ Node::Node(State* state, Node* parent, uint16_t parent_action, Model* neural_net
     torch::Tensor model_input = torch::empty({1, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
     model_input[0] = gamestate.getTensor();
 
-    std::tuple<torch::Tensor, float> model_output;
+    std::tuple<torch::Tensor, torch::Tensor> model_output;
     model_output = neural_network->forward(model_input);
-
-    value = std::get<1>(model_output);
     torch::Tensor policy_output = std::get<0>(model_output)[0];
+    torch::Tensor value_output = std::get<1>(model_output)[0];
+    value = value_output.item<float>();
 
     for (uint16_t possible_action : possible_actions)
         untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, policy_output[possible_action].item<float>()));

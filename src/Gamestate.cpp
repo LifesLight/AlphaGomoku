@@ -135,10 +135,15 @@ std::string Gamestate::sliceToString(uint8_t depth)
         whiteStones = tensor[whiteIndex];
     }
 
-    output += "   --------------------------------------------------------------\n";
+    output += "\n   ";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        output += " ---";
+    output += "\n";
+
     for (int y = 14; y >= 0; y--) {
-        output += std::to_string(y) + " |";
+        output += std::to_string(y) + std::string(3 - std::to_string(y).length(), ' ');
         for (int x = 0; x < 15; x++) {
+            output += "|";
             if (blackStones[x][y].item<bool>() == 0 && whiteStones[x][y].item<bool>() == 0) {
                 output += "   ";
             } else if (blackStones[x][y].item<bool>() == 1) {
@@ -146,11 +151,18 @@ std::string Gamestate::sliceToString(uint8_t depth)
             } else if (whiteStones[x][y].item<bool>() == 1) {
                 output += " W ";
             }
-            output += "|";
         }
-        output += "\n   --------------------------------------------------------------\n";
+
+        output += "|\n   ";
+        for (uint16_t i = 0; i < BoardSize; i++)
+            output += " ---";
+        output += "\n";
     }
-    output += "     0   1   2   3   4   5   6   7   8   9  10  11  12  13  14\n";
+
+    output += "    ";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        output += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
+    output += "\n";
 
     return output;
 }
