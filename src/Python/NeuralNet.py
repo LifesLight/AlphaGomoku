@@ -6,7 +6,7 @@ class ResidualLayer(nn.Module):
     def __init__(self, filters, kernal_size=3):
         super().__init__()
 
-        self.conv2d_sequential = nn.Sequential(                
+        self.conv2d_sequential = nn.Sequential(
             nn.Conv2d(filters, filters, kernal_size, padding=(kernal_size - 1) // 2),
             nn.BatchNorm2d(filters),
             nn.ReLU(),

@@ -1,8 +1,8 @@
 #include "Node.h"
 
 
-Node::Node(State* state, Node* parent, uint16_t parent_action, Model* neural_network)
-    : parent(parent), parent_action(parent_action), state(state), visits(0), neural_network(neural_network)
+Node::Node(State* state, Node* parent, uint16_t parent_action)
+    : parent(parent), parent_action(parent_action), state(state), visits(0)
 {
     std::vector<uint16_t> possible_actions = state->getPossible();
 
@@ -29,18 +29,33 @@ Node::Node(State* state, Node* parent, uint16_t parent_action, Model* neural_net
     backpropagate(value);
 }
 
-Node::Node(State* state, Model* neural_network)
-    : Node(new State(state), nullptr, uint16_t(-1), neural_network)
+Node::Node(State* state)
+    : Node(new State(state), nullptr, uint16_t(-1))
 {   }
 
-Node::Node(Model* neural_network)
-    : Node(new State(), neural_network)
+Node::Node()
+    : Node(new State())
 {   }
 
 Node::~Node()
 {
     delete state;
     for (Node* child : children) delete child;
+}
+
+void Node::setNetwork(Model* neural_net)
+{
+    neural_network = neural_net;
+}
+
+void Node::setLogTable(float (*log_table)[MaxSimulations])
+{
+    logTable = log_table;
+}
+
+void Node::setHeadNode(Node* head)
+{
+    head_node = head;
 }
 
 Node* Node::expand()
@@ -52,7 +67,7 @@ Node* Node::expand()
 
     State* resulting_state = new State(state);
     resulting_state->makeMove(action);
-    Node* child = new Node(resulting_state, this, action, neural_network);
+    Node* child = new Node(resulting_state, this, action);
 
     // Store predicted value of child
     child->prior_propability = child_value;
@@ -64,7 +79,9 @@ void Node::backpropagate(float evaluation)
 {
     visits++;
     summed_evaluation += evaluation;
-    if (parent)
+
+    // Dont propagate above current head node
+    if (parent && this != head_node)
         parent->backpropagate(evaluation);
 }
 
@@ -79,16 +96,16 @@ float Node::meanEvaluation(bool turn_color)
 Node* Node::bestChild()
 {
     Node* best_child = nullptr;
-    FloatPrecision best_result = -100.0;
+    float best_result = -100.0;
     // Precompute
-    FloatPrecision log_visits = 2 * logTable[visits];
+    float log_visits = 2 * (*logTable)[visits];
     bool turn = !state->nextColor();
-    FloatPrecision Q_value;
-    FloatPrecision result;
+    float Q_value;
+    float result;
     for (Node* child : children)
     {
-        Q_value = FloatPrecision(child->meanEvaluation(turn));
-        result = Q_value + ExplorationBias * std::sqrt(log_visits / FloatPrecision(child->visits)) * child->prior_propability;
+        Q_value = float(child->meanEvaluation(turn));
+        result = Q_value + ExplorationBias * std::sqrt(log_visits / float(child->visits)) * child->prior_propability;
         if (result > best_result)
         {
             best_result = result;
@@ -101,13 +118,13 @@ Node* Node::bestChild()
 Node* Node::absBestChild()
 {
     Node* best_child = nullptr;
-    FloatPrecision result;
-    FloatPrecision best_result = -100.0;
+    float result;
+    float best_result = -100.0;
     // Precompute
     bool turn = !state->nextColor();
     for (Node* child : children)
     {
-        result = FloatPrecision(child->meanEvaluation(turn));
+        result = float(child->meanEvaluation(turn));
         if (result > best_result)
         {
             best_result = result;
@@ -121,18 +138,18 @@ Node* Node::absBestChild(float confidence_bound)
 {
     std::list<Node*> children_copy;
     for (Node* child : children)
-       if (FloatPrecision(child->visits) / FloatPrecision(visits) > confidence_bound)
+       if (float(child->visits) / float(visits) > confidence_bound)
             children_copy.push_back(child);
  
     Node* best_child = nullptr;
-    FloatPrecision result;
-    FloatPrecision best_result = -100.0;
+    float result;
+    float best_result = -100.0;
     // Precompute
     bool turn = !state->nextColor();
     
     for (Node* child : children_copy)
     {
-        result = FloatPrecision(child->meanEvaluation(turn));
+        result = float(child->meanEvaluation(turn));
         if (result > best_result)
         {
             best_result = result;
@@ -143,7 +160,7 @@ Node* Node::absBestChild(float confidence_bound)
     return best_child;
 }
 
-Node* Node::policy()
+Node* Node::simulationStep()
 {
     Node* current = this;
     while (!current->state->isTerminal())

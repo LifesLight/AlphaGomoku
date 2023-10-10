@@ -16,30 +16,36 @@ public:
     std::vector<std::tuple<uint16_t, float>> untried_actions;
 
     // Network stuff
-    Model* neural_network;
     float value;
     float prior_propability;
 
-    
-    Node(State*, Node*, uint16_t, Model*);
-    Node(State*, Model*);
-    Node(Node*, Model*);
-    Node(Model*);
-
+    // Constructors
+    Node(State*, Node*, uint16_t);
+    Node(State*);
+    Node(Node*);
+    Node();
     ~Node();
 
-    void rollout();
+
     Node* bestChild();
-    
     // Best child without exploration biases
     Node* absBestChild();
     // Best child within confidence bound
     Node* absBestChild(float);
 
-    Node* policy();
+    Node* simulationStep();
     float meanEvaluation(bool);
 
+    // Config
+    static void setNetwork(Model* neural_net);
+    static void setLogTable(float (*log_table)[MaxSimulations]);
+    static void setHeadNode(Node* head);
+
 private:
+    static Model* neural_network;
+    static float (*logTable)[MaxSimulations];
+    static Node* head_node;
+
     Node* expand();
     void backpropagate(float);
 };

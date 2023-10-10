@@ -69,9 +69,9 @@ public:
         state->makeMove(index);
     }
 
-    static void MCTS_move(State* root_state, std::chrono::milliseconds time, FloatPrecision confidence_bound, bool analytics, Model* neural_network)
+    static void MCTS_move(State* root_state, std::chrono::milliseconds time, float confidence_bound, bool analytics)
     {
-        Node* root = new Node(root_state, neural_network);
+        Node* root = new Node(root_state);
         // Build Tree
         uint64_t i;
         auto start = std::chrono::high_resolution_clock::now();
@@ -79,20 +79,20 @@ public:
         {
             for (i = 0; i < 1000; i++)
             {
-                Node* node = root->policy();
+                Node* node = root->simulationStep();
                 node->rollout();
             }
         }
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
 
-    static void MCTS_move(State* root_state, uint64_t simulations, FloatPrecision confidence_bound, bool analytics, Model* neural_network)
+    static void MCTS_move(State* root_state, uint64_t simulations, float confidence_bound, bool analytics)
     {
-        Node* root = new Node(root_state, neural_network);
+        Node* root = new Node(root_state);
         // Build Tree
         for (uint64_t i = 0; i < simulations; i++)
         {
-            Node* node = root->policy();
+            Node* node = root->simulationStep();
         }
         MCTS_master(root, root_state, confidence_bound, analytics);
     }
@@ -110,7 +110,7 @@ static std::string sim_distribution(Node* root)
         result << "-";
     result << ">\n   ";
 
-    FloatPrecision max_visits = 0;
+    float max_visits = 0;
     for (Node* child : root->children)
         if (child->visits > max_visits)
             max_visits = child->visits;
@@ -128,7 +128,7 @@ static std::string sim_distribution(Node* root)
             {
                 for (Node* child : root->children)
                     if (child->parent_action == (y * BoardSize + x))
-                        result << std::setw(3) << std::setfill(' ') << int(FloatPrecision(child->visits) / max_visits * 100);
+                        result << std::setw(3) << std::setfill(' ') << int(float(child->visits) / max_visits * 100);
             }
             else if (root->state->c_array[y] & (BLOCK(1) << x))
             {
@@ -191,7 +191,7 @@ static std::string ucb_distribution(Node* root)
             {
                 for (Node* child : root->children)
                     if (child->parent_action == (y * BoardSize + x))
-                        result << std::setw(3) << std::setfill(' ') << int(FloatPrecision(child->meanEvaluation(!root->state->nextColor())) * 100);
+                        result << std::setw(3) << std::setfill(' ') << int(float(child->meanEvaluation(!root->state->nextColor())) * 100);
             }
             else if (root->state->c_array[y] & (BLOCK(1) << x))
             {
@@ -227,7 +227,7 @@ static std::string ucb_distribution(Node* root)
 
 
 private:
-    static void MCTS_master(Node* root, State* root_state, FloatPrecision confidence_bound, bool analytics)
+    static void MCTS_master(Node* root, State* root_state, float confidence_bound, bool analytics)
     {
         // Select best child
         Node* best = nullptr;
@@ -261,12 +261,12 @@ private:
     {
         std::ostringstream result;
         result << "Action:      " << int32_t(best->parent_action) % BoardSize << "," << int32_t(best->parent_action) / BoardSize << "\n";
-        result << "Simulations: " << FloatPrecision(int32_t(best->parent->visits) / 1000) / 1000 << "M" << "\n";
-        result << "Chosen Mean Evaluation:  " << std::fixed << std::setprecision(3) << FloatPrecision(best->meanEvaluation(!best->parent->state->nextColor()))<< "\n";
-        result << "Chosen Value Evaluation:  " << std::fixed << std::setprecision(3) << FloatPrecision(best->value) << "\n";
-        result << "Chosen Policy Evaluation:  " << std::fixed << std::setprecision(3) << FloatPrecision(best->prior_propability) << "\n";
+        result << "Simulations: " << float(int32_t(best->parent->visits) / 1000) / 1000 << "M" << "\n";
+        result << "Chosen Mean Evaluation:  " << std::fixed << std::setprecision(3) << float(best->meanEvaluation(!best->parent->state->nextColor()))<< "\n";
+        result << "Chosen Value Evaluation:  " << std::fixed << std::setprecision(3) << float(best->value) << "\n";
+        result << "Chosen Policy Evaluation:  " << std::fixed << std::setprecision(3) << float(best->prior_propability) << "\n";
         result << "Best Simulations:  " << int(best->visits) << "\n";
-        result << "Confidence:  " << FloatPrecision(best->visits * 100) / FloatPrecision(best->parent->visits) << "%\n";
+        result << "Confidence:  " << float(best->visits * 100) / float(best->parent->visits) << "%\n";
         result << "    <";
         for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
             result << "-";
@@ -280,7 +280,7 @@ int main(int argc, const char* argv[])
 {
     HOST::init();
 
-    Model* neural_network = new Model(argv[1]);
+    Model* neural_network = new Model(argv[1], torch::kCUDA);
 
     State* state = HOST::create();
 
