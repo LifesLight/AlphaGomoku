@@ -3,7 +3,7 @@
 Environment::Environment(Model* NNB, Model* NNW)
     : current_state(new State())
 {
-    std::cout << "Initializing Environment with following trees:" << std::endl;
+    std::cout << "[Env]: Initializing with following trees:" << std::endl;
 
     // Set model before root initialization
     if (NNB != nullptr)
@@ -165,9 +165,16 @@ uint16_t Environment::calculateNextMove(uint32_t simulations)
 
     if (!is_ai[color])
     {
-        std::cout << "[Environment]: Error, tried to calculateNextMove for non AI player" << std::endl;
+        std::cout << "[Env]: Error, tried to calculateNextMove for non AI player" << std::endl;
         return -1;
     }
+
+    std::cout << "[Env]: Calculating best move for ";
+    
+    if (color)
+        std::cout << "White" << std::endl;
+    else
+        std::cout << "Black" << std::endl;
 
     Node* working_node = current_node[color];
     Node::setHeadNode(working_node);
