@@ -7,7 +7,13 @@
 
 int main(int argc, const char* argv[])
 {
-    Model* neural_network = new Model(argv[1], torch::kCUDA, "Testmodel");
+    if (argc == 1)
+    {
+        std::cout << "[FATAL]: Missing model path" << std::endl;
+        return 0;
+    }
+
+    Model* neural_network = new Model(argv[1], torch::kMPS, "Testmodel");
 
     Environment* env = new Environment(neural_network, neural_network);
 
@@ -17,4 +23,6 @@ int main(int argc, const char* argv[])
         env->makeMove(computedMove);
         std::cout << env->toString() << std::endl;
     }
+    
+    return 1;
 }

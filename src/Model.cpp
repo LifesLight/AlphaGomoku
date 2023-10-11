@@ -22,7 +22,7 @@ Model::Model(std::string model_path, torch::Device device, std::string name)
     }
     catch (const c10::Error& e)
     {
-        std::cerr << "Error loading the model\n" << e.what() << std::endl;
+        std::cout << "[Model][E]: Could not load model from:" << std::endl << model_path << std::endl;
     }
 }
 
