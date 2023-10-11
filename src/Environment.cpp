@@ -95,6 +95,8 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
                 delete child;
             working_node->children.clear();
 
+            // Set correct network before creating new node
+            Node::setNetwork(neural_network(color));
             chosen_child = new Node(new State(current_state), working_node, move_index);
             working_node->children.push_back(chosen_child); 
         }
@@ -140,6 +142,8 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
                 delete child;
             opposing_node->children.clear();
 
+            // Set correct network before creating new node
+            Node::setNetwork(neural_network(!color));
             target_node = new Node(new State(current_state), opposing_node, move_index);
             opposing_node->children.push_back(target_node); 
         }
