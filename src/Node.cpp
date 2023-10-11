@@ -14,19 +14,12 @@ Node::Node(State* state, Node* parent, uint16_t parent_action)
     torch::Tensor model_input = torch::empty({1, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
     model_input[0] = gamestate.getTensor();
 
-    std::cout << "Hi" << std::endl;
-    std::cout << model_input << std::endl;
-
     std::tuple<torch::Tensor, torch::Tensor> model_output;
     model_output = neural_network->forward(model_input);
-
-    std::cout << "He" << std::endl;
 
     torch::Tensor policy_output = std::get<0>(model_output)[0];
     torch::Tensor value_output = std::get<1>(model_output)[0];
     value = value_output.item<float>();
-
-    std::cout << "Ho" << std::endl;
 
     for (uint16_t possible_action : possible_actions)
         untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, policy_output[possible_action].item<float>()));
@@ -39,7 +32,7 @@ Node::Node(State* state, Node* parent, uint16_t parent_action)
 }
 
 Node::Node(State* state)
-    : Node(new State(state), nullptr, uint16_t(-1))
+    : Node(state, nullptr, uint16_t(-1))
 {   }
 
 Node::Node()
@@ -109,7 +102,7 @@ void Node::backpropagate(float evaluation)
 
 float Node::meanEvaluation(bool turn_color)
 {
-    if (!turn_color)
+    if (turn_color)
         return summed_evaluation / float(visits);
     else
         return -(summed_evaluation / float(visits));

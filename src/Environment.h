@@ -4,6 +4,7 @@
 #include "Node.h"
 #include "Model.h"
 #include "State.h"
+#include "Gamestate.h"
 
 class Environment
 {
@@ -19,9 +20,12 @@ public:
 
     // Display state
     std::string toString();
+    std::string toString(uint8_t depth);
 
     bool isFinished();
 
+    // Default current
+    Node* getNode();
     Node* getNode(bool color);
 
 private:

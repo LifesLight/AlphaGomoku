@@ -10,6 +10,7 @@ Gamestate::Gamestate(Node* node)
 
     // Next color tensor
     torch::Tensor next_color;
+
     if (node->state->nextColor())
         next_color = torch::ones({BoardSize, BoardSize}, torch::kFloat32);
     else
@@ -23,13 +24,11 @@ Gamestate::Gamestate(Node* node)
     {
         if (running_node == nullptr)
         {
-            //std::cout << "Found: -" << std::endl;
             // Is max number which will never be reached
             move_history.push_front(uint16_t(-1));
         }
         else
         {
-            //std::cout << "Found: " << running_node->parent_action << std::endl;
             move_history.push_front(running_node->parent_action);
             running_node = running_node->parent;
         }
@@ -72,7 +71,6 @@ Gamestate::Gamestate(Node* node)
         if (color_toggle)
         {
             index_white++;
-            //std::cout << "White: " << int(index_white) << std::endl;
             if (history_move != uint16_t(-1))
             {
                 uint8_t x, y;
@@ -85,7 +83,6 @@ Gamestate::Gamestate(Node* node)
         else
         {
             index_black++;
-            //std::cout << "Black: " << int(index_black) << std::endl;
             if (history_move != uint16_t(-1))
             {
                 uint8_t x, y;
@@ -97,7 +94,6 @@ Gamestate::Gamestate(Node* node)
 
         color_toggle = !color_toggle;
     }
-    tensor = torch::zeros({HistoryDepth + 1, 15, 15}, torch::kFloat32);
 }
 
 torch::Tensor Gamestate::getTensor()
@@ -109,7 +105,7 @@ std::string Gamestate::sliceToString(uint8_t depth)
 {
     int HD = HistoryDepth;
     if (depth > HD - 2) {
-        std::cout << "[Utilities] WARNING: Gamestate sliced too deep" << std::endl;
+        std::cout << "[Gamestate][W]: Gamestate sliced too deep" << std::endl;
     }
 
     std::string output = "";
@@ -148,9 +144,9 @@ std::string Gamestate::sliceToString(uint8_t depth)
             if (blackStones[x][y].item<bool>() == 0 && whiteStones[x][y].item<bool>() == 0) {
                 output += "   ";
             } else if (blackStones[x][y].item<bool>() == 1) {
-                output += " B ";
+                output += "\033[1;34m B \033[0m";
             } else if (whiteStones[x][y].item<bool>() == 1) {
-                output += " W ";
+                output += "\033[1;31m W \033[0m";
             }
         }
 

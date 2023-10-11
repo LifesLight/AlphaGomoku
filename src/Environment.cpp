@@ -3,21 +3,29 @@
 Environment::Environment(Model* NNB, Model* NNW)
     : current_state(new State())
 {
+    std::cout << "Initializing Environment with following trees:" << std::endl;
+
     // Set model before root initialization
     if (NNB != nullptr)
     {
         Node::setNetwork(NNB);
+        neural_network[0] = NNB;
         root_node[0] = new Node();
         current_node[0] = root_node[0];
         is_ai[0] = true;
+
+        std::cout << "  Black: (NW:" << NNB->getName() << ")" << std::endl;
     }
 
     if (NNW != nullptr)
     {
         Node::setNetwork(NNW);
+        neural_network[1] = NNW;
         root_node[1] = new Node();
         current_node[1] = root_node[1];
         is_ai[1] = true;
+
+        std::cout << "  White: (NW:" << NNW->getName() << ")" << std::endl;
     }
 
     // Init Log Table
@@ -46,11 +54,26 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
     if (!(0 <= y && y < BoardSize)) return false;
     if (!current_state->isCellEmpty(x, y)) return false;
 
+    std::cout << "[Env]: Making move [" << int(x) << "," << int(y) << "] for ";
+    if (color)
+        std::cout << "White" << std::endl;
+    else
+        std::cout << "Black" << std::endl;
+
     uint16_t move_index;
     Utils::cordsToIndex(move_index, x ,y);
+    
+    // Update current state
+    current_state->makeMove(move_index);
 
     if (is_ai[color])
     {
+        std::cout << "[Env]: Updating ";
+        if (color)
+            std::cout << "White Tree" << std::endl;
+        else
+            std::cout << "Black Tree" << std::endl;
+
         Node* working_node = current_node[color];
         Node* chosen_child = nullptr;
 
@@ -62,30 +85,38 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
                 break;
             }
 
+        // Node does not have desired child
         if (chosen_child == nullptr)
         {
-            std::cout << "[Environment]: Error, Action for AI does not have matching child" << std::endl;
-            return false;
+            std::cout << " ^[W]: Manually expanding Tree (expected existing child)" << std::endl;
+
+            // Clear parent children
+            for (Node* child : working_node->children)
+                delete child;
+            working_node->children.clear();
+
+            chosen_child = new Node(new State(current_state), working_node, move_index);
+            working_node->children.push_back(chosen_child); 
         }
-
-        // Constrain Parent
-        working_node->constrain(chosen_child);
-
-        // Update current state
-        current_state = new State(chosen_child->state);
-
+        else
+        {
+            // Constrain Parent
+            working_node->constrain(chosen_child);
+        }
 
         // Set the updated node to current
         current_node[color] = chosen_child;
-    }
-    else
-    {
-        current_state->makeMove(move_index);
     }
 
     // Check if opposite tree exists if yes update
     if (is_ai[!color])
     {
+        std::cout << "[Env]: Updating ";
+        if (!color)
+            std::cout << "White Tree" << std::endl;
+        else
+            std::cout << "Black Tree" << std::endl;
+            
         Node* opposing_node = current_node[!color];
         Node* target_node = nullptr;
         
@@ -102,6 +133,8 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
         // If opposing tree doesnt have node
         if (target_node == nullptr)
         {
+            std::cout << " ^[I]: Manually expanding Tree" << std::endl;
+
             // Clear parent children
             for (Node* child : opposing_node->children)
                 delete child;
@@ -151,6 +184,14 @@ std::string Environment::toString()
     return current_state->toString();
 }
 
+std::string Environment::toString(uint8_t depth)
+{
+    bool color = current_state->nextColor();
+    Gamestate current_gamestate(current_node[color]);
+    return current_gamestate.sliceToString(depth);
+}
+
+
 bool Environment::makeMove(uint16_t index)
 {
     uint8_t x, y;
@@ -162,6 +203,13 @@ bool Environment::isFinished()
 {
     return current_state->isTerminal();
 }
+
+Node* Environment::getNode()
+{
+    bool color = current_state->nextColor();
+    return current_node[color];
+}
+
 
 Node* Environment::getNode(bool color)
 {

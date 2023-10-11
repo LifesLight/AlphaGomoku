@@ -9,4 +9,5 @@ find_package(Torch REQUIRED)
 set(CMAKE_CXX_STANDARD 23)
 add_executable(AlphaGomoku src/MCTS.cpp src/State.cpp src/Node.cpp src/Gamestate.cpp src/Model.cpp src/Environment.cpp)
 target_link_libraries(AlphaGomoku "${TORCH_LIBRARIES}")
-set(CMAKE_CXX_FLAGS "-O0")
+
+set(CMAKE_CXX_FLAGS "-O3")
