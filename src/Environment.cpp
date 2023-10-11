@@ -92,7 +92,7 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
         // Find opposing node that matches this
         for (Node* child : opposing_node->children)
         {
-            if (child->parent_action = move_index)
+            if (child->parent_action == move_index)
             {
                 target_node = child;
                 break;
