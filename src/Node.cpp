@@ -90,23 +90,22 @@ Node* Node::expand()
     return child;
 }
 
-void Node::backpropagate(float evaluation)
+void Node::backpropagate(float evaluation, uint16_t depth)
 {
     visits++;
-    summed_evaluation += evaluation;
+    if (depth % 2)
+        summed_evaluation -= evaluation;
+    else
+        summed_evaluation += evaluation;
 
     // Dont propagate above current head node
     if (parent && this != head_node)
-        parent->backpropagate(evaluation);
+        parent->backpropagate(evaluation, depth + 1);
 }
 
 float Node::meanEvaluation()
 {
-    // Invert ???
-    if (state->nextColor())
-        return summed_evaluation / float(visits);
-    else
-        return -(summed_evaluation / float(visits));
+    return summed_evaluation / float(visits);
 }
 
 Node* Node::bestChild()
@@ -179,13 +178,15 @@ void Node::simulationStep()
         if (current->untried_actions.size() > 0)
         {
             current = current->expand();
-            current->backpropagate(current->value);
+            current->backpropagate(current->value, 0);
             return;
         }
-            
         else
+        {
             current = current->bestChild();
-    current->backpropagate(current->value);
+        }
+            
+    current->backpropagate(current->value, 0);
     return;
 }
 

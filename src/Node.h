@@ -50,5 +50,5 @@ private:
     static Node* head_node;
 
     Node* expand();
-    void backpropagate(float);
+    void backpropagate(float value, uint16_t depth);
 };
