@@ -36,7 +36,7 @@ Environment::Environment(Model* NNB, Model* NNW)
         current_node[0] = root_node[0];
         is_ai[0] = true;
 
-        std::cout << "  Black: (NW:" << NNB->getName() << ")" << std::endl;
+        std::cout << "  Black: (NN:" << NNB->getName() << ")" << std::endl;
     }
 
     if (NNW != nullptr)
@@ -47,7 +47,7 @@ Environment::Environment(Model* NNB, Model* NNW)
         current_node[1] = root_node[1];
         is_ai[1] = true;
 
-        std::cout << "  White: (NW:" << NNW->getName() << ")" << std::endl;
+        std::cout << "  White: (NN:" << NNW->getName() << ")" << std::endl;
     }
 }
 
@@ -250,7 +250,108 @@ bool Environment::getNextColor()
     return current_state->nextColor();
 }
 
-std::string Environment::nodeAnalytics(Node* node)
+
+// Analytic stuff
+std::string distribution_helper(Node* child, int x, int y, int max_visits, float max_policy, const std::string& type)
+{
+    std::ostringstream result;
+    result << std::setw(3) << std::setfill(' ');
+    if      (type == "VISITS")
+        result << int(float(child->visits) / max_visits * 999);
+    else if (type == "VALUE")
+        result << int(float(child->value) * 100);
+    else if (type == "MEAN")
+        result << int(float(-child->meanEvaluation()) * 100);
+    else if (type == "POLICY")
+        result << int(float(child->prior_propability) / max_policy * 999);
+    else
+        result << "ERR";
+    return result.str();
+}
+
+std::string distribution(Node* root, const std::string& type)
+{
+    std::ostringstream result;
+
+    result << "\n      <";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << "-";
+    result << " " << type;
+    result << " DISTRIBUTION ";
+
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << "-";
+    result << ">\n   ";
+
+    float max_visits = 0;
+    float max_policy = 0;
+    for (Node* child : root->children)
+        if (child->visits > max_visits)
+            max_visits = child->visits;
+    for (Node* child : root->children)
+        if (child->prior_propability > max_policy)
+            max_policy = child->prior_propability;
+
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << " ---";
+    result << "\n";
+    for (int y = BoardSize - 1; y >= 0; y--)
+    {
+        result << std::setw(3) << std::setfill(' ') << y << " ";
+        for (int x = 0; x < BoardSize; x++)
+        {
+            result << "|";
+            if (!(root->state->m_array[y] & (BLOCK(1) << x)))
+            {
+                bool matched = false;
+                for (Node* child : root->children)
+                {
+                    uint16_t index;
+                    Utils::cordsToIndex(index, x, y);
+                    if (child->parent_action == index)
+                    {
+                        matched = true;
+                        result << distribution_helper(child, x, y, max_visits, max_policy, type); 
+                        break;
+                    }        
+                }
+                if (!matched)
+                    result << "   ";
+            }
+            else if (root->state->c_array[y] & (BLOCK(1) << x))
+            {
+                if (root->state->nextColor())
+                    result << "\033[1;34m o \033[0m";
+                else
+                    result << "\033[1;31m o \033[0m";
+            }
+            else if (!(root->state->c_array[y] & (BLOCK(1) << x)))
+            {
+                if (!root->state->nextColor())
+                    result << "\033[1;34m o \033[0m";
+                else
+                    result << "\033[1;31m o \033[0m";
+            }
+        }
+        result << "|\n    ";
+        for (uint16_t i = 0; i < BoardSize; i++)
+            result << " ---";
+        result << "\n";
+    }
+
+    result << "  ";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << " " << std::setw(3) << std::setfill(' ') << i;
+
+    result << "\n    <";
+    for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
+        result << "-";
+    result << ">\n";
+
+    return result.str();
+}
+
+std::string Environment::nodeAnalytics(Node* node, const std::initializer_list<std::string> distributions)
 {
     bool color = node->state->nextColor();
 
@@ -298,6 +399,11 @@ std::string Environment::nodeAnalytics(Node* node)
     }
 
     output << std::endl;
+
+    for (const std::string& value : distributions) 
+    {
+        std::cout << distribution(node->parent, value);
+    }
 
     return output.str();
 }

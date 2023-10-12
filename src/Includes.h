@@ -11,4 +11,6 @@
 #include <chrono>
 #include <cstring>
 #include <tuple>
+#include <functional>
 #include <sstream>
+#include <initializer_list>

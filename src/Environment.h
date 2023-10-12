@@ -31,7 +31,7 @@ public:
     Node* getNode();
     Node* getNode(bool color);
 
-    static std::string nodeAnalytics(Node* node);  
+    static std::string nodeAnalytics(Node* node, const std::initializer_list<std::string> args);  
 
 private:
     State* current_state = nullptr;
