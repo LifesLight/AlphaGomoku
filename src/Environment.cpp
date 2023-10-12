@@ -1,9 +1,31 @@
 #include "Environment.h"
 
+float* Environment::log_table = new float[MaxSimulations];
+bool Environment::is_initialized = false;
+
+void Environment::initialize()
+{
+    // Init Log Table
+    std::memset(log_table, 0, MaxSimulations * sizeof(float));
+    for (uint32_t i = 1; i < MaxSimulations; i++)
+        log_table[i] = std::log(i);
+
+    // Set log table
+    Node::setLogTable(log_table);
+
+    is_initialized = true; 
+    std::cout << "[Env]: Initialized" << std::endl;
+}
+
 Environment::Environment(Model* NNB, Model* NNW)
     :   current_state(new State())
 {
-    std::cout << "[Env]: Initializing with following trees:" << std::endl;
+    if (!is_initialized)
+    {
+        std::cout << "[Env][E]: Tried to construct a environment before calling initialize" << std::endl;
+    }
+
+    std::cout << "[Env]: Creating new environment with following trees:" << std::endl;
 
     // Set model before root initialization
     if (NNB != nullptr)
@@ -27,12 +49,6 @@ Environment::Environment(Model* NNB, Model* NNW)
 
         std::cout << "  White: (NW:" << NNW->getName() << ")" << std::endl;
     }
-
-    // Init Log Table
-    std::memset(log_table, 0, MaxSimulations * sizeof(float));
-    for (uint32_t i = 1; i < MaxSimulations; i++)
-        log_table[i] = std::log(i);
-    Node::setLogTable(log_table);
 }
 
 Environment::~Environment()

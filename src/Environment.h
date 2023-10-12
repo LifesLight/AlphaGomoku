@@ -9,6 +9,8 @@
 class Environment
 {
 public:
+    static void initialize();
+
     Environment(Model* NNB, Model* NNW);
     ~Environment();
     // Returns success
@@ -29,7 +31,7 @@ public:
     Node* getNode();
     Node* getNode(bool color);
 
-    static std::string nodeAnalytics(Node* node);
+    static std::string nodeAnalytics(Node* node);  
 
 private:
     State* current_state = nullptr;
@@ -37,5 +39,9 @@ private:
     Node* current_node[2] = {nullptr, nullptr};
     Model* neural_network[2] = {nullptr, nullptr};
     bool is_ai[2] = {false, false};
-    float* log_table = new float[MaxSimulations];
+
+    // Static
+    static float* log_table;
+    static bool is_initialized;
+
 };

@@ -205,8 +205,9 @@ int main(int argc, const char* argv[])
     if (argc == 3)
         simulations = std::stoi(argv[2]);
 
-    Model* neural_network = new Model(argv[1], torch::kMPS, "Testmodel");
+    Environment::initialize();
 
+    Model* neural_network = new Model(argv[1], torch::kMPS, "Testmodel");
     Environment* env = new Environment(nullptr, neural_network);
 
     int turn = 0;
