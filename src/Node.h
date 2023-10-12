@@ -19,6 +19,8 @@ public:
     // Network stuff
     float value;
     float prior_propability;
+    void runNetwork(Model* neural_net);
+    bool is_initialized;
 
     // Constructors
     Node(State* state, Node* parent, uint16_t parent_action);
@@ -33,22 +35,18 @@ public:
     // Best child within confidence bound
     Node* absBestChild(float);
 
-    void simulationStep();
+    void simulationStep(Model* neural_network, Node* head_node);
     float meanEvaluation();
 
     // Config
-    static void setNetwork(Model* neural_net);
     static void setLogTable(float* log_table);
-    static void setHeadNode(Node* head);
 
     // Constrain children to one Node
     void constrain(Node* valid);
 
 private:
-    static Model* neural_network;
     static float* logTable;
-    static Node* head_node;
 
-    Node* expand();
-    void backpropagate(float value, uint16_t depth);
+    Node* expand(Model* neural_network);
+    void backpropagate(float value, Node* head_node);
 };

@@ -8,9 +8,9 @@ Environment::Environment(Model* NNB, Model* NNW)
     // Set model before root initialization
     if (NNB != nullptr)
     {
-        Node::setNetwork(NNB);
         neural_network[0] = NNB;
         root_node[0] = new Node();
+        root_node[0]->runNetwork(NNB);
         current_node[0] = root_node[0];
         is_ai[0] = true;
 
@@ -19,9 +19,9 @@ Environment::Environment(Model* NNB, Model* NNW)
 
     if (NNW != nullptr)
     {
-        Node::setNetwork(NNW);
         neural_network[1] = NNW;
         root_node[1] = new Node();
+        root_node[1]->runNetwork(NNW);
         current_node[1] = root_node[1];
         is_ai[1] = true;
 
@@ -95,15 +95,15 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
                 delete child;
             working_node->children.clear();
 
-            // Set correct network before creating new node
-            Node::setNetwork(neural_network[color]);
+            // Create new node
             chosen_child = new Node(new State(current_state), working_node, move_index);
+            chosen_child->runNetwork(neural_network[color]);
             working_node->children.push_back(chosen_child); 
         }
         else
         {
             // Constrain Parent
-            working_node->constrain(chosen_child);
+            //working_node->constrain(chosen_child);
         }
 
         // Set the updated node to current
@@ -142,14 +142,14 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
                 delete child;
             opposing_node->children.clear();
 
-            // Set correct network before creating new node
-            Node::setNetwork(neural_network[!color]);
+            // Create new node
             target_node = new Node(new State(current_state), opposing_node, move_index);
+            target_node->runNetwork(neural_network[!color]);
             opposing_node->children.push_back(target_node); 
         }
         else
         {
-            opposing_node->constrain(target_node);
+            //opposing_node->constrain(target_node);
         }
 
         // Set the updated node to current
@@ -177,12 +177,11 @@ uint16_t Environment::calculateNextMove(uint32_t simulations)
         std::cout << "Black" << std::endl;
 
     Node* working_node = current_node[color];
-    Node::setHeadNode(working_node);
-    Node::setNetwork(neural_network[color]);
+    Model* neural_net = neural_network[color];
 
     for (int i = 0; i < simulations; i++)
     {
-        working_node->simulationStep();
+        working_node->simulationStep(neural_net, working_node);
     }
 
     // Get best child
@@ -201,9 +200,6 @@ std::string Environment::toString(uint8_t depth)
     Gamestate current_gamestate(current_node[color]);
     return current_gamestate.sliceToString(depth);
 }
-
-
-
 
 bool Environment::makeMove(uint16_t index)
 {
@@ -271,6 +267,20 @@ std::string Environment::nodeAnalytics(Node* node)
     
     for (uint16_t i = 0; i < window_width; i++)
         output << "#";
+    output << std::endl;
+
+    // Print move history
+    Node* running_node = node;
+    output << "Move history: ";
+
+    while (running_node->parent)
+    {
+        uint8_t x, y;
+        Utils::indexToCords(running_node->parent_action, x, y);
+        output << "[" << int(x) << "," << int(y) << "];";
+        running_node = running_node->parent;
+    }
+
     output << std::endl;
 
     return output.str();
