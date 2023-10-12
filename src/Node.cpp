@@ -5,7 +5,7 @@ float* Node::logTable = nullptr;
 Node* Node::head_node = nullptr;
 
 Node::Node(State* state, Node* parent, uint16_t parent_action)
-    : parent(parent), parent_action(parent_action), state(state), visits(uint16_t(-1))
+    : parent(parent), parent_action(parent_action), state(state), visits(0)
 {
     std::vector<uint16_t> possible_actions = state->getPossible();
 
@@ -26,7 +26,7 @@ Node::Node(State* state, Node* parent, uint16_t parent_action)
 
     std::sort(untried_actions.begin(), untried_actions.end(),
     [](const auto& a, const auto& b) {
-            return std::get<1>(a) > std::get<1>(b);
+            return std::get<1>(a) < std::get<1>(b);
         }
     );
 }
@@ -100,9 +100,10 @@ void Node::backpropagate(float evaluation)
         parent->backpropagate(evaluation);
 }
 
-float Node::meanEvaluation(bool turn_color)
+float Node::meanEvaluation()
 {
-    if (turn_color)
+    // Invert ???
+    if (state->nextColor())
         return summed_evaluation / float(visits);
     else
         return -(summed_evaluation / float(visits));
@@ -112,14 +113,13 @@ Node* Node::bestChild()
 {
     Node* best_child = nullptr;
     float best_result = -100.0;
-    // Precompute
     float log_visits = 2 * logTable[visits];
-    bool turn = !state->nextColor();
     float Q_value;
     float result;
+
     for (Node* child : children)
     {
-        Q_value = float(child->meanEvaluation(turn));
+        Q_value = float(child->meanEvaluation());
         result = Q_value + ExplorationBias * std::sqrt(log_visits / float(child->visits)) * child->prior_propability;
         if (result > best_result)
         {
@@ -135,11 +135,10 @@ Node* Node::absBestChild()
     Node* best_child = nullptr;
     float result;
     float best_result = -100.0;
-    // Precompute
-    bool turn = !state->nextColor();
+
     for (Node* child : children)
     {
-        result = float(child->meanEvaluation(turn));
+        result = float(child->meanEvaluation());
         if (result > best_result)
         {
             best_result = result;
@@ -159,12 +158,10 @@ Node* Node::absBestChild(float confidence_bound)
     Node* best_child = nullptr;
     float result;
     float best_result = -100.0;
-    // Precompute
-    bool turn = !state->nextColor();
     
     for (Node* child : children_copy)
     {
-        result = float(child->meanEvaluation(turn));
+        result = float(child->meanEvaluation());
         if (result > best_result)
         {
             best_result = result;

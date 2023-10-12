@@ -1,7 +1,7 @@
 #include "Environment.h"
 
 Environment::Environment(Model* NNB, Model* NNW)
-    : current_state(new State())
+    :   current_state(new State())
 {
     std::cout << "[Env]: Initializing with following trees:" << std::endl;
 
@@ -203,6 +203,8 @@ std::string Environment::toString(uint8_t depth)
 }
 
 
+
+
 bool Environment::makeMove(uint16_t index)
 {
     uint8_t x, y;
@@ -218,11 +220,58 @@ bool Environment::isFinished()
 Node* Environment::getNode()
 {
     bool color = current_state->nextColor();
-    return current_node[color];
+    return getNode(color);
 }
 
 
 Node* Environment::getNode(bool color)
 {
-    return current_node[color];
+    if (is_ai[color])
+        return current_node[color];
+
+    std::cout << "[Env][W]: Tried to get node of non existent tree" << std::endl;
+    return nullptr;
+}
+
+bool Environment::getNextColor()
+{
+    return current_state->nextColor();
+}
+
+std::string Environment::nodeAnalytics(Node* node)
+{
+    bool color = node->state->nextColor();
+
+    std::ostringstream output;
+    output << std::endl;
+
+    // Static window
+    uint16_t window_width = 40;
+    for (uint16_t i = 0; i < window_width; i++)
+        output << "#";
+    // Stat header
+    output << std::endl << "#";
+    for (uint16_t i = 0; i < ((window_width - 11) / 2); i++)
+        output << " ";
+    output << "STATISTICS";
+    for (uint16_t i = 0; i < ((window_width - 11) / 2); i++)
+        output << " ";
+    output << "#" << std::endl;
+    // Total sims
+    output << "# Visits" << std::setw(window_width - 8) << std::setfill(' ') << "#" << std::endl; 
+    if (node->parent)
+        output << "# Parent:" << std::setw(window_width - 11) << std::setfill(' ') << int(node->parent->visits) << " #" << std::endl;
+    output << "# Current:" << std::setw(window_width - 12) << std::setfill(' ') << int(node->visits) << " #" << std::endl;
+    // Evaluations
+    output << "# Evaluations" << std::setw(window_width - 13) << std::setfill(' ') << "#" << std::endl; 
+    if (node->parent)
+        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->prior_propability << " #" << std::endl;
+    output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->value << " #" << std::endl;
+    output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->meanEvaluation() << " #" << std::endl;
+    
+    for (uint16_t i = 0; i < window_width; i++)
+        output << "#";
+    output << std::endl;
+
+    return output.str();
 }

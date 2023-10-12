@@ -23,16 +23,19 @@ public:
     std::string toString(uint8_t depth);
 
     bool isFinished();
+    bool getNextColor();
 
     // Default current
     Node* getNode();
     Node* getNode(bool color);
 
+    static std::string nodeAnalytics(Node* node);
+
 private:
-    State* current_state;
-    Node* root_node[2];
-    Node* current_node[2];
-    Model* neural_network[2];
+    State* current_state = nullptr;
+    Node* root_node[2] = {nullptr, nullptr};
+    Node* current_node[2] = {nullptr, nullptr};
+    Model* neural_network[2] = {nullptr, nullptr};
     bool is_ai[2] = {false, false};
     float* log_table = new float[MaxSimulations];
 };

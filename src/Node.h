@@ -21,9 +21,8 @@ public:
     float prior_propability;
 
     // Constructors
-    Node(State*, Node*, uint16_t);
-    Node(State*);
-    Node(Node*);
+    Node(State* state, Node* parent, uint16_t parent_action);
+    Node(State* state);
     Node();
     ~Node();
 
@@ -35,7 +34,7 @@ public:
     Node* absBestChild(float);
 
     void simulationStep();
-    float meanEvaluation(bool);
+    float meanEvaluation();
 
     // Config
     static void setNetwork(Model* neural_net);

@@ -18,5 +18,5 @@ public:
     static void cordsToIndex(uint16_t& index, T x, T y)
     {
         index = y * BoardSize + x;
-    }   
+    }
 };
