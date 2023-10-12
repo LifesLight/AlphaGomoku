@@ -108,7 +108,7 @@ void Node::backpropagate(float evaluation, Node* head_node)
 
 float Node::meanEvaluation()
 {
-    if (!state->nextColor())
+    if (state->nextColor())
         return summed_evaluation / float(visits);
     else
         return -(summed_evaluation / float(visits));  
@@ -119,13 +119,17 @@ Node* Node::bestChild()
     Node* best_child = nullptr;
     float best_result = -100.0;
     float log_visits = 2 * logTable[visits];
-    float Q_value;
-    float result;
+    float result, value, exploration, policy;
 
     for (Node* child : children)
     {
-        Q_value = float(child->meanEvaluation());
-        result = (Q_value + ExplorationBias * std::sqrt(log_visits / float(child->visits))) * (child->prior_propability * 0.5 + 0.05) ;
+        value = float(child->meanEvaluation());
+        exploration = ExplorationBias * std::sqrt(log_visits / float(child->visits));
+        policy = PolicyBias * child->prior_propability;
+
+        result = value + exploration + policy;
+        //std::cout << "V:" << value << std::endl << "E:" << exploration << std::endl << "P:" << policy << std::endl << std::endl;
+
         if (result > best_result)
         {
             best_result = result;
@@ -138,12 +142,12 @@ Node* Node::bestChild()
 Node* Node::absBestChild()
 {
     Node* best_child = nullptr;
-    float result;
-    float best_result = -100.0;
+    uint32_t result;
+    uint32_t best_result = 0;
 
     for (Node* child : children)
     {
-        result = float(child->meanEvaluation());
+        result = child->visits;
         if (result > best_result)
         {
             best_result = result;
@@ -161,12 +165,12 @@ Node* Node::absBestChild(float confidence_bound)
             children_copy.push_back(child);
  
     Node* best_child = nullptr;
-    float result;
-    float best_result = -100.0;
+    uint32_t result;
+    uint32_t best_result = 0;
     
     for (Node* child : children_copy)
     {
-        result = float(child->meanEvaluation());
+        result = child->visits;
         if (result > best_result)
         {
             best_result = result;

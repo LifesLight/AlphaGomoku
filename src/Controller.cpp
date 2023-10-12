@@ -5,14 +5,14 @@
 #include "Environment.h"
 
 
-std::string ucb_distribution(Node* root)
+std::string mean_distribution(Node* root)
 {
     std::ostringstream result;
 
     result << "\n    <";
     for (uint16_t i = 0; i < BoardSize; i++)
         result << "-";
-    result << "     UCB DISTRIBUTION     ";
+    result << "     MEAN DISTRIBUTION     ";
 
     for (uint16_t i = 0; i < BoardSize; i++)
         result << "-";
@@ -32,7 +32,7 @@ std::string ucb_distribution(Node* root)
             {
                 for (Node* child : root->children)
                     if (child->parent_action == (y * BoardSize + x))
-                        result << std::setw(3) << std::setfill(' ') << int(float(child->meanEvaluation()) * 100);
+                        result << std::setw(3) << std::setfill(' ') << int(float(-child->meanEvaluation()) * 100);
             }
             else if (root->state->c_array[y] & (BLOCK(1) << x))
             {
@@ -58,6 +58,72 @@ std::string ucb_distribution(Node* root)
     result << "  ";
     for (uint16_t i = 0; i < BoardSize; i++)
         result << " " << std::setw(3) << std::setfill(' ') << i;;
+    result << "\n    <";
+    for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
+        result << "-";
+    result << ">\n";
+
+    return result.str();
+}
+
+std::string pol_distribution(Node* root)
+{
+    std::ostringstream result;
+
+    result << "\n    <";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << "-";
+    result << " POLICY DISTRIBUTION ";
+
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << "-";
+    result << ">\n   ";
+
+    float max_visits = 0;
+    for (Node* child : root->children)
+        if (child->visits > max_visits)
+            max_visits = child->visits;
+
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << " ---";
+    result << "\n";
+    for (int16_t y = BoardSize - 1; y >= 0; y--)
+    {
+        result << std::setw(3) << std::setfill(' ') << y;
+        for (uint16_t x = 0; x < BoardSize; x++)
+        {
+            result << "|";
+            if (!(root->state->m_array[y] & (BLOCK(1) << x)))
+            {
+                for (Node* child : root->children)
+                    if (child->parent_action == (y * BoardSize + x))
+                        result << std::setw(3) << std::setfill(' ') << int(child->prior_propability * 1000);
+            }
+            else if (root->state->c_array[y] & (BLOCK(1) << x))
+            {
+                if (root->state->nextColor())
+                    result << "\033[1;34m o \033[0m";
+                else
+                    result << "\033[1;31m o \033[0m";
+            }
+            else if (!(root->state->c_array[y] & (BLOCK(1) << x)))
+            {
+                if (!root->state->nextColor())
+                    result << "\033[1;34m o \033[0m";
+                else
+                    result << "\033[1;31m o \033[0m";
+            }
+        }
+        result << "|\n   ";
+        for (uint16_t i = 0; i < BoardSize; i++)
+            result << " ---";
+        result << "\n";
+    }
+
+    result << "  ";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << " " << std::setw(3) << std::setfill(' ') << i;
+
     result << "\n    <";
     for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
         result << "-";
@@ -93,7 +159,7 @@ std::string val_distribution(Node* root)
             {
                 for (Node* child : root->children)
                     if (child->parent_action == (y * BoardSize + x))
-                        result << std::setw(3) << std::setfill(' ') << int(float(-(child->value)) * 100);
+                        result << std::setw(3) << std::setfill(' ') << int(float(child->value) * 100);
             }
             else if (root->state->c_array[y] & (BLOCK(1) << x))
             {
@@ -220,8 +286,9 @@ int main(int argc, const char* argv[])
             env->makeMove(computedMove);
             Node* cn = env->getNode(!env->getNextColor());
             std::cout << sim_distribution(cn->parent) << std::endl;
-            std::cout << ucb_distribution(cn->parent) << std::endl;
+            std::cout << mean_distribution(cn->parent) << std::endl;
             std::cout << val_distribution(cn->parent) << std::endl;
+            std::cout << pol_distribution(cn->parent) << std::endl;
             std::cout << Environment::nodeAnalytics(cn) << std::endl;
         }
         else
