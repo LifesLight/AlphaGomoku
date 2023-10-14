@@ -211,7 +211,7 @@ std::string distribution_helper(Node* child, int x, int y, int max_visits, float
     return result.str();
 }
 
-std::string distribution(Node* root, const std::string& type)
+std::string distribution(Node* parent, const std::string& type)
 {
     std::ostringstream result;
 
@@ -227,10 +227,10 @@ std::string distribution(Node* root, const std::string& type)
 
     float max_visits = 0;
     float max_policy = 0;
-    for (Node* child : root->children)
+    for (Node* child : parent->children)
         if (child->visits > max_visits)
             max_visits = child->visits;
-    for (Node* child : root->children)
+    for (Node* child : parent->children)
         if (child->prior_propability > max_policy)
             max_policy = child->prior_propability;
 
@@ -243,10 +243,10 @@ std::string distribution(Node* root, const std::string& type)
         for (int x = 0; x < BoardSize; x++)
         {
             result << "|";
-            if (!(root->state->m_array[y] & (BLOCK(1) << x)))
+            if (!(parent->state->m_array[y] & (BLOCK(1) << x)))
             {
                 bool matched = false;
-                for (Node* child : root->children)
+                for (Node* child : parent->children)
                 {
                     uint16_t index;
                     Utils::cordsToIndex(index, x, y);
@@ -260,16 +260,16 @@ std::string distribution(Node* root, const std::string& type)
                 if (!matched)
                     result << "   ";
             }
-            else if (root->state->c_array[y] & (BLOCK(1) << x))
+            else if (parent->state->c_array[y] & (BLOCK(1) << x))
             {
-                if (root->state->nextColor())
+                if (parent->state->nextColor())
                     result << "\033[1;34m o \033[0m";
                 else
                     result << "\033[1;31m o \033[0m";
             }
-            else if (!(root->state->c_array[y] & (BLOCK(1) << x)))
+            else if (!(parent->state->c_array[y] & (BLOCK(1) << x)))
             {
-                if (!root->state->nextColor())
+                if (!parent->state->nextColor())
                     result << "\033[1;34m o \033[0m";
                 else
                     result << "\033[1;31m o \033[0m";
@@ -295,6 +295,9 @@ std::string distribution(Node* root, const std::string& type)
 
 std::string Node::analytics(Node* node, const std::initializer_list<std::string> distributions)
 {
+    if (node->children.size() != 1)
+        std::cout << "[Node][W]: Analytics is missing chilren, did you free memory before calling?" << std::endl;
+        
     bool color = node->state->nextColor();
 
     std::ostringstream output;

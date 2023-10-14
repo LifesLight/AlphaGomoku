@@ -20,13 +20,13 @@ int main(int argc, const char* argv[])
     Environment::initialize();
 
     Model* neural_network = new Model(argv[1], torch::kMPS, "Testmodel");
-    Environment* env = new Environment(neural_network, neural_network);
+    Environment* env = new Environment(neural_network, nullptr);
 
-    int turn = 0;
+    int turn = 1;
 
     while (!env->isFinished())
     {
-        if (true)
+        if (turn % 2)
         {
             uint16_t computedMove = env->calculateNextMove(simulations);
             bool success = env->makeMove(computedMove);
@@ -57,6 +57,8 @@ int main(int argc, const char* argv[])
         }
         std::cout << env->toString() << std::endl;
         turn++;
+
+        //env->freeMemory();
     }
     
     Environment::deinitialize();
