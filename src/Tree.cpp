@@ -58,7 +58,7 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         // Create new node
         State* updated_state = new State(current_state);
         updated_state->makeMove(move_index);
-        chosen_child = new Node(new State(updated_state), current_node, move_index);
+        chosen_child = new Node(updated_state, current_node, move_index);
         chosen_child->runNetwork(neural_net);
         current_node->children.push_back(chosen_child);
     }
