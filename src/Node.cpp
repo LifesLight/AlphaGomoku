@@ -194,7 +194,7 @@ void Node::simulationStep(Model* neural_network)
 
 
 // Analytic stuff
-std::string distribution_helper(Node* child, int x, int y, int max_visits, float max_policy, const std::string& type)
+std::string distribution_helper(Node* child, int max_visits, float max_policy, const std::string& type)
 {
     std::ostringstream result;
     result << std::setw(3) << std::setfill(' ');
@@ -253,7 +253,7 @@ std::string distribution(Node* parent, const std::string& type)
                     if (child->parent_action == index)
                     {
                         matched = true;
-                        result << distribution_helper(child, x, y, max_visits, max_policy, type); 
+                        result << distribution_helper(child, max_visits, max_policy, type); 
                         break;
                     }        
                 }
