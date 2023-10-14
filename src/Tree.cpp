@@ -97,7 +97,12 @@ Node* Tree::getParentNode()
 void Tree::clean()
 {
     for (Node* garbage : deletion_queue)
+    {
+        // Remove node from parent children list
+        garbage->parent->children.remove(garbage);
         delete garbage;
+    }
+        
     deletion_queue.clear();
 }
 

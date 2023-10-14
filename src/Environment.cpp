@@ -68,7 +68,7 @@ bool Environment::makeMove(uint16_t index)
 
 bool Environment::makeMove(uint8_t x, uint8_t y)
 {
-    // Update all valid trees
+    // Update all existing trees
     for (int i = 0; i < 2; i ++)
         if (trees[i] != nullptr)
         {
