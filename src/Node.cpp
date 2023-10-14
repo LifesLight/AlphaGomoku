@@ -243,7 +243,7 @@ std::string distribution(Node* parent, const std::string& type)
         for (int x = 0; x < BoardSize; x++)
         {
             result << "|";
-            if (!(parent->state->m_array[y] & (BLOCK(1) << x)))
+            if (parent->state->isCellEmpty(x, y))
             {
                 bool matched = false;
                 for (Node* child : parent->children)
@@ -260,19 +260,12 @@ std::string distribution(Node* parent, const std::string& type)
                 if (!matched)
                     result << "   ";
             }
-            else if (parent->state->c_array[y] & (BLOCK(1) << x))
+            else
             {
-                if (parent->state->nextColor())
-                    result << "\033[1;34m o \033[0m";
+                if (parent->state->getCellValue(x, y))
+                    result << "\033[1;31m W \033[0m";
                 else
-                    result << "\033[1;31m o \033[0m";
-            }
-            else if (!(parent->state->c_array[y] & (BLOCK(1) << x)))
-            {
-                if (!parent->state->nextColor())
-                    result << "\033[1;34m o \033[0m";
-                else
-                    result << "\033[1;31m o \033[0m";
+                    result << "\033[1;34m B \033[0m";
             }
         }
         result << "|\n    ";
