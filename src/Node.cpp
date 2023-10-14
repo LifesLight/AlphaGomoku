@@ -19,7 +19,6 @@ Node::Node()
 Node::~Node()
 {
     delete state;
-    for (Node* child : children) delete child;
 }
 
 void Node::runNetwork(Model* neural_network)
@@ -57,19 +56,6 @@ void Node::runNetwork(Model* neural_network)
 void Node::setLogTable(float* log_table)
 {
     logTable = log_table;
-}
-
-void Node::constrain(Node* valid)
-{
-    bool successfull = false;
-    for (Node* child : children)
-        if (child != valid)
-            delete child;
-        else
-            successfull = true;
-    children.clear();
-    if (successfull)  
-        children.push_back(valid);
 }
 
 Node* Node::expand(Model* neural_network)
@@ -181,7 +167,7 @@ Node* Node::absBestChild(float confidence_bound)
     return best_child;
 }
 
-void Node::simulationStep(Model* neural_network, Node* head_node)
+void Node::simulationStep(Model* neural_network)
 {
     Node* current = this;
     while (!current->state->isTerminal())
@@ -189,7 +175,8 @@ void Node::simulationStep(Model* neural_network, Node* head_node)
         if (current->untried_actions.size() > 0)
         {
             current = current->expand(neural_network);
-            current->backpropagate(current->value, head_node);
+            // this is head node
+            current->backpropagate(current->value, this);
             return;
         }
         else
@@ -198,6 +185,167 @@ void Node::simulationStep(Model* neural_network, Node* head_node)
         }
     }
 
-    current->backpropagate(current->value, head_node);
+    // this is head node
+    current->backpropagate(current->value, this);
     return;
+}
+
+
+
+
+// Analytic stuff
+std::string distribution_helper(Node* child, int x, int y, int max_visits, float max_policy, const std::string& type)
+{
+    std::ostringstream result;
+    result << std::setw(3) << std::setfill(' ');
+    if      (type == "VISITS")
+        result << int(float(child->visits) / max_visits * 999);
+    else if (type == "VALUE")
+        result << int(float(child->value) * 100);
+    else if (type == "MEAN")
+        result << int(float(-child->meanEvaluation()) * 100);
+    else if (type == "POLICY")
+        result << int(float(child->prior_propability) / max_policy * 999);
+    else
+        result << "ERR";
+    return result.str();
+}
+
+std::string distribution(Node* root, const std::string& type)
+{
+    std::ostringstream result;
+
+    result << "\n      <";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << "-";
+    result << " " << type;
+    result << " DISTRIBUTION ";
+
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << "-";
+    result << ">\n   ";
+
+    float max_visits = 0;
+    float max_policy = 0;
+    for (Node* child : root->children)
+        if (child->visits > max_visits)
+            max_visits = child->visits;
+    for (Node* child : root->children)
+        if (child->prior_propability > max_policy)
+            max_policy = child->prior_propability;
+
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << " ---";
+    result << "\n";
+    for (int y = BoardSize - 1; y >= 0; y--)
+    {
+        result << std::setw(3) << std::setfill(' ') << y << " ";
+        for (int x = 0; x < BoardSize; x++)
+        {
+            result << "|";
+            if (!(root->state->m_array[y] & (BLOCK(1) << x)))
+            {
+                bool matched = false;
+                for (Node* child : root->children)
+                {
+                    uint16_t index;
+                    Utils::cordsToIndex(index, x, y);
+                    if (child->parent_action == index)
+                    {
+                        matched = true;
+                        result << distribution_helper(child, x, y, max_visits, max_policy, type); 
+                        break;
+                    }        
+                }
+                if (!matched)
+                    result << "   ";
+            }
+            else if (root->state->c_array[y] & (BLOCK(1) << x))
+            {
+                if (root->state->nextColor())
+                    result << "\033[1;34m o \033[0m";
+                else
+                    result << "\033[1;31m o \033[0m";
+            }
+            else if (!(root->state->c_array[y] & (BLOCK(1) << x)))
+            {
+                if (!root->state->nextColor())
+                    result << "\033[1;34m o \033[0m";
+                else
+                    result << "\033[1;31m o \033[0m";
+            }
+        }
+        result << "|\n    ";
+        for (uint16_t i = 0; i < BoardSize; i++)
+            result << " ---";
+        result << "\n";
+    }
+
+    result << "   ";
+    for (uint16_t i = 0; i < BoardSize; i++)
+        result << " " << std::setw(3) << std::setfill(' ') << i;
+
+    result << "\n    <";
+    for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
+        result << "-";
+    result << ">\n";
+
+    return result.str();
+}
+
+std::string Node::analytics(Node* node, const std::initializer_list<std::string> distributions)
+{
+    bool color = node->state->nextColor();
+
+    std::ostringstream output;
+    output << std::endl;
+
+    // Static window
+    uint16_t window_width = 40;
+    for (uint16_t i = 0; i < window_width; i++)
+        output << "#";
+    // Stat header
+    output << std::endl << "#";
+    for (uint16_t i = 0; i < ((window_width - 11) / 2); i++)
+        output << " ";
+    output << "STATISTICS";
+    for (uint16_t i = 0; i < ((window_width - 11) / 2); i++)
+        output << " ";
+    output << "#" << std::endl;
+    // Total sims
+    output << "# Visits" << std::setw(window_width - 8) << std::setfill(' ') << "#" << std::endl; 
+    if (node->parent)
+        output << "# Parent:" << std::setw(window_width - 11) << std::setfill(' ') << int(node->parent->visits) << " #" << std::endl;
+    output << "# Current:" << std::setw(window_width - 12) << std::setfill(' ') << int(node->visits) << " #" << std::endl;
+    // Evaluations
+    output << "# Evaluations" << std::setw(window_width - 13) << std::setfill(' ') << "#" << std::endl; 
+    if (node->parent)
+        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->prior_propability << " #" << std::endl;
+    output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->value << " #" << std::endl;
+    output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->meanEvaluation() << " #" << std::endl;
+    
+    for (uint16_t i = 0; i < window_width; i++)
+        output << "#";
+    output << std::endl;
+
+    // Print move history
+    Node* running_node = node;
+    output << "Move history: ";
+
+    while (running_node->parent)
+    {
+        uint8_t x, y;
+        Utils::indexToCords(running_node->parent_action, x, y);
+        output << "[" << int(x) << "," << int(y) << "];";
+        running_node = running_node->parent;
+    }
+
+    output << std::endl;
+
+    for (const std::string& value : distributions) 
+    {
+        std::cout << distribution(node->parent, value);
+    }
+
+    return output.str();
 }

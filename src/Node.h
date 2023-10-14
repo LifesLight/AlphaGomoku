@@ -1,5 +1,4 @@
 #pragma once
-#include "Includes.h"
 #include "Config.h"
 #include "State.h"
 #include "Model.h"
@@ -35,14 +34,12 @@ public:
     // Best child within confidence bound
     Node* absBestChild(float);
 
-    void simulationStep(Model* neural_network, Node* head_node);
+    void simulationStep(Model* neural_network);
     float meanEvaluation();
 
     // Config
     static void setLogTable(float* log_table);
-
-    // Constrain children to one Node
-    void constrain(Node* valid);
+    static std::string analytics(Node* node, const std::initializer_list<std::string> distributions);
 
 private:
     static float* logTable;

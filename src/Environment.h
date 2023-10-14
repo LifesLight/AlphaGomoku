@@ -5,11 +5,13 @@
 #include "Model.h"
 #include "State.h"
 #include "Gamestate.h"
+#include "Tree.h"
 
 class Environment
 {
 public:
     static void initialize();
+    static void deinitialize();
 
     Environment(Model* NNB, Model* NNW);
     ~Environment();
@@ -28,20 +30,18 @@ public:
     bool getNextColor();
 
     // Default current
-    Node* getNode();
-    Node* getNode(bool color);
+    Node* getPlayingNode();
+    Node* getPlayedNode();
 
-    static std::string nodeAnalytics(Node* node, const std::initializer_list<std::string> args);  
+    void freeMemory();
 
 private:
-    State* current_state = nullptr;
-    Node* root_node[2] = {nullptr, nullptr};
-    Node* current_node[2] = {nullptr, nullptr};
-    Model* neural_network[2] = {nullptr, nullptr};
-    bool is_ai[2] = {false, false};
+    Tree* trees[2] = {nullptr, nullptr};
+    bool next_color;
+
+    Node* getAnyCurrentNode();
 
     // Static
     static float* log_table;
     static bool is_initialized;
-
 };

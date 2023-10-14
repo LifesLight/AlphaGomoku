@@ -20,18 +20,23 @@ int main(int argc, const char* argv[])
     Environment::initialize();
 
     Model* neural_network = new Model(argv[1], torch::kMPS, "Testmodel");
-    Environment* env = new Environment(neural_network, nullptr);
+    Environment* env = new Environment(neural_network, neural_network);
 
-    int turn = 1;
+    int turn = 0;
 
     while (!env->isFinished())
     {
-        if (turn % 2)
+        if (true)
         {
             uint16_t computedMove = env->calculateNextMove(simulations);
-            env->makeMove(computedMove);
-            Node* cn = env->getNode(!env->getNextColor());
-            std::cout << Environment::nodeAnalytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
+            bool success = env->makeMove(computedMove);
+            if (!success)
+            {
+                std::cout << "Computer move failed" << std::endl;
+                return 0;
+            }
+            Node* cn = env->getPlayedNode();
+            std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
         }
         else
         {
@@ -43,11 +48,17 @@ int main(int argc, const char* argv[])
             std::cin >> y_string;
             x = std::stoi(x_string);
             y = std::stoi(y_string);
-            env->makeMove(x, y);
+            bool success = env->makeMove(x, y);
+            if (!success)
+            {
+                std::cout << "Human move failed" << std::endl;
+                return 0;
+            }
         }
         std::cout << env->toString() << std::endl;
         turn++;
     }
     
+    Environment::deinitialize();
     return 1;
 }
