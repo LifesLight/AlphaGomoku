@@ -14,19 +14,20 @@ int main(int argc, const char* argv[])
     }
 
     int simulations = 100;
-    if (argc == 3)
-        simulations = std::stoi(argv[2]);
+    if (argc == 4)
+        simulations = std::stoi(argv[3]);
 
     Environment::initialize();
 
-    Model* neural_network = new Model(argv[1], torch::kMPS, "Testmodel");
-    Environment* env = new Environment(neural_network, nullptr);
+    Model* nnb = new Model(argv[1], torch::kMPS, "Model Giga");
+    Model* nnw = new Model(argv[2], torch::kMPS, "Model Smull");
+    Environment* env = new Environment(nnb, nnw);
 
     int turn = 1;
 
     while (!env->isFinished())
     {
-        if (turn % 2)
+        if (true)
         {
             uint16_t computedMove = env->calculateNextMove(simulations);
             bool success = env->makeMove(computedMove);
@@ -55,6 +56,7 @@ int main(int argc, const char* argv[])
                 return 0;
             }
         }
+
         std::cout << env->toString() << std::endl;
         turn++;
 

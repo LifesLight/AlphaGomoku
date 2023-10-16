@@ -109,7 +109,7 @@ Node* Node::bestChild()
 
     for (Node* child : children)
     {
-        value = float(child->meanEvaluation());
+        value = ValueBias * child->meanEvaluation();
         exploration = ExplorationBias * std::sqrt(log_visits / float(child->visits));
         policy = PolicyBias * child->prior_propability;
 
@@ -185,7 +185,6 @@ void Node::simulationStep(Model* neural_network)
         }
     }
 
-    // this is head node
     current->backpropagate(current->value, this);
     return;
 }
@@ -203,7 +202,7 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
     else if (type == "VALUE")
         result << int(float(child->value) * 100);
     else if (type == "MEAN")
-        result << int(float(-child->meanEvaluation()) * 100);
+        result << int(float(child->meanEvaluation()) * 100);
     else if (type == "POLICY")
         result << int(float(child->prior_propability) / max_policy * 999);
     else
@@ -288,7 +287,7 @@ std::string distribution(Node* parent, const std::string& type)
 
 std::string Node::analytics(Node* node, const std::initializer_list<std::string> distributions)
 {
-    if (node->children.size() != 1)
+    if (node->children.size() == 1)
         std::cout << "[Node][W]: Analytics is missing chilren, did you free memory before calling?" << std::endl;
         
     bool color = node->state->nextColor();
