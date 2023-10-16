@@ -7,9 +7,9 @@
 
 int main(int argc, const char* argv[])
 {
-    if (argc == 1)
+    if (argc < 3)
     {
-        std::cout << "[FATAL]: Missing model path" << std::endl;
+        std::cout << "[FATAL]: Missing arguments" << std::endl;
         return 0;
     }
 
@@ -19,8 +19,8 @@ int main(int argc, const char* argv[])
 
     Environment::initialize();
 
-    Model* nnb = new Model(argv[1], torch::kMPS, "Model Giga");
-    Model* nnw = new Model(argv[2], torch::kMPS, "Model Smull");
+    Model* nnb = new Model(argv[1], torch::kMPS, "Model 1");
+    Model* nnw = new Model(argv[2], torch::kMPS, "Model 2");
     Environment* env = new Environment(nnb, nnw);
 
     int turn = 1;
@@ -36,8 +36,8 @@ int main(int argc, const char* argv[])
                 std::cout << "Computer move failed" << std::endl;
                 return 0;
             }
-            Node* cn = env->getPlayedNode();
-            std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
+            //Node* cn = env->getPlayedNode();
+            //std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
         }
         else
         {
@@ -60,7 +60,7 @@ int main(int argc, const char* argv[])
         std::cout << env->toString() << std::endl;
         turn++;
 
-        //env->freeMemory();
+        env->freeMemory();
     }
     
     Environment::deinitialize();
