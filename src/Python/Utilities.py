@@ -55,3 +55,11 @@ class Utilities:
             gamestate[HD//2][x][y] = True
 
         return gamestate
+    
+    def indexToCords(index):
+        x = index // 15
+        y = index % 15
+        return x, y
+
+    def cordsToIndex(x, y):
+        return x * 15 + y

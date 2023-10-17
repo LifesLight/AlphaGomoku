@@ -79,20 +79,35 @@ class ValueHead(nn.Module):
         x = self.value(x)
         return x
 
-class NeuralNetwork(nn.Module):
-    def __init__(self, filters, feature_dimensions, residual_layers=5, kernal_size=3):
+class ResidualNetwork(nn.Module):
+    def __init__(self, filters, layers, history_depth):
         super().__init__()
 
-        self.conv_layer = ConvolutionLayer(feature_dimensions, filters, kernal_size=kernal_size)
-        self.residual_layers = nn.ModuleList([ResidualLayer(filters, kernal_size=kernal_size) for _ in range(residual_layers)])
-        self.policy_head = PolicyHead(filters)
-        self.value_head = ValueHead(filters)
+        self.conv_layer = ConvolutionLayer(history_depth, filters, kernal_size=3)
+        self.residual_layers = nn.ModuleList([ResidualLayer(filters, kernal_size=3) for _ in range(layers)])
 
-    def forward(self, x):      
+    def forward(self, x):
         x = self.conv_layer(x)
-        for layer in self.residual_layers:
-            x = layer(x)
-        policyResult = self.policy_head(x)
-        valueResult = self.value_head(x)
+        for res_layer in self.residual_layers:
+            x = res_layer(x)
+        return x
+    
+class PolicyNetwork(nn.Module):
+    def __init__(self, filters):
+        super().__init__()
 
-        return policyResult, valueResult
+        self.policy_head = PolicyHead(filters)
+    
+    def forward(self, x):
+        x = self.policy_head(x)
+        return x
+    
+class ValueNetwork(nn.Module):
+    def __init__(self, filters):
+        super().__init__()
+
+        self.value_head = ValueHead(filters)
+    
+    def forward(self, x):
+        x = self.value_head(x)
+        return x
