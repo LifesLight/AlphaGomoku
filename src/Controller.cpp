@@ -7,27 +7,27 @@
 
 int main(int argc, const char* argv[])
 {
-    if (argc < 3)
+    if (argc < 4)
     {
         std::cout << "[FATAL]: Missing arguments" << std::endl;
         return 0;
     }
 
     int simulations = 100;
-    if (argc == 4)
-        simulations = std::stoi(argv[3]);
+    if (argc == 5)
+        simulations = std::stoi(argv[4]);
 
     Environment::initialize();
 
-    Model* nnb = new Model(argv[1], torch::kMPS, "Model 1");
-    Model* nnw = new Model(argv[2], torch::kMPS, "Model 2");
-    Environment* env = new Environment(nnb, nnw);
+    Model* nnb = new Model(argv[1], argv[2], argv[3], torch::kMPS, "Model 1");
+    //Model* nnw = new Model(argv[2], torch::kMPS, "Model 2");
+    Environment* env = new Environment(nnb, nullptr);
 
     int turn = 1;
 
     while (!env->isFinished())
     {
-        if (true)
+        if (turn % 2)
         {
             uint16_t computedMove = env->calculateNextMove(simulations);
             bool success = env->makeMove(computedMove);
@@ -36,8 +36,8 @@ int main(int argc, const char* argv[])
                 std::cout << "Computer move failed" << std::endl;
                 return 0;
             }
-            //Node* cn = env->getPlayedNode();
-            //std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
+            Node* cn = env->getPlayedNode();
+            std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
         }
         else
         {
@@ -60,7 +60,7 @@ int main(int argc, const char* argv[])
         std::cout << env->toString() << std::endl;
         turn++;
 
-        env->freeMemory();
+        //env->freeMemory();
     }
     
     Environment::deinitialize();
