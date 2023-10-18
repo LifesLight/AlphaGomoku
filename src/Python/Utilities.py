@@ -1,3 +1,11 @@
+import torch
+from torch.utils.data import TensorDataset, DataLoader
+
+import numpy as np
+from NeuralNet import ResidualNetwork as Resnet
+from NeuralNet import PolicyNetwork as PolHead
+from NeuralNet import ValueNetwork as ValHead
+
 class Utilities:
     def sliceGamestate(gamestate, depth = 0):
         HD = gamestate.shape[0] - 1
@@ -63,3 +71,44 @@ class Utilities:
 
     def cordsToIndex(x, y):
         return x * 15 + y
+
+    def modelLoader(model_name, Filters, Layers, HistoryDepth, device):
+        general_path = '../../Models/Human/'
+
+        resnetPath = f'{general_path}/ResNet/{model_name}.pt'
+        policyPath = f'{general_path}/PolHead/{model_name}.pt'
+        valuePath = f'{general_path}/ValHead/{model_name}.pt'
+
+        resnetModel = Resnet(Filters, Layers, HistoryDepth + 1)
+        resnetModel.load_state_dict(torch.load(resnetPath, map_location=torch.device('cpu')))
+        resnetModel.eval()
+        resnetModel.to(device)
+
+        policyModel = PolHead(Filters)
+        policyModel.load_state_dict(torch.load(policyPath, map_location=torch.device('cpu')))
+        policyModel.eval()
+        policyModel.to(device)
+
+        valueModel = ValHead(Filters)
+        valueModel.load_state_dict(torch.load(valuePath, map_location=torch.device('cpu')))
+        valueModel.eval()
+        valueModel.to(device)
+
+        return resnetModel, policyModel, valueModel
+    
+    def loadDataset(Path, Shape, SourceType):
+        return torch.from_numpy(np.fromfile(Path, dtype=SourceType).astype(np.float32).reshape((Shape)))
+    
+    def toDataloader(X, Y, BatchSize=128, Shuffle=False):
+        dataset = TensorDataset(X, Y)
+        return DataLoader(dataset, batch_size=BatchSize, shuffle=Shuffle)
+    
+    def trainableParameterCount(model):
+        pp = 0
+        for p in model.parameters():
+            if p.requires_grad:
+                nn = 1
+                for s in p.size():
+                    nn *= s
+                pp += nn
+        return pp

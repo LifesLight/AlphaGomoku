@@ -19,7 +19,7 @@ int main(int argc, const char* argv[])
 
     Environment::initialize();
 
-    Model* nnb = new Model(argv[1], argv[2], argv[3], torch::kMPS, "Model 1");
+    Model* nnb = new Model(argv[1], argv[2], argv[3], torch::kCUDA, "Model 1");
     //Model* nnw = new Model(argv[2], torch::kMPS, "Model 2");
     Environment* env = new Environment(nnb, nullptr);
 
