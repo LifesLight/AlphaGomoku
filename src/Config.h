@@ -19,7 +19,7 @@
 #define BoardSize 15
 
 #define ExplorationBias 0.225
-#define PolicyBias 0.4
+#define PolicyBias 0.3
 #define ValueBias 1
 #define MaxSimulations 100'000
 #define HistoryDepth 8

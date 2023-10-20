@@ -58,49 +58,42 @@ class PolicyHead(nn.Module):
     def forward(self, x):
         x = self.head(x)
         return x
-    
+
 class ValueHead(nn.Module):
-    def __init__(self, filters):
+    def __init__(self, inFilters, convFilters, linearFilters):
         super().__init__()
-        self.filters = filters
+        self.inFilters = inFilters
+        self.convFilters  = convFilters
+        self.linearFilters = linearFilters
+
         self.value = nn.Sequential(
-            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
-            nn.BatchNorm2d(self.filters),
+            nn.Conv2d(self.inFilters, self.convFilters, 3, padding = 0),
+            nn.BatchNorm2d(self.convFilters),
             nn.ReLU(),
-            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
-            nn.BatchNorm2d(self.filters),
+            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
+            nn.BatchNorm2d(self.convFilters),
             nn.ReLU(),
-            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
-            nn.BatchNorm2d(self.filters),
+            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
+            nn.BatchNorm2d(self.convFilters),
             nn.ReLU(),
-            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
-            nn.BatchNorm2d(self.filters),
+            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
+            nn.BatchNorm2d(self.convFilters),
             nn.ReLU(),
-            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
-            nn.BatchNorm2d(self.filters),
+            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
+            nn.BatchNorm2d(self.convFilters),
             nn.ReLU(),
-            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
-            nn.BatchNorm2d(self.filters),
+            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
+            nn.BatchNorm2d(self.convFilters),
             nn.ReLU(),
-            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
-            nn.BatchNorm2d(self.filters),
+            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
+            nn.BatchNorm2d(self.convFilters),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(self.filters, 256),
+            nn.Linear(self.convFilters, self.linearFilters),
             nn.ReLU(),
-            nn.Linear(256, 1),
+            nn.Linear(self.linearFilters, 1),
             nn.Tanh()
         )
-#        self.value = nn.Sequential(
-#            nn.Conv2d(self.filters, 1, 1, padding=0),
-#            nn.BatchNorm2d(1),
-#            nn.ReLU(),
-#            nn.Flatten(),
-#            nn.Linear(225, 256),
-#            nn.ReLU(),
-#            nn.Linear(256, 1),
-#            nn.Tanh()
-#        )
 
     def forward(self, x):
         x = self.value(x)
@@ -130,10 +123,10 @@ class PolicyNetwork(nn.Module):
         return x
     
 class ValueNetwork(nn.Module):
-    def __init__(self, filters):
+    def __init__(self, inFilters, convFilters, linearFilters):
         super().__init__()
 
-        self.value_head = ValueHead(filters)
+        self.value_head = ValueHead(inFilters, convFilters, linearFilters)
     
     def forward(self, x):
         x = self.value_head(x)

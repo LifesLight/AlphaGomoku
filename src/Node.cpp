@@ -222,7 +222,7 @@ std::string distribution(Node* parent, const std::string& type)
 
     for (uint16_t i = 0; i < BoardSize; i++)
         result << "-";
-    result << ">\n   ";
+    result << ">\n    ";
 
     float max_visits = 0;
     float max_policy = 0;
