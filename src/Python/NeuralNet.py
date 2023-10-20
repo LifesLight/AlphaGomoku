@@ -63,17 +63,44 @@ class ValueHead(nn.Module):
     def __init__(self, filters):
         super().__init__()
         self.filters = filters
-
         self.value = nn.Sequential(
-            nn.Conv2d(self.filters, 1, 1, padding=0),
-            nn.BatchNorm2d(1),
+            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
+            nn.BatchNorm2d(self.filters),
+            nn.ReLU(),
+            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
+            nn.BatchNorm2d(self.filters),
+            nn.ReLU(),
+            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
+            nn.BatchNorm2d(self.filters),
+            nn.ReLU(),
+            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
+            nn.BatchNorm2d(self.filters),
+            nn.ReLU(),
+            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
+            nn.BatchNorm2d(self.filters),
+            nn.ReLU(),
+            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
+            nn.BatchNorm2d(self.filters),
+            nn.ReLU(),
+            nn.Conv2d(self.filters, self.filters, 3, padding = 0),
+            nn.BatchNorm2d(self.filters),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(225, 256),
+            nn.Linear(self.filters, 256),
             nn.ReLU(),
             nn.Linear(256, 1),
             nn.Tanh()
         )
+#        self.value = nn.Sequential(
+#            nn.Conv2d(self.filters, 1, 1, padding=0),
+#            nn.BatchNorm2d(1),
+#            nn.ReLU(),
+#            nn.Flatten(),
+#            nn.Linear(225, 256),
+#            nn.ReLU(),
+#            nn.Linear(256, 1),
+#            nn.Tanh()
+#        )
 
     def forward(self, x):
         x = self.value(x)
