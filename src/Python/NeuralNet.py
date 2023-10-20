@@ -91,6 +91,10 @@ class ValueHead(nn.Module):
             nn.Flatten(),
             nn.Linear(self.convFilters, self.linearFilters),
             nn.ReLU(),
+            nn.Linear(self.linearFilters, self.linearFilters),
+            nn.ReLU(),
+            nn.Linear(self.linearFilters, self.linearFilters),
+            nn.ReLU(),
             nn.Linear(self.linearFilters, 1),
             nn.Tanh()
         )

@@ -6,6 +6,8 @@ from NeuralNet import ResidualNetwork as Resnet
 from NeuralNet import PolicyNetwork as PolHead
 from NeuralNet import ValueNetwork as ValHead
 
+from Config import Config as Conf
+
 class Utilities:
     def sliceGamestate(gamestate, depth = 0):
         HD = gamestate.shape[0] - 1
@@ -72,8 +74,17 @@ class Utilities:
     def cordsToIndex(x, y):
         return x * 15 + y
 
-    def modelLoader(model_name, Filters, Layers, HistoryDepth, device):
-        general_path = '../../Models/Human/'
+    def modelLoader(model_name,
+                    Filters = Conf.NN_FILTERS, 
+                    Layers = Conf.NN_RESNETLAYERS, 
+                    HistoryDepth = Conf.HISTORYDEPTH, 
+                    Device = Conf.DEVICE, 
+                    Type = 'Human'
+                    ):
+        
+        general_path = '../../Models/Human'
+        if Type == 'Selfplay':
+            general_path = '../../Models/Selfplay'
 
         resnetPath = f'{general_path}/ResNet/{model_name}.pt'
         policyPath = f'{general_path}/PolHead/{model_name}.pt'
@@ -82,17 +93,17 @@ class Utilities:
         resnetModel = Resnet(Filters, Layers, HistoryDepth + 1)
         resnetModel.load_state_dict(torch.load(resnetPath, map_location=torch.device('cpu')))
         resnetModel.eval()
-        resnetModel.to(device)
+        resnetModel.to(Device)
 
         policyModel = PolHead(Filters)
         policyModel.load_state_dict(torch.load(policyPath, map_location=torch.device('cpu')))
         policyModel.eval()
-        policyModel.to(device)
+        policyModel.to(Device)
 
         valueModel = ValHead(Filters)
         valueModel.load_state_dict(torch.load(valuePath, map_location=torch.device('cpu')))
         valueModel.eval()
-        valueModel.to(device)
+        valueModel.to(Device)
 
         return resnetModel, policyModel, valueModel
     
@@ -103,6 +114,7 @@ class Utilities:
         dataset = TensorDataset(X, Y)
         return DataLoader(dataset, batch_size=BatchSize, shuffle=Shuffle)
     
+    # Change this to take a model class as input
     def trainableParameterCount(model):
         pp = 0
         for p in model.parameters():
@@ -112,3 +124,20 @@ class Utilities:
                     nn *= s
                 pp += nn
         return pp
+    
+    def scriptModel(model, TargetPath = '../../Models/scripted/'):
+        resnetExample = np.zeros((1, Conf.HISTORYDEPTH + 1, 15, 15), dtype=np.float32) 
+        resnetExample = torch.tensor(resnetExample)
+        resnetExample = resnetExample.to(Conf.DEVICE)
+
+        headsExample = np.zeros((1, Conf.NN_FILTERS, 15, 15), dtype=np.float32)
+        headsExample = torch.tensor(headsExample)
+        headsExample = headsExample.to(Conf.DEVICE)
+
+        traced_resnet = torch.jit.trace(model.resnet, resnetExample)
+        traced_polhead = torch.jit.trace(model.policy, headsExample)
+        traced_valhead = torch.jit.trace(model.value, headsExample)
+
+        traced_resnet.save(f'{TargetPath}/ResNet/{model.name}.pt')
+        traced_polhead.save(f'{TargetPath}/PolHead/{model.name}.pt')
+        traced_valhead.save(f'{TargetPath}/ValHead/{model.name}.pt')

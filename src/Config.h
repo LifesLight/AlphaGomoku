@@ -15,10 +15,13 @@
 #include <sstream>
 #include <initializer_list>
 
+// External
+#define ModelPath "../Models/scripted/"
+
 // Even numbers in BoardSize will break State due to inverted colors!
 #define BoardSize 15
 
-#define ExplorationBias 0.225
+#define ExplorationBias 0.2
 #define PolicyBias 0.3
 #define ValueBias 1
 #define MaxSimulations 100'000
