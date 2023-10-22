@@ -19,8 +19,11 @@ public:
     bool makeMove(uint8_t x, uint8_t y);
     bool makeMove(uint16_t index);
 
-    // Let network compute next move
-    uint16_t calculateNextMove(uint32_t simulations);
+    // Let network compute step
+    void simulationStep();
+
+    std::vector<Node*> getNetworkQueue();
+    bool isReady();
 
     // Display state
     std::string toString();

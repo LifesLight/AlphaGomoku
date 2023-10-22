@@ -4,7 +4,7 @@ Tree::Tree(Model* neural_network)
     : neural_net(neural_network)
 {
     root_node = new Node();
-    root_node->runNetwork(neural_net);
+    network_queue.push_back(root_node);
     current_node = root_node;
 }
 
@@ -59,8 +59,8 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         State* updated_state = new State(current_state);
         updated_state->makeMove(move_index);
         chosen_child = new Node(updated_state, current_node, move_index);
-        chosen_child->runNetwork(neural_net);
         current_node->children.push_back(chosen_child);
+        network_queue.push_back(chosen_child);
     }
     // Node does have child
     else
@@ -74,12 +74,49 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
     return true;
 }
 
-uint16_t Tree::computeMove(uint32_t simulations)
+std::vector<Node*> Tree::getNetworkQueue()
 {
-    for (uint32_t i = 0; i < simulations; i++)
-        current_node->simulationStep(neural_net);
-    Node* best_child = current_node->absBestChild();
-    return best_child->parent_action;
+    return network_queue;
+}
+
+void Tree::clearNetworkQueue()
+{
+    network_queue.clear();
+}
+
+bool Tree::isReady()
+{
+    if (network_queue.size() == 0)
+        return true;
+    return false;
+}
+
+uint16_t Tree::bestMove()
+{
+    Node* bestChild = current_node->absBestChild();
+    if (bestChild == nullptr)
+    {
+        std::cout << "[Tree][E]: Tried to get bestMove of Tree with no current children" << std::endl;
+        return -1;
+    }
+    return bestChild->parent_action;
+}
+
+void Tree::simulationStep()
+{
+    if (!isReady())
+    {
+        std::cout << "[Tree][E]: Called simulation step on non ready tree" << std::endl;
+        return;
+    }
+
+    // Backprob node result and add to network queue if needed
+    // If node has no network output backprob once available
+    Node* node = current_node->simulationStep();
+    if (!node->hasNetworkOut())
+        network_queue.push_back(node);
+    else
+        node->backpropagate(node->value, current_node);
 }
 
 Node* Tree::getCurrentNode()

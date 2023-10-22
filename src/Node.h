@@ -2,7 +2,6 @@
 #include "Config.h"
 #include "State.h"
 #include "Model.h"
-#include "Gamestate.h"
 
 class Node
 {
@@ -17,10 +16,12 @@ public:
 
     // Network stuff
     float value;
-    float prior_propability;
-    bool is_initialized;
+    // For get prior propability
+    std::map<uint16_t, float> policy_evaluations;
 
-    void runNetwork(Model* neural_net);
+    void addNetworkOutput(std::tuple<torch::Tensor, torch::Tensor> model_output);
+    float getPriorPropability();
+    bool hasNetworkOut();
 
     // Constructors
     Node(State* state, Node* parent, uint16_t parent_action);
@@ -35,8 +36,9 @@ public:
     // Best child within confidence bound
     Node* absBestChild(float);
 
-    void simulationStep(Model* neural_network);
+    Node* simulationStep();
     float meanEvaluation();
+    void backpropagate(float value, Node* head_node);
 
     // Config
     static void setLogTable(float* log_table);
@@ -44,7 +46,6 @@ public:
 
 private:
     static float* logTable;
-
-    Node* expand(Model* neural_network);
-    void backpropagate(float value, Node* head_node);
+    bool has_network_output;
+    Node* expand();
 };

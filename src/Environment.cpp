@@ -30,19 +30,40 @@ Environment::Environment(Model* NNB, Model* NNW)
         std::cout << "[Env][E]: Environment needs at least 1 tree" << std::endl;
     }
 
-    std::cout << "[Env]: Creating new environment with following trees:" << std::endl;
-
     if (NNB != nullptr)
     {
         trees[0] = new Tree(NNB);
-        std::cout << "  Black: (NN:" << NNB->getName() << ")" << std::endl;
     }
 
     if (NNW != nullptr)
     {
         trees[1] = new Tree(NNW);
-        std::cout << "  White: (NN:" << NNW->getName() << ")" << std::endl;
     }
+}
+
+bool Environment::isReady()
+{
+    bool ready = true;
+    for (int i = 0; i < 2; i++)
+        if (trees[i] != nullptr)
+            if (!trees[i]->isReady())
+                ready = false;
+    return ready;
+}
+
+std::vector<Node*> Environment::getNetworkQueue()
+{
+    std::vector<Node*> queue;
+    for (int i = 0; i < 2; i++)
+    {
+        if (trees[i] != nullptr)
+        {
+            for (Node* node : trees[i]->getNetworkQueue())
+                queue.push_back(node);
+            trees[i]->clearNetworkQueue();
+        }
+    }
+    return queue;
 }
 
 void Environment::deinitialize()
@@ -82,15 +103,15 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
     return true;
 }
 
-uint16_t Environment::calculateNextMove(uint32_t simulations)
+void Environment::simulationStep()
 {
     if (trees[next_color] == nullptr)
     {
-        std::cout << "[Env]: Error, tried to calculateNextMove for non AI player" << std::endl;
-        return -1;
+        std::cout << "[Env]: Error, tried to simulate for non AI player" << std::endl;
+        return;
     }
-
-    return trees[next_color]->computeMove(simulations);
+    
+    trees[next_color]->simulationStep();
 }
 
 Node* Environment::getAnyCurrentNode()

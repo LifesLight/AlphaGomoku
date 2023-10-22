@@ -14,21 +14,22 @@ public:
 
     bool makeMove(uint8_t x, uint8_t y);
     bool makeMove(uint16_t index);
-
-    bool isReady();
-
-
-    uint16_t computeMove(uint32_t simulations);
+    void simulationStep();
+    uint16_t bestMove();
 
     Node* getCurrentNode();
     Node* getParentNode();
 
-    bool isTerminal();
+    bool isReady();
+    std::vector<Node*> getNetworkQueue();
+    void clearNetworkQueue();
 
+    bool isTerminal();
     void clean();
 
 private:
     std::vector<Node*> deletion_queue;
+    std::vector<Node*> network_queue;
     Model* neural_net;
     Node* root_node;
     Node* current_node;

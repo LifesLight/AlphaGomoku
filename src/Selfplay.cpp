@@ -55,5 +55,9 @@ int main(int argc, const char* argv[])
         environments.push_back(env);
     }
 
-    
+    std::cout << environments[0]->getNetworkQueue().size() << std::endl;
+
+    environments[0]->simulationStep();
+
+    return 1;
 }

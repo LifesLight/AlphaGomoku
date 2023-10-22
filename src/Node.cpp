@@ -4,8 +4,8 @@ float* Node::logTable = nullptr;
 
 Node::Node(State* state, Node* parent, uint16_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), visits(0)
-{   
-    is_initialized = false;
+{
+    has_network_output = false;
 }
 
 Node::Node(State* state)
@@ -21,28 +21,27 @@ Node::~Node()
     delete state;
 }
 
-void Node::runNetwork(Model* neural_network)
+float Node::getPriorPropability()
 {
-    std::vector<uint16_t> possible_actions = state->getPossible();
+    return parent->policy_evaluations[parent_action];
+}
 
-    // Implement model here
-    Gamestate gamestate = Gamestate(this);
-    torch::Tensor model_input = torch::empty({1, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
-    model_input[0] = gamestate.getTensor();
+void Node::addNetworkOutput(std::tuple<torch::Tensor, torch::Tensor> model_output)
+{
+    torch::Tensor policy_out = std::get<0>(model_output);
+    torch::Tensor value_out = std::get<1>(model_output);
 
-    std::tuple<torch::Tensor, torch::Tensor> model_output;
-    model_output = neural_network->forward(model_input);
-
-    torch::Tensor policy_output = std::get<0>(model_output)[0];
-    torch::Tensor value_output = std::get<1>(model_output)[0];
-    value = value_output.item<float>();
+    value = value_out.item<float>();
 
     // Normalize for player color, black is positive
     if (state->nextColor())
         value *= -1;
 
+    // Configure possible_actions
+    std::vector<uint16_t> possible_actions = state->getPossible();
+
     for (uint16_t possible_action : possible_actions)
-        untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, policy_output[possible_action].item<float>()));
+        untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, policy_out[possible_action].item<float>()));
 
     std::sort(untried_actions.begin(), untried_actions.end(),
     [](const auto& a, const auto& b) {
@@ -50,7 +49,7 @@ void Node::runNetwork(Model* neural_network)
         }
     );
 
-    is_initialized = true;
+    has_network_output = true;
 }
 
 void Node::setLogTable(float* log_table)
@@ -58,26 +57,25 @@ void Node::setLogTable(float* log_table)
     logTable = log_table;
 }
 
-Node* Node::expand(Model* neural_network)
+Node* Node::expand()
 {
-    if (!is_initialized)
+    if (!has_network_output)
     {
-        std::cout << "[Node][E]: Tried to expand uninitialized Node" << std::endl;
+        std::cout << "[Node][E]: Tried to expand node without NN data" << std::endl << std::flush;
         return nullptr;
     }
-        
     std::tuple<uint16_t, float> next_pair = untried_actions.back();
     untried_actions.pop_back();
     uint16_t action = std::get<0>(next_pair);
     float child_value = std::get<1>(next_pair);
 
+    // Add to prior map
+    policy_evaluations[action] = child_value;
+
     State* resulting_state = new State(state);
     resulting_state->makeMove(action);
     Node* child = new Node(resulting_state, this, action);
-    child->runNetwork(neural_network);
 
-    // Store predicted value of child
-    child->prior_propability = child_value;
     children.push_back(child);
     return child;
 }
@@ -111,10 +109,9 @@ Node* Node::bestChild()
     {
         value = ValueBias * child->meanEvaluation();
         exploration = ExplorationBias * std::sqrt(log_visits / float(child->visits));
-        policy = PolicyBias * child->prior_propability;
+        policy = PolicyBias * child->getPriorPropability();
 
         result = value + exploration + policy;
-        //std::cout << "V:" << value << std::endl << "E:" << exploration << std::endl << "P:" << policy << std::endl << std::endl;
 
         if (result > best_result)
         {
@@ -167,17 +164,14 @@ Node* Node::absBestChild(float confidence_bound)
     return best_child;
 }
 
-void Node::simulationStep(Model* neural_network)
+Node* Node::simulationStep()
 {
     Node* current = this;
     while (!current->state->isTerminal())
     {
         if (current->untried_actions.size() > 0)
         {
-            current = current->expand(neural_network);
-            // this is head node
-            current->backpropagate(current->value, this);
-            return;
+            return current->expand();
         }
         else
         {
@@ -185,12 +179,14 @@ void Node::simulationStep(Model* neural_network)
         }
     }
 
-    current->backpropagate(current->value, this);
-    return;
+    return current;
 }
 
 
-
+bool Node::hasNetworkOut()
+{
+    return has_network_output;
+}
 
 // Analytic stuff
 std::string distribution_helper(Node* child, int max_visits, float max_policy, const std::string& type)
@@ -204,7 +200,7 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
     else if (type == "MEAN")
         result << int(float(child->meanEvaluation()) * 100);
     else if (type == "POLICY")
-        result << int(float(child->prior_propability) / max_policy * 999);
+        result << int(float(child->getPriorPropability()) / max_policy * 999);
     else
         result << "ERR";
     return result.str();
@@ -230,8 +226,8 @@ std::string distribution(Node* parent, const std::string& type)
         if (child->visits > max_visits)
             max_visits = child->visits;
     for (Node* child : parent->children)
-        if (child->prior_propability > max_policy)
-            max_policy = child->prior_propability;
+        if (child->getPriorPropability() > max_policy)
+            max_policy = child->getPriorPropability();
 
     for (uint16_t i = 0; i < BoardSize; i++)
         result << " ---";
@@ -315,7 +311,7 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
     // Evaluations
     output << "# Evaluations" << std::setw(window_width - 13) << std::setfill(' ') << "#" << std::endl; 
     if (node->parent)
-        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->prior_propability << " #" << std::endl;
+        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->getPriorPropability() << " #" << std::endl;
     output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->value << " #" << std::endl;
     output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->meanEvaluation() << " #" << std::endl;
     
