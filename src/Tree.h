@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "Node.h"
 #include "State.h"
+#include "Gamestate.h"
 
 class Tree
 {
@@ -13,6 +14,9 @@ public:
 
     bool makeMove(uint8_t x, uint8_t y);
     bool makeMove(uint16_t index);
+
+    bool isReady();
+
 
     uint16_t computeMove(uint32_t simulations);
 

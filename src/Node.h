@@ -18,8 +18,9 @@ public:
     // Network stuff
     float value;
     float prior_propability;
-    void runNetwork(Model* neural_net);
     bool is_initialized;
+
+    void runNetwork(Model* neural_net);
 
     // Constructors
     Node(State* state, Node* parent, uint16_t parent_action);

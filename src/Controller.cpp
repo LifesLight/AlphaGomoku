@@ -36,8 +36,8 @@ int main(int argc, const char* argv[])
                 std::cout << "Computer move failed" << std::endl;
                 return 0;
             }
-            Node* cn = env->getPlayedNode();
-            std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
+            //Node* cn = env->getPlayedNode();
+            //std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
         }
         else
         {
@@ -60,7 +60,7 @@ int main(int argc, const char* argv[])
         std::cout << env->toString() << std::endl;
         turn++;
 
-        //env->freeMemory();
+        env->freeMemory();
     }
     
     Environment::deinitialize();
