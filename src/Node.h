@@ -12,16 +12,12 @@ public:
     uint32_t visits;
     float summed_evaluation;
     std::list<Node*> children;
-    std::vector<std::tuple<uint16_t, float>> untried_actions;
+    std::vector<uint16_t> untried_actions;
+    float policy_evaluations[BoardSize * BoardSize];
 
-    // Network stuff
-    float value;
-    // For get prior propability
-    std::map<uint16_t, float> policy_evaluations;
-
-    void addNetworkOutput(std::tuple<torch::Tensor, torch::Tensor> model_output);
-    float getPriorPropability();
-    bool hasNetworkOut();
+    // Neural Net
+    float evaluation;
+    float getPolicyValue();
 
     // Constructors
     Node(State* state, Node* parent, uint16_t parent_action);
@@ -29,23 +25,15 @@ public:
     Node();
     ~Node();
 
-
-    Node* bestChild();
-    // Best child without exploration biases
-    Node* absBestChild();
-    // Best child within confidence bound
-    Node* absBestChild(float);
-
-    Node* simulationStep();
+    // Algorithm
+    Node* expand();
     float meanEvaluation();
     void backpropagate(float value, Node* head_node);
+    Node* bestChild();
 
-    // Config
-    static void setLogTable(float* log_table);
+    // Best child without exploration biases
+    Node* absBestChild();
+
+    // Debug
     static std::string analytics(Node* node, const std::initializer_list<std::string> distributions);
-
-private:
-    static float* logTable;
-    bool has_network_output;
-    Node* expand();
 };

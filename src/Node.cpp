@@ -1,11 +1,9 @@
 #include "Node.h"
 
-float* Node::logTable = nullptr;
-
 Node::Node(State* state, Node* parent, uint16_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), visits(0)
 {
-    has_network_output = false;
+    malloc
 }
 
 Node::Node(State* state)
@@ -21,56 +19,10 @@ Node::~Node()
     delete state;
 }
 
-float Node::getPriorPropability()
-{
-    return parent->policy_evaluations[parent_action];
-}
-
-void Node::addNetworkOutput(std::tuple<torch::Tensor, torch::Tensor> model_output)
-{
-    torch::Tensor policy_out = std::get<0>(model_output);
-    torch::Tensor value_out = std::get<1>(model_output);
-
-    value = value_out.item<float>();
-
-    // Normalize for player color, black is positive
-    if (state->nextColor())
-        value *= -1;
-
-    // Configure possible_actions
-    std::vector<uint16_t> possible_actions = state->getPossible();
-
-    for (uint16_t possible_action : possible_actions)
-        untried_actions.push_back(std::tuple<uint16_t, float>(possible_action, policy_out[possible_action].item<float>()));
-
-    std::sort(untried_actions.begin(), untried_actions.end(),
-    [](const auto& a, const auto& b) {
-            return std::get<1>(a) < std::get<1>(b);
-        }
-    );
-
-    has_network_output = true;
-}
-
-void Node::setLogTable(float* log_table)
-{
-    logTable = log_table;
-}
-
 Node* Node::expand()
 {
-    if (!has_network_output)
-    {
-        std::cout << "[Node][E]: Tried to expand node without NN data" << std::endl << std::flush;
-        return nullptr;
-    }
-    std::tuple<uint16_t, float> next_pair = untried_actions.back();
+    uint16_t action = untried_actions.back();
     untried_actions.pop_back();
-    uint16_t action = std::get<0>(next_pair);
-    float child_value = std::get<1>(next_pair);
-
-    // Add to prior map
-    policy_evaluations[action] = child_value;
 
     State* resulting_state = new State(state);
     resulting_state->makeMove(action);
@@ -102,16 +54,16 @@ Node* Node::bestChild()
 {
     Node* best_child = nullptr;
     float best_result = -100.0;
-    float log_visits = 2 * logTable[visits];
+    float log_visits = 2 * std::log(visits);
     float result, value, exploration, policy;
 
     for (Node* child : children)
     {
         value = ValueBias * child->meanEvaluation();
         exploration = ExplorationBias * std::sqrt(log_visits / float(child->visits));
-        policy = PolicyBias * child->getPriorPropability();
+        //policy = PolicyBias * child->getPriorPropability();
 
-        result = value + exploration + policy;
+        result = value + exploration;// + policy;
 
         if (result > best_result)
         {
@@ -140,52 +92,9 @@ Node* Node::absBestChild()
     return best_child;
 }
 
-Node* Node::absBestChild(float confidence_bound)
+float Node::getPolicyValue()
 {
-    std::list<Node*> children_copy;
-    for (Node* child : children)
-       if (float(child->visits) / float(visits) > confidence_bound)
-            children_copy.push_back(child);
- 
-    Node* best_child = nullptr;
-    uint32_t result;
-    uint32_t best_result = 0;
-    
-    for (Node* child : children_copy)
-    {
-        result = child->visits;
-        if (result > best_result)
-        {
-            best_result = result;
-            best_child = child;
-        }
-    }
-
-    return best_child;
-}
-
-Node* Node::simulationStep()
-{
-    Node* current = this;
-    while (!current->state->isTerminal())
-    {
-        if (current->untried_actions.size() > 0)
-        {
-            return current->expand();
-        }
-        else
-        {
-            current = current->bestChild();
-        }
-    }
-
-    return current;
-}
-
-
-bool Node::hasNetworkOut()
-{
-    return has_network_output;
+    return parent->policy_evaluations[parent_action];
 }
 
 // Analytic stuff
@@ -196,11 +105,11 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
     if      (type == "VISITS")
         result << int(float(child->visits) / max_visits * 999);
     else if (type == "VALUE")
-        result << int(float(child->value) * 100);
+        result << int(float(child->evaluation) * 100);
     else if (type == "MEAN")
         result << int(float(child->meanEvaluation()) * 100);
     else if (type == "POLICY")
-        result << int(float(child->getPriorPropability()) / max_policy * 999);
+        result << int(float(child->getPolicyValue()) / max_policy * 999);
     else
         result << "ERR";
     return result.str();
