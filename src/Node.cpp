@@ -2,9 +2,7 @@
 
 Node::Node(State* state, Node* parent, uint16_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), visits(0)
-{
-    malloc
-}
+{   }
 
 Node::Node(State* state)
     : Node(state, nullptr, uint16_t(-1))
@@ -135,8 +133,8 @@ std::string distribution(Node* parent, const std::string& type)
         if (child->visits > max_visits)
             max_visits = child->visits;
     for (Node* child : parent->children)
-        if (child->getPriorPropability() > max_policy)
-            max_policy = child->getPriorPropability();
+        if (child->getPolicyValue() > max_policy)
+            max_policy = child->getPolicyValue();
 
     for (uint16_t i = 0; i < BoardSize; i++)
         result << " ---";
@@ -220,8 +218,8 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
     // Evaluations
     output << "# Evaluations" << std::setw(window_width - 13) << std::setfill(' ') << "#" << std::endl; 
     if (node->parent)
-        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->getPriorPropability() << " #" << std::endl;
-    output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->value << " #" << std::endl;
+        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->getPolicyValue() << " #" << std::endl;
+    output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->evaluation << " #" << std::endl;
     output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->meanEvaluation() << " #" << std::endl;
     
     for (uint16_t i = 0; i < window_width; i++)
