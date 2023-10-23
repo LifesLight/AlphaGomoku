@@ -1,7 +1,6 @@
 #include "Tree.h"
 
-Tree::Tree(Model* neural_network)
-    : neural_net(neural_network)
+Tree::Tree()
 {
     root_node = new Node();
     network_queue.push_back(root_node);
@@ -60,6 +59,8 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         updated_state->makeMove(move_index);
         chosen_child = new Node(updated_state, current_node, move_index);
         current_node->children.push_back(chosen_child);
+
+        // Push the new node into the network queue
         network_queue.push_back(chosen_child);
     }
     // Node does have child
@@ -74,49 +75,48 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
     return true;
 }
 
+Node* Tree::simulationStep()
+{
+    // Policy loop
+    Node* current = current_node;
+    while (!current->isTerminal())
+    {
+        if (current->untried_actions.size() > 0)
+        {
+            Node* new_node = current->expand();
+            network_queue.push_back(network_queue);
+            return new_node;
+        }
+        else
+        {
+            current = current->bestChild();
+        }
+    }
+    return current;
+}
+
 std::vector<Node*> Tree::getNetworkQueue()
 {
     return network_queue;
 }
 
-void Tree::clearNetworkQueue()
+bool Tree::clearNetworkQueue()
 {
+    std::vector<Node*> unsuccessfull;
+    for (Node* node : network_queue)
+        if (!node->getNetworkStatus())
+            unsuccessfull.push_back(node);
+    
     network_queue.clear();
-}
 
-bool Tree::isReady()
-{
-    if (network_queue.size() == 0)
+    // All queued nodes are sucessfully initialized
+    if (unsuccessfull.size() == 0)
         return true;
-    return false;
-}
 
-uint16_t Tree::bestMove()
-{
-    Node* bestChild = current_node->absBestChild();
-    if (bestChild == nullptr)
-    {
-        std::cout << "[Tree][E]: Tried to get bestMove of Tree with no current children" << std::endl;
-        return -1;
-    }
-    return bestChild->parent_action;
-}
-
-void Tree::simulationStep()
-{
-    if (!isReady())
-    {
-        std::cout << "[Tree][E]: Called simulation step on non ready tree" << std::endl;
-        return;
-    }
-
-    // Backprob node result and add to network queue if needed
-    // If node has no network output backprob once available
-    Node* node = current_node->simulationStep();
-    if (!node->hasNetworkOut())
+    // Some nodes are still not initialized
+    for (Node* node : unsuccessfull)
         network_queue.push_back(node);
-    else
-        node->backpropagate(node->value, current_node);
+    return false;
 }
 
 Node* Tree::getCurrentNode()
