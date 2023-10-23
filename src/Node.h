@@ -10,14 +10,16 @@ public:
     uint16_t parent_action;
     State* state;
     uint32_t visits;
-    float summed_evaluation;
     std::list<Node*> children;
     std::vector<uint16_t> untried_actions;
+    bool network_status;
+    float evaluation;
+    float summed_evaluation;
     float policy_evaluations[BoardSize * BoardSize];
 
     // Neural Net
-    float evaluation;
     float getPolicyValue();
+    bool getNetworkStatus();
 
     // Constructors
     Node(State* state, Node* parent, uint16_t parent_action);
@@ -30,6 +32,7 @@ public:
     float meanEvaluation();
     void backpropagate(float value, Node* head_node);
     Node* bestChild();
+    bool isTerminal();
 
     // Best child without exploration biases
     Node* absBestChild();

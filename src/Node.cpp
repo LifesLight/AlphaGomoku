@@ -1,7 +1,7 @@
 #include "Node.h"
 
 Node::Node(State* state, Node* parent, uint16_t parent_action)
-    : parent(parent), parent_action(parent_action), state(state), visits(0)
+    : parent(parent), parent_action(parent_action), state(state), visits(0), network_status(0)
 {   }
 
 Node::Node(State* state)
@@ -15,6 +15,11 @@ Node::Node()
 Node::~Node()
 {
     delete state;
+}
+
+bool Node::getNetworkStatus()
+{
+    return network_status;
 }
 
 Node* Node::expand()
@@ -70,6 +75,11 @@ Node* Node::bestChild()
         }
     }
     return best_child;
+}
+
+bool Node::isTerminal()
+{
+    return state->isTerminal();
 }
 
 Node* Node::absBestChild()
