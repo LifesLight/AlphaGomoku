@@ -84,7 +84,7 @@ Node* Tree::simulationStep()
         if (current->untried_actions.size() > 0)
         {
             Node* new_node = current->expand();
-            network_queue.push_back(network_queue);
+            network_queue.push_back(new_node);
             return new_node;
         }
         else

@@ -20,6 +20,7 @@ public:
     // Neural Net
     float getPolicyValue();
     bool getNetworkStatus();
+    void setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input);
 
     // Constructors
     Node(State* state, Node* parent, uint16_t parent_action);

@@ -15,22 +15,18 @@ public:
     // These functions can/will require a NN computation, those will be stored in network queue
     bool makeMove(uint8_t x, uint8_t y);
     bool makeMove(uint16_t index);
-    void simulationStep();
+    Node* simulationStep();
     // <-------------------->
 
     // Network queue managment
     std::vector<Node*> getNetworkQueue();
     bool clearNetworkQueue();
     
-
     Node* getCurrentNode();
     Node* getParentNode();
 
     bool isTerminal();
     void clean();
-
-    // Batching
-
 
 private:
     std::vector<Node*> deletion_queue;

@@ -3,7 +3,7 @@
 #include "State.h"
 #include "Model.h"
 #include "Environment.h"
-
+#include "Batcher.h"
 
 int main(int argc, const char* argv[])
 {
@@ -17,52 +17,16 @@ int main(int argc, const char* argv[])
     if (argc == 4)
         simulations = std::stoi(argv[3]);
 
-    Environment::initialize();
-
     Model* nnb = Utils::autoloadModel(argv[1], torch::kMPS);
     Model* nnw = Utils::autoloadModel(argv[2], torch::kMPS);
-    Environment* env = new Environment(nnb, nnw);
 
-    int turn = 1;
+    Batcher batcher(10, nnb, nnw);
 
-    while (!env->isFinished())
-    {
-        if (turn % 2 || (nnb && nnw))
-        {
-            uint16_t computedMove = env->calculateNextMove(simulations);
-            bool success = env->makeMove(computedMove);
-            if (!success)
-            {
-                std::cout << "Computer move failed" << std::endl;
-                return 0;
-            }
-            //Node* cn = env->getPlayedNode();
-            //std::cout << Node::analytics(cn, {"VISITS", "POLICY", "MEAN", "VALUE"}) << std::endl;
-        }
-        else
-        {
-            std::string x_string, y_string;
-            uint8_t x, y;
-            std::cout << "Move:" << std::endl << "X:";
-            std::cin >> x_string;
-            std::cout << "Y:";
-            std::cin >> y_string;
-            x = std::stoi(x_string);
-            y = std::stoi(y_string);
-            bool success = env->makeMove(x, y);
-            if (!success)
-            {
-                std::cout << "Human move failed" << std::endl;
-                return 0;
-            }
-        }
+    std::cout << "Success" << std::endl;
 
-        std::cout << env->toString() << std::endl;
-        turn++;
 
-        env->freeMemory();
-    }
-    
-    Environment::deinitialize();
+    //std::cout << batcher.getNode(0)->state->toString();
+    for (int i = 0; i < 10; i++)
+        std::cout << Node::analytics(batcher.getEnvironment(i)->getOpposingNode(), {"POLICY", "VALUE"});
     return 1;
 }

@@ -17,6 +17,21 @@ Node::~Node()
     delete state;
 }
 
+void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
+{
+    torch::Tensor policy = std::get<0>(input);
+    torch::Tensor value = std::get<1>(input);
+
+    // Assign value
+    evaluation = value.item<float>();
+    if (state->nextColor())
+        evaluation *= -1;
+
+    // Assign policy values
+    for (int i = 0; i < BoardSize * BoardSize; i++)
+        policy_evaluations[i] = policy[i].item<float>();
+}
+
 bool Node::getNetworkStatus()
 {
     return network_status;
@@ -250,10 +265,14 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
 
     output << std::endl;
 
-    for (const std::string& value : distributions) 
+    if (node->parent)
     {
-        std::cout << distribution(node->parent, value);
+        for (const std::string& value : distributions) 
+        {
+            std::cout << distribution(node->parent, value);
+        }
     }
+
 
     return output.str();
 }
