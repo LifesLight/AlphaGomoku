@@ -14,19 +14,36 @@ int main(int argc, const char* argv[])
     }
 
     int simulations = BoardSize * BoardSize;
+    int environment_count = 10;
     if (argc == 4)
         simulations = std::stoi(argv[3]);
 
-    Model* nnb = Utils::autoloadModel(argv[1], torch::kMPS);
-    Model* nnw = Utils::autoloadModel(argv[2], torch::kMPS);
+    if (argc == 5)
+        environment_count = std::stoi(argv[4]);
 
-    Batcher batcher(10, nnb, nnw);
+    torch::NoGradGuard no_grad_guard;
 
-    std::cout << "Success" << std::endl;
+    Model* nnb = Utils::autoloadModel(argv[1], torch::kCPU);
+    Model* nnw = Utils::autoloadModel(argv[2], torch::kCPU);
 
+    Batcher batcher(environment_count, nnb, nnw);
 
-    //std::cout << batcher.getNode(0)->state->toString();
-    for (int i = 0; i < 10; i++)
-        std::cout << Node::analytics(batcher.getEnvironment(i)->getOpposingNode(), {"POLICY", "VALUE"});
+    batcher.runSimulations(simulations);
+
+    for (int i = 0; i < environment_count; i++)
+    {
+        Node* node = batcher.getEnvironment(i)->getCurrentNode();
+        node = node->absBestChild();
+        std::cout << Node::analytics(node, {"POLICY", "VALUE"});
+    }
+
+    std::string temp;
+    std::cin >> temp;
+
+    std::cout << "Freeing Memory" << std::endl;
+    batcher.freeMemory();
+
+    std::cin >> temp;
+
     return 1;
 }

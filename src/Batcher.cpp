@@ -13,6 +13,12 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     runNetwork();
 }
 
+Batcher::~Batcher()
+{
+    for (Environment* env : environments)
+        delete env;
+}
+
 void Batcher::runNetwork()
 {
     // Accumilate Nodes per model
@@ -23,21 +29,19 @@ void Batcher::runNetwork()
 
     // Output of each model
     std::tuple<torch::Tensor, torch::Tensor> model_outputs[2];
-
-    std::cout << "Calling Networks with Batchsize: ";
-
     for (int i = 0; i < 2; i++)
     {
+        // If no nodes, skip model call
+        if (nodes[i].size() == 0)
+            continue;
+
         // Convert to tensor
         uint32_t batch_size = nodes[i].size();
-
-        std::cout << batch_size << ", ";
-
-        torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, 15, 15}, torch::kFloat32);
-        for (Node* node : nodes[i])
+        torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
+        for (int index = 0; index < batch_size; index++)
         {
-            Gamestate gs(node);
-            model_input[i] = gs.getTensor();
+            Gamestate gs(nodes[i][index]);
+            model_input[index] = gs.getTensor();
         }
 
         // Run model
@@ -62,11 +66,37 @@ void Batcher::runNetwork()
 void Batcher::runSimulations(uint32_t sim_count)
 {
     // Simulation loop / MCTS loop
-    for (uint32_t i = 0; i < sim_count; i++)
-    {
-        // Run policy
+    uint32_t env_count = environments.size();
 
+    std::vector<Node*> simulation_nodes;
+    simulation_nodes.reserve(env_count);
+
+    for (uint32_t sim_step = 0; sim_step < sim_count; sim_step++)
+    {
+        std::cout << "-" << std::flush;
+        // Run policy on all envs
+        for (uint32_t i = 0; i < env_count; i++)
+        {
+            Environment* env = environments[i];
+            simulation_nodes.push_back(env->simulationStep());
+        }
+
+        // Run network for all envs
+        runNetwork();
+
+        // Backprop all envs
+        for (uint32_t i = 0; i < env_count; i++)
+        {
+            Environment* env = environments[i];
+            Node* current_node = env->getCurrentNode();
+            Node* sim_node = simulation_nodes[i];
+            sim_node->backpropagate(sim_node->evaluation, current_node);
+        } 
+
+        simulation_nodes.clear();
     }
+
+    std::cout << std::endl;
 }
 
 Environment* Batcher::getEnvironment(uint32_t index)
@@ -85,4 +115,10 @@ Node* Batcher::getNode(uint32_t index)
     
     std::cout << "Tried to get node with out of bounds index" << std::endl;
     return nullptr;
+}
+
+void Batcher::freeMemory()
+{
+    for (Environment* env : environments)
+        env->freeMemory();
 }

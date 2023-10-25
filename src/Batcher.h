@@ -9,11 +9,14 @@ class Batcher
 {
 public:
     Batcher(int environments, Model* NN_Black, Model* NN_White);
+    ~Batcher();
 
     Environment* getEnvironment(uint32_t index);
     Node* getNode(uint32_t index);
 
     void runSimulations(uint32_t simulations);
+
+    void freeMemory();
 
 private:
     std::vector<Environment*> environments;

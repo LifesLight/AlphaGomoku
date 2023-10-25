@@ -36,9 +36,9 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
     return true;
 }
 
-void Environment::simulationStep()
+Node* Environment::simulationStep()
 {
-
+    return trees[next_color]->simulationStep();
 }
 
 std::vector<std::tuple<Node*, bool>> Environment::getNetworkQueue()

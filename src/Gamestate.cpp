@@ -3,7 +3,7 @@
 Gamestate::Gamestate(Node* node)
 {
     // Init main tensor
-    tensor = torch::zeros({HistoryDepth + 1, 15, 15}, torch::kFloat32);
+    tensor = torch::zeros({HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
 
     // State at node
     State* current_state = node->state;

@@ -16,6 +16,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     {
         resnet = torch::jit::load(resnet_path);
         resnet.to(device);
+        resnet.eval();
     }
     catch (const c10::Error& e)
     {
@@ -27,6 +28,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     {
         polhead = torch::jit::load(polhead_path);
         polhead.to(device);
+        polhead.eval();
     }
     catch (const c10::Error& e)
     {
@@ -38,6 +40,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     {
         valhead = torch::jit::load(valhead_path);
         valhead.to(device);
+        valhead.eval();
     }
     catch (const c10::Error& e)
     {

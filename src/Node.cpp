@@ -2,7 +2,9 @@
 
 Node::Node(State* state, Node* parent, uint16_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), visits(0), network_status(0)
-{   }
+{  
+    untried_actions = state->getPossible();
+}
 
 Node::Node(State* state)
     : Node(state, nullptr, uint16_t(-1))
@@ -23,13 +25,15 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     torch::Tensor value = std::get<1>(input);
 
     // Assign value
-    evaluation = value.item<float>();
+    evaluation = value.detach().item<float>();
     if (state->nextColor())
         evaluation *= -1;
 
     // Assign policy values
     for (int i = 0; i < BoardSize * BoardSize; i++)
-        policy_evaluations[i] = policy[i].item<float>();
+        policy_evaluations[i] = policy[i].detach().item<float>();
+
+    network_status = true;
 }
 
 bool Node::getNetworkStatus()
@@ -39,8 +43,21 @@ bool Node::getNetworkStatus()
 
 Node* Node::expand()
 {
-    uint16_t action = untried_actions.back();
-    untried_actions.pop_back();
+    if (!network_status)
+    {
+        std::cout << "Tried to expand node without network data" << std::endl << std::flush;
+        return nullptr;
+    }
+
+    // Find highest policy action
+    uint16_t action = -1; // initialized as unreachable value
+    for (uint16_t possible : untried_actions)
+        if (action == uint16_t(-1) || policy_evaluations[action] < policy_evaluations[possible])
+            action = possible;
+
+    // Maybe optimize
+    auto remove_me = std::find(untried_actions.begin(), untried_actions.end(), action);
+    untried_actions.erase(remove_me);
 
     State* resulting_state = new State(state);
     resulting_state->makeMove(action);

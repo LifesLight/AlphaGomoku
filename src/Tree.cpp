@@ -9,6 +9,7 @@ Tree::Tree()
 
 Tree::~Tree()
 {
+    // Not correct?
     delete root_node;
 }
 
