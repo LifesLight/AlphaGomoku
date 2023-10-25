@@ -238,8 +238,9 @@ std::string distribution(Node* parent, const std::string& type)
 
 std::string Node::analytics(Node* node, const std::initializer_list<std::string> distributions)
 {
-    if (node->children.size() == 1)
-        std::cout << "[Node][W]: Analytics is missing chilren, did you free memory before calling?" << std::endl;
+    if (node->parent)
+        if ((node->parent->children.size() == 1) && (node->parent->children.size() != 0))
+            std::cout << "[Node][W]: Analytics is missing chilren, did you free memory before calling?" << std::endl;
         
     bool color = node->state->nextColor();
 

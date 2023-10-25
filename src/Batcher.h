@@ -18,6 +18,7 @@ public:
     void runSimulations(uint32_t simulations);
     void makeBestMoves();
     void makeRandomMoves();
+    void makeRandomMoves(int amount);
 
     void freeMemory();
 

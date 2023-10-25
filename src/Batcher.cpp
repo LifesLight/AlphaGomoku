@@ -97,8 +97,6 @@ void Batcher::runSimulations(uint32_t sim_count)
         } 
 
         simulation_nodes.clear();
-
-        std::cout << "." << std::flush;
     }
 
     std::cout << std::endl;
@@ -132,10 +130,20 @@ void Batcher::makeBestMoves()
 {
     for (Environment* env : environments)
         env->makeBestMove();
+    runNetwork();
 }
 
 void Batcher::makeRandomMoves()
 {
     for (Environment* env : environments)
         env->makeRandomMove();
+    runNetwork();
+}
+
+void Batcher::makeRandomMoves(int amount)
+{
+    for (int i = 0; i < amount; i++)
+        for (Environment* env : environments)
+            env->makeRandomMove();
+    runNetwork();
 }

@@ -38,7 +38,12 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
 
 bool Environment::makeBestMove()
 {
-    return makeMove(getCurrentNode()->absBestChild()->parent_action);
+    Node* node = getCurrentNode()->absBestChild();
+    if (node)
+        return makeMove(node->parent_action);
+    
+    std::cout << "[Env][E]: Get absBestChild failed in makeBestMove" << std::endl;
+    return false;
 }
 
 bool Environment::makeRandomMove()
