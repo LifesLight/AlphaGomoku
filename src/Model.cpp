@@ -54,6 +54,10 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
 
 std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
 {
+    // Disable gradients for this scope
+    torch::NoGradGuard no_grad_guard;
+
+    // Inference
     input = input.to(device);
     auto resnet_result = resnet.forward({input});
     auto policy_result = polhead.forward({resnet_result});
