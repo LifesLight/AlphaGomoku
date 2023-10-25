@@ -55,6 +55,9 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         for (Node* child : current_node->children)
             deletion_queue.push_back(child);
 
+        // Remove untried from parent node
+        current_node->removeFromUntried(move_index);
+
         // Create new node
         State* updated_state = new State(current_state);
         updated_state->makeMove(move_index);

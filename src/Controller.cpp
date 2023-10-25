@@ -27,6 +27,9 @@ int main(int argc, const char* argv[])
     Model* nnw = Utils::autoloadModel(argv[2], torch::kMPS);
 
     Batcher batcher(environment_count, nnb, nnw);
+    for (int i = 0; i < 10; i++)
+        batcher.makeRandomMoves();
+    batcher.runNetwork();
 
     batcher.runSimulations(simulations);
 

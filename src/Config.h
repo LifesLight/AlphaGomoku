@@ -14,6 +14,7 @@
 #include <functional>
 #include <sstream>
 #include <initializer_list>
+#include <random>
 
 // External
 #define ModelPath "../Models/scripted/"

@@ -25,7 +25,9 @@ public:
     // These functions can/will require a NN computation, those will be stored in trees netqueues
     bool makeMove(uint8_t x, uint8_t y);
     bool makeMove(uint16_t index);
-    Node* simulationStep();
+    bool makeBestMove();
+    bool makeRandomMove();
+    Node* policy();
     // <-------------------->
 
     // These are wrappers around tree, it just translates it to the env

@@ -36,7 +36,25 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
     return true;
 }
 
-Node* Environment::simulationStep()
+bool Environment::makeBestMove()
+{
+    return makeMove(getCurrentNode()->absBestChild()->parent_action);
+}
+
+bool Environment::makeRandomMove()
+{
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    Node* current = getCurrentNode();
+    int action_count = current->untried_actions.size();
+    std::uniform_int_distribution<int> uni(0, action_count);
+
+    uint16_t action = current->untried_actions[uni(rng)];
+    return makeMove(action);
+}
+
+Node* Environment::policy()
 {
     return trees[next_color]->simulationStep();
 }

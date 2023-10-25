@@ -24,8 +24,12 @@ void Batcher::runNetwork()
     // Accumilate Nodes per model
     std::vector<Node*> nodes[2];
     for (Environment* env : environments)
+    {
         for (std::tuple<Node*, bool> node : env->getNetworkQueue())
             nodes[std::get<1>(node)].push_back(std::get<0>(node));
+        env->clearNetworkQueue();
+    }
+
 
     // Output of each model
     std::tuple<torch::Tensor, torch::Tensor> model_outputs[2];
@@ -73,12 +77,11 @@ void Batcher::runSimulations(uint32_t sim_count)
 
     for (uint32_t sim_step = 0; sim_step < sim_count; sim_step++)
     {
-        std::cout << "-" << std::flush;
         // Run policy on all envs
         for (uint32_t i = 0; i < env_count; i++)
         {
             Environment* env = environments[i];
-            simulation_nodes.push_back(env->simulationStep());
+            simulation_nodes.push_back(env->policy());
         }
 
         // Run network for all envs
@@ -94,6 +97,8 @@ void Batcher::runSimulations(uint32_t sim_count)
         } 
 
         simulation_nodes.clear();
+
+        std::cout << "." << std::flush;
     }
 
     std::cout << std::endl;
@@ -121,4 +126,16 @@ void Batcher::freeMemory()
 {
     for (Environment* env : environments)
         env->freeMemory();
+}
+
+void Batcher::makeBestMoves()
+{
+    for (Environment* env : environments)
+        env->makeBestMove();
+}
+
+void Batcher::makeRandomMoves()
+{
+    for (Environment* env : environments)
+        env->makeRandomMove();
 }

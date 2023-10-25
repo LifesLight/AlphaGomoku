@@ -39,6 +39,9 @@ public:
     Node* bestChild();
     bool isTerminal();
 
+    // Other
+    void removeFromUntried(uint16_t action);
+
     // Best child without exploration biases
     Node* absBestChild();
 

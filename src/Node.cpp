@@ -37,6 +37,13 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     network_status = true;
 }
 
+void Node::removeFromUntried(uint16_t action)
+{
+    // Optimize me :)
+    auto remove_me = std::find(untried_actions.begin(), untried_actions.end(), action);
+    untried_actions.erase(remove_me);
+}
+
 bool Node::getNetworkStatus()
 {
     return network_status;
@@ -56,9 +63,7 @@ Node* Node::expand()
         if (action == uint16_t(-1) || policy_evaluations[action] < policy_evaluations[possible])
             action = possible;
 
-    // Maybe optimize
-    auto remove_me = std::find(untried_actions.begin(), untried_actions.end(), action);
-    untried_actions.erase(remove_me);
+    removeFromUntried(action);
 
     State* resulting_state = new State(state);
     resulting_state->makeMove(action);

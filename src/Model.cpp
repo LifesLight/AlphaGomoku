@@ -1,5 +1,14 @@
 #include "Model.h"
 
+torch::jit::script::Module load_model(std::string path, torch::Device device)
+{
+    // Always load on CPU
+    torch::jit::script::Module model = torch::jit::load(path, torch::kCPU);
+    model.to(device);
+    model.eval();  
+    return model;  
+}
+
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path)
     : Model(resnet_path, polhead_path, valhead_path, torch::kCPU)
 {   }
@@ -14,9 +23,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     // Load resnet
     try
     {
-        resnet = torch::jit::load(resnet_path);
-        resnet.to(device);
-        resnet.eval();
+        resnet = load_model(resnet_path, device);
     }
     catch (const c10::Error& e)
     {
@@ -26,9 +33,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     // Load polhead
     try
     {
-        polhead = torch::jit::load(polhead_path);
-        polhead.to(device);
-        polhead.eval();
+        polhead = load_model(polhead_path, device);
     }
     catch (const c10::Error& e)
     {
@@ -38,9 +43,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     // Load valhead
     try
     {
-        valhead = torch::jit::load(valhead_path);
-        valhead.to(device);
-        valhead.eval();
+        valhead = load_model(valhead_path, device);
     }
     catch (const c10::Error& e)
     {
