@@ -9,8 +9,6 @@ class Batcher
 public:
     Batcher(int environments, Model* NN_Black, Model* NN_White);
     ~Batcher();
-    // Clear up all network queues
-    void runNetwork();
 
     Environment* getEnvironment(uint32_t index);
     Node* getNode(uint32_t index);
@@ -23,6 +21,10 @@ public:
     void freeMemory();
 
 private:
+    // Clear up all network queues
+    // Should never be a need to call manually
+    void runNetwork();
+
     std::vector<Environment*> environments;
     Model* models[2];
 };

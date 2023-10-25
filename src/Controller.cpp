@@ -23,8 +23,8 @@ int main(int argc, const char* argv[])
 
     torch::NoGradGuard no_grad_guard;
 
-    Model* nnb = Utils::autoloadModel(argv[1], torch::kMPS);
-    Model* nnw = Utils::autoloadModel(argv[2], torch::kMPS);
+    Model* nnb = Utils::autoloadModel(argv[1], torch::kCPU);
+    Model* nnw = Utils::autoloadModel(argv[2], torch::kCPU);
 
     Batcher batcher(environment_count, nnb, nnw);
 
@@ -38,13 +38,7 @@ int main(int argc, const char* argv[])
         std::cout << Node::analytics(node, {"POLICY", "VALUE"});
     }
 
-    std::string temp;
-    std::cin >> temp;
-
-    std::cout << "Freeing Memory" << std::endl;
     batcher.freeMemory();
-
-    std::cin >> temp;
 
     return 1;
 }

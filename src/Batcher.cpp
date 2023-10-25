@@ -24,12 +24,8 @@ void Batcher::runNetwork()
     // Accumilate Nodes per model
     std::vector<Node*> nodes[2];
     for (Environment* env : environments)
-    {
         for (std::tuple<Node*, bool> node : env->getNetworkQueue())
             nodes[std::get<1>(node)].push_back(std::get<0>(node));
-        env->clearNetworkQueue();
-    }
-
 
     // Output of each model
     std::tuple<torch::Tensor, torch::Tensor> model_outputs[2];
@@ -63,6 +59,14 @@ void Batcher::runNetwork()
             std::tuple input = std::tuple<torch::Tensor, torch::Tensor>(policy_data[i], value_data[i]);
             nodes[ii][i]->setModelOutput(input);
         }
+    }
+
+    // Clear network queue
+    for (Environment* env : environments)
+    {
+        bool success = env->clearNetworkQueue();
+        if (!success)
+            std::cout << "[Batcher][W]: Network queue could not be cleared (Nodes without Netdata remaining)" << std::endl;
     }
 }
 
