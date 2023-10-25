@@ -4,7 +4,6 @@
 #include "Node.h"
 #include "Model.h"
 #include "State.h"
-#include "Gamestate.h"
 #include "Tree.h"
 
 /*

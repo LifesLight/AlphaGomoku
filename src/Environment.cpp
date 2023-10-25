@@ -86,8 +86,7 @@ std::string Environment::toString()
 
 std::string Environment::toString(uint8_t depth)
 {
-    Gamestate current_gamestate(getCurrentNode());
-    return current_gamestate.sliceToString(depth);
+    return Node::sliceNodeHistory(getCurrentNode(), depth);
 }
 
 bool Environment::isFinished()

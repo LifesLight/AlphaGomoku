@@ -22,6 +22,10 @@ public:
     bool getNetworkStatus();
     void setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input);
 
+    // Converters
+    static torch::Tensor nodeToGamestate(Node* node);
+    static std::string sliceNodeHistory(Node* node, uint8_t depth);
+
     // Constructors
     Node(State* state, Node* parent, uint16_t parent_action);
     Node(State* state);

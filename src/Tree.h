@@ -4,7 +4,6 @@
 #include "Model.h"
 #include "Node.h"
 #include "State.h"
-#include "Gamestate.h"
 
 class Tree
 {

@@ -2,7 +2,6 @@
 #include "Environment.h"
 #include "Model.h"
 #include "Node.h"
-#include "Gamestate.h"
 
 // This class is a wrapper around environments to allow simple parallelization of selfplay
 class Batcher

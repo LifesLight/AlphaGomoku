@@ -40,8 +40,8 @@ void Batcher::runNetwork()
         torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
         for (int index = 0; index < batch_size; index++)
         {
-            Gamestate gs(nodes[i][index]);
-            model_input[index] = gs.getTensor();
+            torch::Tensor tensor = Node::nodeToGamestate(nodes[i][index]);
+            model_input[index] = tensor;
         }
 
         // Run model

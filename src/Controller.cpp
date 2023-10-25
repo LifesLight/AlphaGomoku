@@ -15,16 +15,16 @@ int main(int argc, const char* argv[])
 
     int simulations = BoardSize * BoardSize;
     int environment_count = 10;
-    if (argc == 4)
+    if (argc >= 4)
         simulations = std::stoi(argv[3]);
 
-    if (argc == 5)
+    if (argc >= 5)
         environment_count = std::stoi(argv[4]);
 
     torch::NoGradGuard no_grad_guard;
 
-    Model* nnb = Utils::autoloadModel(argv[1], torch::kCPU);
-    Model* nnw = Utils::autoloadModel(argv[2], torch::kCPU);
+    Model* nnb = Utils::autoloadModel(argv[1], torch::kMPS);
+    Model* nnw = Utils::autoloadModel(argv[2], torch::kMPS);
 
     Batcher batcher(environment_count, nnb, nnw);
 
