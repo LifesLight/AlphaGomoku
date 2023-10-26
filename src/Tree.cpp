@@ -85,7 +85,6 @@ Node* Tree::policy()
     Node* current = current_node;
     while (!current->isTerminal())
     {
-        std::cout << current->untried_actions.size() << std::endl;
         if (current->untried_actions.size() > 0)
         {
             Node* new_node = current->expand();

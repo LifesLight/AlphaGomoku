@@ -21,18 +21,19 @@ int main(int argc, const char* argv[])
     if (argc >= 5)
         environment_count = std::stoi(argv[4]);
 
-    Model* nnb = Utils::autoloadModel(argv[1], torch::kCPU);
-    Model* nnw = Utils::autoloadModel(argv[2], torch::kCPU);
+    Model* nnb = Utils::autoloadModel(argv[1], torch::kMPS);
+    Model* nnw = Utils::autoloadModel(argv[2], torch::kMPS);
 
     Batcher batcher(environment_count, nnb, nnw);
 
     batcher.makeRandomMoves(5);
     batcher.runSimulations(simulations);
-    batcher.makeBestMoves();
 
     for (int i = 0; i < environment_count; i++)
     {
-        std::cout << Node::analytics(batcher.getEnvironment(i)->getCurrentNode(), {"POLICY", "VALUE", "MEAN", "VISITS"});
+        Node* node = batcher.getEnvironment(i)->getCurrentNode();
+        node = node->absBestChild();
+        std::cout << Node::analytics(node, {"POLICY", "VALUE", "MEAN", "VISITS"});
     }
 
     batcher.freeMemory();

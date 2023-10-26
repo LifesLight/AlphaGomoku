@@ -35,7 +35,6 @@ public:
     // Algorithm
     Node* expand();
     float meanEvaluation();
-    void backpropagate(float value);
     Node* bestChild();
     bool isTerminal();
 
@@ -47,4 +46,8 @@ public:
 
     // Debug
     static std::string analytics(Node* node, const std::initializer_list<std::string> distributions);
+
+private:
+    // Get called when network data is recieved
+    void backpropagate(float value);
 };
