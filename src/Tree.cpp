@@ -79,12 +79,13 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
     return true;
 }
 
-Node* Tree::simulationStep()
+Node* Tree::policy()
 {
     // Policy loop
     Node* current = current_node;
     while (!current->isTerminal())
     {
+        std::cout << current->untried_actions.size() << std::endl;
         if (current->untried_actions.size() > 0)
         {
             Node* new_node = current->expand();
@@ -92,7 +93,7 @@ Node* Tree::simulationStep()
             return new_node;
         }
         else
-        {
+        {   
             current = current->bestChild();
         }
     }

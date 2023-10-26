@@ -115,19 +115,8 @@ void Batcher::runSimulations(uint32_t sim_count)
         // Run network for all envs
         runNetwork();
 
-        // Backprop all envs
-        for (uint32_t i = 0; i < env_count; i++)
-        {
-            Environment* env = non_terminal_environments[i];
-            Node* current_node = env->getCurrentNode();
-            Node* sim_node = simulation_nodes[i];
-            sim_node->backpropagate(sim_node->evaluation, current_node);
-        } 
-
         simulation_nodes.clear();
     }
-
-    std::cout << std::endl;
 }
 
 Environment* Batcher::getEnvironment(uint32_t index)

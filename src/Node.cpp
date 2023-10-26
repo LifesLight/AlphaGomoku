@@ -34,6 +34,8 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     for (int i = 0; i < BoardSize * BoardSize; i++)
         policy_evaluations[i] = policy[i].detach().item<float>();
 
+    backpropagate(evaluation);
+
     network_status = true;
 }
 
@@ -73,18 +75,21 @@ Node* Node::expand()
     return child;
 }
 
-void Node::backpropagate(float evaluation, Node* head_node)
+void Node::backpropagate(float evaluation)
 {
     visits++;
     summed_evaluation += evaluation;
 
     // Dont propagate above current head node
-    if (parent && this != head_node)
-        parent->backpropagate(evaluation, head_node);
+    if (parent)
+        parent->backpropagate(evaluation);
 }
 
 float Node::meanEvaluation()
 {
+    if (visits == 0)
+        return 0;
+
     if (state->nextColor())
         return summed_evaluation / float(visits);
     else
@@ -149,7 +154,10 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
     std::ostringstream result;
     result << std::setw(3) << std::setfill(' ');
     if      (type == "VISITS")
-        result << int(float(child->visits) / max_visits * 999);
+        if (max_visits == 0)
+            result << 0;
+        else
+            result << int(float(child->visits) / float(max_visits) * 999);
     else if (type == "VALUE")
         result << int(float(child->evaluation) * 100);
     else if (type == "MEAN")

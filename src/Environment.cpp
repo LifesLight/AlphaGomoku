@@ -61,7 +61,7 @@ bool Environment::makeRandomMove()
 
 Node* Environment::policy()
 {
-    return trees[next_color]->simulationStep();
+    return trees[next_color]->policy();
 }
 
 std::vector<std::tuple<Node*, bool>> Environment::getNetworkQueue()

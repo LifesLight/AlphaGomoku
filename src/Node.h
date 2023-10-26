@@ -35,7 +35,7 @@ public:
     // Algorithm
     Node* expand();
     float meanEvaluation();
-    void backpropagate(float value, Node* head_node);
+    void backpropagate(float value);
     Node* bestChild();
     bool isTerminal();
 
