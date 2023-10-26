@@ -3,8 +3,6 @@
 #include "Model.h"
 #include "Node.h"
 
-// TODO Deal with terminal environments
-
 // This class is a wrapper around environments to allow simple parallelization of selfplay
 class Batcher
 {
