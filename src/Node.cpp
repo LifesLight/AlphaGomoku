@@ -65,6 +65,11 @@ Node* Node::expand()
         if (action == uint16_t(-1) || policy_evaluations[action] < policy_evaluations[possible])
             action = possible;
 
+    return expand(action);
+}
+
+Node* Node::expand(uint16_t action)
+{
     removeFromUntried(action);
 
     State* resulting_state = new State(state);

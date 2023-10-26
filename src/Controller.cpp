@@ -28,11 +28,11 @@ int main(int argc, const char* argv[])
 
     batcher.makeRandomMoves(5);
     batcher.runSimulations(simulations);
+    batcher.makeBestMoves();
 
     for (int i = 0; i < environment_count; i++)
     {
-        Node* node = batcher.getEnvironment(i)->getCurrentNode();
-        node = node->absBestChild();
+        Node* node = batcher.getEnvironment(i)->getOpposingNode();
         std::cout << Node::analytics(node, {"POLICY", "VALUE", "MEAN", "VISITS"});
     }
 

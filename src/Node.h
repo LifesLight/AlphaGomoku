@@ -34,6 +34,7 @@ public:
 
     // Algorithm
     Node* expand();
+    Node* expand(uint16_t move_index);
     float meanEvaluation();
     Node* bestChild();
     bool isTerminal();

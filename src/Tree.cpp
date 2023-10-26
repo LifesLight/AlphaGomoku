@@ -10,7 +10,7 @@ Tree::Tree()
 Tree::~Tree()
 {
     // Not correct?
-    delete root_node;
+    // TODO do this
 }
 
 bool Tree::makeMove(uint16_t index)
@@ -55,14 +55,8 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         for (Node* child : current_node->children)
             deletion_queue.push_back(child);
 
-        // Remove untried from parent node
-        current_node->removeFromUntried(move_index);
-
-        // Create new node
-        State* updated_state = new State(current_state);
-        updated_state->makeMove(move_index);
-        chosen_child = new Node(updated_state, current_node, move_index);
-        current_node->children.push_back(chosen_child);
+        // Expand to move index
+        chosen_child = current_node->expand(move_index);
 
         // Push the new node into the network queue
         network_queue.push_back(chosen_child);
@@ -70,6 +64,7 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
     // Node does have child
     else
     {
+        // Delete other children
         for (Node* child : current_node->children)
             if (child != chosen_child)
                 deletion_queue.push_back(child);
