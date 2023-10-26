@@ -6,10 +6,19 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     models[0] = NNB;
     models[1] = NNW;
 
+    environments.reserve(environment_count);
+    non_terminal_environments.reserve(environment_count);
+
     // Super simple, needs randomization for inital gamestates
     for (int i = 0; i < environment_count; i++)
-        environments.push_back(new Environment());
+    {
+        Environment* env = new Environment();
+        environments.push_back(env);
 
+        // new envs are assumed non terminal
+        non_terminal_environments.push_back(env);
+    }
+        
     runNetwork();
 }
 
@@ -17,6 +26,21 @@ Batcher::~Batcher()
 {
     for (Environment* env : environments)
         delete env;
+}
+
+bool Batcher::isTerminal()
+{
+    if (non_terminal_environments.size() == 0)
+        return true;
+    return false;
+}
+
+void Batcher::updateNonTerminal()
+{
+    non_terminal_environments.clear();
+    for (Environment* env : environments)
+        if (!env->isTerminal())
+            non_terminal_environments.push_back(env);
 }
 
 void Batcher::runNetwork()
@@ -70,11 +94,11 @@ void Batcher::runNetwork()
     }
 }
 
-
+// Only run on non terminal environments
 void Batcher::runSimulations(uint32_t sim_count)
 {
     // Simulation loop / MCTS loop
-    uint32_t env_count = environments.size();
+    uint32_t env_count = non_terminal_environments.size();
 
     std::vector<Node*> simulation_nodes;
     simulation_nodes.reserve(env_count);
@@ -84,7 +108,7 @@ void Batcher::runSimulations(uint32_t sim_count)
         // Run policy on all envs
         for (uint32_t i = 0; i < env_count; i++)
         {
-            Environment* env = environments[i];
+            Environment* env = non_terminal_environments[i];
             simulation_nodes.push_back(env->policy());
         }
 
@@ -94,7 +118,7 @@ void Batcher::runSimulations(uint32_t sim_count)
         // Backprop all envs
         for (uint32_t i = 0; i < env_count; i++)
         {
-            Environment* env = environments[i];
+            Environment* env = non_terminal_environments[i];
             Node* current_node = env->getCurrentNode();
             Node* sim_node = simulation_nodes[i];
             sim_node->backpropagate(sim_node->evaluation, current_node);
@@ -132,22 +156,43 @@ void Batcher::freeMemory()
 
 void Batcher::makeBestMoves()
 {
-    for (Environment* env : environments)
+    for (Environment* env : non_terminal_environments)
         env->makeBestMove();
+
+    updateNonTerminal();
     runNetwork();
 }
 
 void Batcher::makeRandomMoves()
 {
-    for (Environment* env : environments)
+    for (Environment* env : non_terminal_environments)
         env->makeRandomMove();
+
+    updateNonTerminal();
     runNetwork();
 }
 
 void Batcher::makeRandomMoves(int amount)
 {
     for (int i = 0; i < amount; i++)
-        for (Environment* env : environments)
+    {
+        for (Environment* env : non_terminal_environments)
             env->makeRandomMove();
+            
+        updateNonTerminal();
+    }
+
     runNetwork();
+}
+
+std::string Batcher::toString()
+{
+    std::stringstream output;
+    for (int i = 0; i < environments.size(); i++)
+    {
+        output << std::endl << "Environment: " << i;
+        output << environments[i]->toString();
+    }
+        
+    return output.str();
 }

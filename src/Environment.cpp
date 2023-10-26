@@ -112,7 +112,7 @@ std::string Environment::toString(uint8_t depth)
     return Node::sliceNodeHistory(getCurrentNode(), depth);
 }
 
-bool Environment::isFinished()
+bool Environment::isTerminal()
 {
     return getCurrentNode()->state->isTerminal();
 }

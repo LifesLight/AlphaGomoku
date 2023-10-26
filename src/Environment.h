@@ -39,7 +39,7 @@ public:
     std::string toString();
     std::string toString(uint8_t depth);
 
-    bool isFinished();
+    bool isTerminal();
     bool getNextColor();
 
     // Default current
