@@ -19,8 +19,8 @@ int main(int argc, const char* argv[])
     Model* NN_white;
     try
     {
-        NN_black = Utils::autoloadModel(argv[1], torch::kMPS);
-        NN_white = Utils::autoloadModel(argv[2], torch::kMPS);
+        NN_black = Model::autoloadModel(argv[1], torch::kMPS);
+        NN_white = Model::autoloadModel(argv[2], torch::kMPS);
     }
     catch(const std::exception& e)
     {

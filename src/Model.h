@@ -18,6 +18,9 @@ public:
     std::tuple<torch::Tensor, torch::Tensor> forward(torch::Tensor input);
     std::string getName();
 
+    // Creates a model from just the model name, takes rest from config path
+    static Model* autoloadModel(std::string name, torch::Device device);
+
 private:
     torch::jit::script::Module resnet, polhead, valhead;
     torch::Device device;

@@ -21,7 +21,7 @@ Node::~Node()
 
 void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
 {
-    // Extract eahc heads output
+    // Extract each heads output
     torch::Tensor policy = std::get<0>(input);
     torch::Tensor value = std::get<1>(input);
 

@@ -21,8 +21,8 @@ int main(int argc, const char* argv[])
     if (argc >= 5)
         environment_count = std::stoi(argv[4]);
 
-    Model* nnb = Utils::autoloadModel(argv[1], torch::kMPS);
-    Model* nnw = Utils::autoloadModel(argv[2], torch::kMPS);
+    Model* nnb = Model::autoloadModel(argv[1], torch::kMPS);
+    Model* nnw = Model::autoloadModel(argv[2], torch::kMPS);
 
     Batcher batcher(environment_count, nnb, nnw);
 
