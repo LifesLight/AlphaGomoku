@@ -3,7 +3,11 @@
 #include "Model.h"
 #include "Node.h"
 
-// This class is a wrapper around environments to allow simple parallelization of selfplay
+/*
+Host class for the entire selfplay.
+Automatically manages model calls and batches to improve performance wherever possible.
+*/
+
 class Batcher
 {
 public:
@@ -25,6 +29,8 @@ public:
 
     // Display
     std::string toString();
+    // Outputs a distribution for each env
+    std::string toStringDist(const std::initializer_list<std::string> distributions);
 
 private:
     // Clear up all network queues

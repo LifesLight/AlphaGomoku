@@ -27,6 +27,13 @@ typedef int16_t BLOCK;
 typedef int8_t BLOCK;
 #endif
 
+/*
+State is a highly optimized representation of a singular Gomoku Board.
+It has fast checks for if someone has one or if the Board is terminal (No moves left or player won).
+
+Is also the main interface for getting information about a Board.
+*/
+
 class State
 {
 public:

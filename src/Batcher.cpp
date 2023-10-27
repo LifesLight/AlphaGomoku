@@ -179,9 +179,31 @@ std::string Batcher::toString()
     std::stringstream output;
     for (int i = 0; i < environments.size(); i++)
     {
-        output << std::endl << "Environment: " << i;
+        output << std::endl << std::endl << " <---------- Environment: " << i << "---------->" << std::endl << std::endl; 
         output << environments[i]->toString();
     }
         
+    return output.str();
+}
+
+std::string Batcher::toStringDist(const std::initializer_list<std::string> distributions)
+{
+    std::stringstream output;
+    for (int i = 0; i < environments.size(); i++)
+    {
+        for (int i = 0; i < BoardSize; i++)
+            output << "#-#-";
+        
+        output << std::endl << std::endl << " <---------- Environment: " << i << "---------->" << std::endl << std::endl; 
+
+        output << " <--- Active Tree --->" << std::endl;
+        output << Node::analytics(environments[i]->getCurrentNode(), distributions);
+        output << std::endl;
+
+        output << " <---- Cold Tree ---->" << std::endl;
+        output << Node::analytics(environments[i]->getOpposingNode(), distributions);
+        output << std::endl;
+    }
+
     return output.str();
 }

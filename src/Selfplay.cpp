@@ -42,22 +42,6 @@ int main(int argc, const char* argv[])
         std::cerr << "[FATAL]: Failed get parameters" << std::endl << e.what() << '\n';
         return 0;
     }
-    
-    // Initialize globals
-    Environment::initialize();
-
-    // Creating environments
-    std::vector<Environment*> environments;
-    environments.reserve(games);
-    for (int i = 0; i < games; i++)
-    {
-        Environment* env = new Environment(NN_black, NN_white);
-        environments.push_back(env);
-    }
-
-    std::cout << environments[0]->getNetworkQueue().size() << std::endl;
-
-    environments[0]->simulationStep();
 
     return 1;
 }

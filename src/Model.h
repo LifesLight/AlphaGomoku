@@ -2,6 +2,11 @@
 
 #include "Config.h"
 
+/*
+Wrapper around a pytorch multi module model.
+Used for simplifying the code.
+*/
+
 class Model
 {
 public:

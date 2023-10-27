@@ -30,11 +30,7 @@ int main(int argc, const char* argv[])
     batcher.runSimulations(simulations);
     batcher.makeBestMoves();
 
-    for (int i = 0; i < environment_count; i++)
-    {
-        Node* node = batcher.getEnvironment(i)->getOpposingNode();
-        std::cout << Node::analytics(node, {"POLICY", "VALUE", "MEAN", "VISITS"});
-    }
+    std::cout << batcher.toStringDist({"MEAN"}) << std::endl;
 
     batcher.freeMemory();
 

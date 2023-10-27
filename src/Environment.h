@@ -7,15 +7,12 @@
 #include "Tree.h"
 
 /*
-For batching, we take one batch out of every parellel simulation step
-When calling make move there is a chance that we need to call the model,
-so we take all those into a batch if needed;
+Environment stores 2 Trees and syncs them so that each Model / Agent has his own Tree 
+(Relevant for not needing to store different values for "same" node for 2 different models in each Tree)
 
-For each environment we store 
+Also has a queue for deleting obsolete nodes, this might not be neccessary.
 */
 
-
-// Environment is a wrapper around 2 Trees, most functions act simmelar
 class Environment
 {
 public:

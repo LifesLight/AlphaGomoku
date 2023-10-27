@@ -5,6 +5,12 @@
 #include "Node.h"
 #include "State.h"
 
+/*
+A Tree is a domain for a singular Node tree, its main purpose is to make environment simpler.
+
+Tree also automatically accumilates a network queue which is a list of nodes still requiring model data.
+*/
+
 class Tree
 {
 public:
