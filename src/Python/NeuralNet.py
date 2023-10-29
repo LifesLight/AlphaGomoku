@@ -59,43 +59,31 @@ class PolicyHead(nn.Module):
         x = self.head(x)
         return x
 
+
 class ValueHead(nn.Module):
-    def __init__(self, inFilters, convFilters, linearFilters):
+    def __init__(self, Filters):
         super().__init__()
-        self.inFilters = inFilters
-        self.convFilters  = convFilters
-        self.linearFilters = linearFilters
+        self.filters = Filters
+        self.linearFilters = 128
+
+        self.conv_layers = nn.ModuleList([ConvolutionLayer(self.filters, kernal_size=3) for _ in range(7)])
 
         self.value = nn.Sequential(
-            nn.Conv2d(self.inFilters, self.convFilters, 3, padding = 0),
-            nn.BatchNorm2d(self.convFilters),
-            nn.ReLU(),
-            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
-            nn.BatchNorm2d(self.convFilters),
-            nn.ReLU(),
-            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
-            nn.BatchNorm2d(self.convFilters),
-            nn.ReLU(),
-            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
-            nn.BatchNorm2d(self.convFilters),
-            nn.ReLU(),
-            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
-            nn.BatchNorm2d(self.convFilters),
-            nn.ReLU(),
-            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
-            nn.BatchNorm2d(self.convFilters),
-            nn.ReLU(),
-            nn.Conv2d(self.convFilters, self.convFilters, 3, padding = 0),
-            nn.BatchNorm2d(self.convFilters),
-            nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(self.convFilters, self.linearFilters),
+            nn.Linear(self.filters, self.linearFilters),
+            nn.BatchNorm2d(self.filters),
+            nn.ReLU(),
+            nn.Linear(self.linearFilters, self.linearFilters),
+            nn.BatchNorm2d(self.filters),
             nn.ReLU(),
             nn.Linear(self.linearFilters, 1),
             nn.Tanh()
         )
 
     def forward(self, x):
+        for layer in self.conv_layers:
+            x = layer(x)
+            
         x = self.value(x)
         return x
 
