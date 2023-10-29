@@ -27,9 +27,23 @@ class ResidualLayer(nn.Module):
 class ConvolutionLayer(nn.Module):
     def __init__(self, infilters, outfilters, kernal_size=3):
         super().__init__()
-        
+
         self.conv2d_sequential = nn.Sequential(                
             nn.Conv2d(infilters, outfilters, kernal_size, padding=(kernal_size - 1) // 2),
+            nn.BatchNorm2d(outfilters),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        x = self.conv2d_sequential(x)
+        return x
+    
+class ConvolutionLayerNoPad(nn.Module):
+    def __init__(self, infilters, outfilters, kernal_size=3):
+        super().__init__()
+
+        self.conv2d_sequential = nn.Sequential(                
+            nn.Conv2d(infilters, outfilters, kernal_size, padding=0),
             nn.BatchNorm2d(outfilters),
             nn.ReLU(),
         )
@@ -61,20 +75,20 @@ class PolicyHead(nn.Module):
 
 
 class ValueHead(nn.Module):
-    def __init__(self, Filters):
+    def __init__(self, Filters, LinearFilters):
         super().__init__()
         self.filters = Filters
-        self.linearFilters = 128
+        self.linearFilters = LinearFilters
 
-        self.conv_layers = nn.ModuleList([ConvolutionLayer(self.filters, kernal_size=3) for _ in range(7)])
+        self.conv_layers = nn.ModuleList([ConvolutionLayerNoPad(self.filters, self.filters, kernal_size=3) for _ in range(7)])
 
         self.value = nn.Sequential(
             nn.Flatten(),
             nn.Linear(self.filters, self.linearFilters),
-            nn.BatchNorm2d(self.filters),
+            nn.BatchNorm1d(self.linearFilters),
             nn.ReLU(),
             nn.Linear(self.linearFilters, self.linearFilters),
-            nn.BatchNorm2d(self.filters),
+            nn.BatchNorm1d(self.linearFilters),
             nn.ReLU(),
             nn.Linear(self.linearFilters, 1),
             nn.Tanh()
@@ -111,10 +125,10 @@ class PolicyNetwork(nn.Module):
         return x
     
 class ValueNetwork(nn.Module):
-    def __init__(self, inFilters, convFilters, linearFilters):
+    def __init__(self, filters, linFilters):
         super().__init__()
 
-        self.value_head = ValueHead(inFilters, convFilters, linearFilters)
+        self.value_head = ValueHead(filters, linFilters)
     
     def forward(self, x):
         x = self.value_head(x)

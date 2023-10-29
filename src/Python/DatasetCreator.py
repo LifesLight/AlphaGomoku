@@ -1,12 +1,13 @@
 import xml.etree.ElementTree as ET
+from Config import Config as Conf
 import numpy as np
 import os
 
 # -----Generation Parameters------ #
 
 DATASET_SOURCE = '../../Datasets/HumanExamples/RenjunetDatasets/renjunet_v10.xml'
-HD = 8
-AUGMENTED = True
+HD = Conf.HISTORYDEPTH
+AUGMENTED = False
 # ['all'] for all
 RULESETS_WHITELIST = ['all']
 RULESETS_BLACKLIST = [7]
