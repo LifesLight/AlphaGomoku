@@ -174,17 +174,60 @@ void Batcher::makeRandomMoves(int amount)
     runNetwork();
 }
 
+float Batcher::averageWinner()
+{
+    if (non_terminal_environments.size() != 0)
+    {
+        std::cout << "[Batcher][W]: Got average winner before all environments finished playing" << std::endl;
+    }
+    
+    int total = environments.size() - non_terminal_environments.size();
+    float delta = 0;
+
+    for (Environment* env : environments)
+    {
+        // Skip if env is terminal
+        if (!env->isTerminal())
+            continue;
+
+        uint8_t result = env->getResult();
+
+        if      (result == 0)
+            delta -= 1;
+        else if (result == 1)
+            delta += 1;
+    }
+
+    delta = delta / total;
+
+    return delta;
+}
+
 std::string Batcher::toString()
 {
+    return toString(environments.size());
+}
+
+std::string Batcher::toString(int max_envs)
+{
+    // In case to many max_envs
+    if (max_envs > environments.size())
+        max_envs = environments.size();
+
     std::stringstream output;
-    for (int i = 0; i < environments.size(); i++)
+    for (int i = 0; i < max_envs; i++)
     {
         output << std::endl << std::endl << " <---------- Environment: " << i << "---------->" << std::endl << std::endl; 
         output << environments[i]->toString();
     }
+
+    // Show that not all envs are displayed
+    if (max_envs < environments.size())
+        output << std::endl << "(" << environments.size() - max_envs << ") ...." << std::endl;
         
     return output.str();
 }
+
 
 std::string Batcher::toStringDist(const std::initializer_list<std::string> distributions)
 {

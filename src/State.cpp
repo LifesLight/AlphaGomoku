@@ -82,6 +82,11 @@ bool State::nextColor()
     return !(empty % 2);
 }
 
+uint8_t State::getResult()
+{
+    return result;
+}
+
 std::vector<uint16_t> State::getPossible()
 {
     std::vector<uint16_t> actions;

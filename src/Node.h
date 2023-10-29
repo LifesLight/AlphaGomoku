@@ -55,6 +55,9 @@ public:
     // Best child without exploration biases
     Node* absBestChild();
 
+    // Black is 0, 1 is White, Draw is 2
+    uint8_t getResult();
+
     // Statics
     // Create string representation of node parameters
     // Green cell is cell of next move

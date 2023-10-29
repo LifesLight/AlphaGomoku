@@ -258,6 +258,11 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     return tensor;
 }
 
+uint8_t Node::getResult()
+{
+    return state->getResult();
+}
+
 // -------------- Utility Code (Not relevant for algorithm) --------------
 std::string distribution_helper(Node* child, int max_visits, float max_policy, const std::string& type)
 {
@@ -411,6 +416,11 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
     }
 
     output << " }" << std::endl;
+
+    if (node->state->nextColor())
+        output << "Color: Black" << std::endl;
+    else
+        output << "Color: White" << std::endl;
 
     if (node->parent)
     {

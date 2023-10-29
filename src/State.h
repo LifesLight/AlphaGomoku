@@ -43,8 +43,6 @@ public:
     BLOCK c_array[BoardSize * 6];
     // Last is last played move, empty is remaining empty fields
     uint16_t last, empty;
-    // 0:p0win 1:p1win 2:none
-    uint8_t result;
 
     State();
     State(State*);
@@ -55,6 +53,8 @@ public:
     std::vector<uint16_t> getPossible();
     // Is terminal game state
     bool isTerminal();
+    // Black is 0 White is 1 Draw is 2
+    uint8_t getResult();
     // String representation of state
     std::string toString();
     // Value of field
@@ -67,5 +67,8 @@ public:
     bool nextColor();
 
 private:
+    // 0:p0win 1:p1win 2:none
+    uint8_t result;
+
     bool checkForWin();
 };

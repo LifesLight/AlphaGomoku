@@ -29,8 +29,15 @@ public:
 
     // Display
     std::string toString();
+    // Limit max env output
+    std::string toString(int max_envs);
     // Outputs a distribution for each env
     std::string toStringDist(const std::initializer_list<std::string> distributions);
+
+    // Get winner of self play from -1 to 1
+    // -1 is black
+    float averageWinner();
+
 
 private:
     // Clear up all network queues
