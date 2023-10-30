@@ -76,12 +76,13 @@ class Utilities:
 
     def modelLoader(model_name,
                     Filters = Conf.NN_FILTERS, 
+                    LinFilters = Conf.NN_LINFILTERS,
                     Layers = Conf.NN_RESNETLAYERS, 
                     HistoryDepth = Conf.HISTORYDEPTH, 
                     Device = Conf.DEVICE, 
                     Type = 'Human'
                     ):
-        
+
         general_path = '../../Models/Human'
         if Type == 'Selfplay':
             general_path = '../../Models/Selfplay'
@@ -100,7 +101,7 @@ class Utilities:
         policyModel.eval()
         policyModel.to(Device)
 
-        valueModel = ValHead(Filters)
+        valueModel = ValHead(Filters, LinFilters)
         valueModel.load_state_dict(torch.load(valuePath, map_location=torch.device('cpu')))
         valueModel.eval()
         valueModel.to(Device)
