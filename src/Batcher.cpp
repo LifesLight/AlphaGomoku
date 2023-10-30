@@ -144,10 +144,11 @@ float Batcher::duelModels(int random_actions, int simulations)
             Environment* env2 = non_terminal_environments[i + 1];
             std::deque<uint16_t> untried;
             untried = env1->getUntriedActions();
+
             int action_count = untried.size();
 
             std::uniform_int_distribution<int> uni(0, action_count - 1);
-            uint16_t action_index = uni(rng);
+            uint16_t action_index = untried[uni(rng)];
 
             // Make move for both envs
             env1->makeMove(action_index);
@@ -159,16 +160,44 @@ float Batcher::duelModels(int random_actions, int simulations)
 
     runNetwork();
     
-
     // Gameplay Loop
     while(!isTerminal())
     {
         runSimulations(simulations);
         makeBestMoves();
-        toString(2);
+        std::cout << toString(2) << std::endl << std::flush;
     }
 
-    return averageWinner();
+    int non_draws = 0;
+    float win_delta = 0.0f;
+
+    // Calc average winner Model
+    for (Environment* env : environments)
+    {
+        bool is_swapped = env->areModelsSwapped();
+        uint8_t winner_color = env->getResult();
+
+        if (winner_color == 2)
+            continue;
+
+        non_draws++;
+        
+        if (is_swapped)
+            winner_color = !winner_color;
+
+        if (winner_color == 0)
+            win_delta -= 1;
+        else
+            win_delta += 1;
+    }
+
+    win_delta /= non_draws;
+
+    // Swap models back
+    for (int i = 0; i < environments.size(); i += 2)
+        environments[i]->swapModels();
+
+    return win_delta;
 }
 
 Environment* Batcher::getEnvironment(uint32_t index)
@@ -277,7 +306,7 @@ std::string Batcher::toString(int max_envs)
 
     // Show that not all envs are displayed
     if (max_envs < environments.size())
-        output << std::endl << "(" << environments.size() - max_envs << ") ...." << std::endl;
+        output << std::endl << "(" << non_terminal_environments.size() - max_envs << "/" << environments.size() - max_envs << ") ...." << std::endl;
         
     return output.str();
 }

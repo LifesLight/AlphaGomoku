@@ -49,6 +49,7 @@ public:
 
     // Just swaps how the model index in getNetworkQueue is set
     void swapModels();
+    bool areModelsSwapped();
 
     void freeMemory();
 

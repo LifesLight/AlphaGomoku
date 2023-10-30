@@ -33,10 +33,10 @@ public:
     // Outputs a distribution for each env
     std::string toStringDist(const std::initializer_list<std::string> distributions);
 
-    // Get winner of self play from -1 to 1
     // -1 is black
     float averageWinner();
 
+    // Evaluate models against another, use this without calling any env modifying functions before
     float duelModels(int random_moves, int simulations);
 
 

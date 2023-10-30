@@ -26,6 +26,11 @@ void Environment::swapModels()
     swapped_models = !swapped_models;
 }
 
+bool Environment::areModelsSwapped()
+{
+    return swapped_models;
+}
+
 bool Environment::makeMove(uint8_t x, uint8_t y)
 {
     // Update all existing trees

@@ -29,7 +29,7 @@ int main(int argc, const char* argv[])
     Model* nnw = Model::autoloadModel(argv[2], torch::kMPS);
 
     Batcher batcher(environment_count, nnb, nnw);
-    batcher.duelModels(rand_moves, simulations);
+    std::cout << batcher.duelModels(rand_moves, simulations) << std::endl;
     batcher.freeMemory();
 
     return 1;
