@@ -1,7 +1,7 @@
 #include "Environment.h"
 
 Environment::Environment()
-    : next_color(false)
+    : next_color(false), swapped_models(false)
 {
     for (int i = 0; i < 2; i++)
         trees[i] = new Tree();
@@ -19,6 +19,11 @@ bool Environment::makeMove(uint16_t index)
     uint8_t x, y;
     Utils::indexToCords(index, x, y);
     return makeMove(x, y);
+}
+
+void Environment::swapModels()
+{
+    swapped_models = !swapped_models;
 }
 
 bool Environment::makeMove(uint8_t x, uint8_t y)
@@ -46,17 +51,9 @@ bool Environment::makeBestMove()
     return false;
 }
 
-bool Environment::makeRandomMove()
+std::deque<uint16_t> Environment::getUntriedActions()
 {
-    std::random_device rd;
-    std::mt19937 rng(rd());
-
-    Node* current = getCurrentNode();
-    int action_count = current->untried_actions.size();
-    std::uniform_int_distribution<int> uni(0, action_count);
-
-    uint16_t action = current->untried_actions[uni(rng)];
-    return makeMove(action);
+    return getCurrentNode()->untried_actions;
 }
 
 Node* Environment::policy()
@@ -71,7 +68,10 @@ std::vector<std::tuple<Node*, bool>> Environment::getNetworkQueue()
     // Get vector of queue with network ID
     for (int i = 0; i < 2; i++)
         for (Node* node : trees[i]->getNetworkQueue())
-            queue.push_back(std::tuple<Node*, bool>(node, i));
+            if (swapped_models)
+                queue.push_back(std::tuple<Node*, bool>(node, !i));
+            else
+                queue.push_back(std::tuple<Node*, bool>(node, i));
 
     return queue;
 }

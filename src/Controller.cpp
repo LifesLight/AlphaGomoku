@@ -29,18 +29,7 @@ int main(int argc, const char* argv[])
     Model* nnw = Model::autoloadModel(argv[2], torch::kMPS);
 
     Batcher batcher(environment_count, nnb, nnw);
-
-    batcher.makeRandomMoves(rand_moves);
-
-    while (!batcher.isTerminal())
-    {
-        batcher.runSimulations(simulations);
-        batcher.makeBestMoves();
-        std::cout << batcher.toString(3) << std::endl;
-        //std::cout << batcher.toStringDist({"MEAN", "POLICY"}) << std::endl;
-    }
-
-    std::cout << batcher.averageWinner() << std::endl;
+    batcher.duelModels(rand_moves, simulations);
     batcher.freeMemory();
 
     return 1;

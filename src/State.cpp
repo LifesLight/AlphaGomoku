@@ -87,10 +87,9 @@ uint8_t State::getResult()
     return result;
 }
 
-std::vector<uint16_t> State::getPossible()
+std::deque<uint16_t> State::getPossible()
 {
-    std::vector<uint16_t> actions;
-    actions.reserve(empty);
+    std::deque<uint16_t> actions;
     uint8_t x, y;
     for (uint16_t i = 0; i < BoardSize * BoardSize; i++)
     {

@@ -119,6 +119,58 @@ void Batcher::runSimulations(uint32_t sim_count)
     }
 }
 
+float Batcher::duelModels(int random_actions, int simulations)
+{
+    if (environments.size() % 2 != 0)
+    {
+        std::cout << "[Batcher][E]: Tried to duel models with not even environment count (" << environments.size() << ")" << std::endl << std::flush;
+        return 0;
+    }
+
+    // Invert models on every second env
+    for (int i = 0; i < environments.size(); i += 2)
+        environments[i]->swapModels();
+
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    for (int ii = 0; ii < random_actions; ii++)
+    {
+        // Itterate in steps of  2
+        for (int i = 0; i < non_terminal_environments.size(); i += 2)
+        {
+            // Select random move for both envs
+            Environment* env1 = non_terminal_environments[i];
+            Environment* env2 = non_terminal_environments[i + 1];
+            std::deque<uint16_t> untried;
+            untried = env1->getUntriedActions();
+            int action_count = untried.size();
+
+            std::uniform_int_distribution<int> uni(0, action_count - 1);
+            uint16_t action_index = uni(rng);
+
+            // Make move for both envs
+            env1->makeMove(action_index);
+            env2->makeMove(action_index);
+        }
+
+        updateNonTerminal();
+    }
+
+    runNetwork();
+    
+
+    // Gameplay Loop
+    while(!isTerminal())
+    {
+        runSimulations(simulations);
+        makeBestMoves();
+        toString(2);
+    }
+
+    return averageWinner();
+}
+
 Environment* Batcher::getEnvironment(uint32_t index)
 {
     if (index < environments.size())
@@ -152,22 +204,24 @@ void Batcher::makeBestMoves()
     runNetwork();
 }
 
-void Batcher::makeRandomMoves()
-{
-    for (Environment* env : non_terminal_environments)
-        env->makeRandomMove();
-
-    updateNonTerminal();
-    runNetwork();
-}
-
 void Batcher::makeRandomMoves(int amount)
 {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
     for (int i = 0; i < amount; i++)
     {
         for (Environment* env : non_terminal_environments)
-            env->makeRandomMove();
-            
+        {   
+            std::deque<uint16_t> untried = env->getUntriedActions();
+            int action_count = untried.size();
+
+            std::uniform_int_distribution<int> uni(0, action_count - 1);
+
+            uint16_t action = untried[uni(rng)];
+            env->makeMove(action);
+        }
+
         updateNonTerminal();
     }
 

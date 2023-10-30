@@ -22,7 +22,6 @@ public:
     void runSimulations(uint32_t simulations);
 
     void makeBestMoves();
-    void makeRandomMoves();
     void makeRandomMoves(int amount);
 
     void freeMemory();
@@ -37,6 +36,8 @@ public:
     // Get winner of self play from -1 to 1
     // -1 is black
     float averageWinner();
+
+    float duelModels(int random_moves, int simulations);
 
 
 private:

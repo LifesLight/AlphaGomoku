@@ -42,9 +42,9 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
 
 void Node::removeFromUntried(uint16_t action)
 {
-    // Optimize me :)
-    auto remove_me = std::find(untried_actions.begin(), untried_actions.end(), action);
-    untried_actions.erase(remove_me);
+    untried_actions.erase(
+            std::remove(untried_actions.begin(), untried_actions.end(), action), untried_actions.end()
+        );
 }
 
 bool Node::getNetworkStatus()

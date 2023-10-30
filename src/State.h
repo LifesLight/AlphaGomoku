@@ -50,7 +50,7 @@ public:
     // Make move
     void makeMove(uint16_t);
     // Get list of remaining empty fields as indecies
-    std::vector<uint16_t> getPossible();
+    std::deque<uint16_t> getPossible();
     // Is terminal game state
     bool isTerminal();
     // Black is 0 White is 1 Draw is 2

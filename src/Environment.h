@@ -23,7 +23,6 @@ public:
     bool makeMove(uint8_t x, uint8_t y);
     bool makeMove(uint16_t index);
     bool makeBestMove();
-    bool makeRandomMove();
     Node* policy();
     // <-------------------->
 
@@ -33,6 +32,9 @@ public:
     bool clearNetworkQueue();
     // Black is 0, White is 1, Draw is 2
     uint8_t getResult();
+
+    // Get all possible actions from node
+    std::deque<uint16_t> getUntriedActions();
 
     // Display state
     std::string toString();
@@ -45,9 +47,13 @@ public:
     Node* getCurrentNode();
     Node* getOpposingNode();
 
+    // Just swaps how the model index in getNetworkQueue is set
+    void swapModels();
+
     void freeMemory();
 
 private:
     Tree* trees[2] = {nullptr, nullptr};
     bool next_color;
+    bool swapped_models;
 };

@@ -30,12 +30,11 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
     // Check if move is legal
     if (!(
         (0 <= x && x < BoardSize) && 
-        (0 <= y && y < BoardSize) && 
-        current_state->isCellEmpty(x, y)
+        (0 <= y && y < BoardSize)
         ))
     {
-        std::cout << "[Tree][E]: Tried to perform illegal move" << std::endl;
-        return false;
+        std::cout << "[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")" << std::endl << std::flush;
+        return false;     
     }
 
     Node* chosen_child = nullptr;
@@ -47,6 +46,14 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
             chosen_child = child;
             break;
         }
+
+    // We check for if node exists first, if it does the field will be alloctated
+    if (!current_state->isCellEmpty(x, y) && chosen_child == nullptr)
+    {
+        std::cout << "[Tree][W]: Tried to perform illegal move (Allocated field): (" << int(x) << "," << int(y) << ") on:" << std::endl;
+        std::cout << current_state->toString() << std::endl << std::flush;
+        return false;
+    }
 
     // Node does not have desired child
     if (chosen_child == nullptr)
@@ -126,7 +133,7 @@ Node* Tree::getCurrentNode()
 Node* Tree::getParentNode()
 {
     if (current_node->parent == nullptr)
-        std::cout << "[Tree][W]: Got non existent parent" << std::endl;
+        std::cout << "[Tree][W]: Got non existent parent" << std::endl << std::flush;
     return current_node->parent;
 }
 

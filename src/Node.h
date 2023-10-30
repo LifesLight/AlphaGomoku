@@ -19,7 +19,7 @@ public:
     State* state;
     uint32_t visits;
     std::list<Node*> children;
-    std::vector<uint16_t> untried_actions;
+    std::deque<uint16_t> untried_actions;
     bool network_status;
     float evaluation;
     float summed_evaluation;
