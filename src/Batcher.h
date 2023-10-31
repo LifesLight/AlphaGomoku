@@ -20,13 +20,16 @@ public:
     Environment* getEnvironment(uint32_t index);
     Node* getNode(uint32_t index);
 
+    // Are all environments terminal
     bool isTerminal();
 
+    // Runs MCTS policy loop n times
     void runSimulations(uint32_t simulations);
 
     void makeBestMoves();
     void makeRandomMoves(int amount);
 
+    // Clears all nodes flagged for deletion
     void freeMemory();
 
     // Display
@@ -43,6 +46,7 @@ public:
     // Swaps models in every second environment
     void swapModels();
 
+    // Generates duplicate envs with mirrored models. Lets them duel and outputs the win distribution between them
     float duelModels(int random_moves, int simulations);
 
 

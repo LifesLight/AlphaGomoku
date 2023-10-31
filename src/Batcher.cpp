@@ -48,6 +48,8 @@ void Batcher::updateNonTerminal()
 
 void Batcher::runNetwork()
 {
+    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDevice).dtype(torch::kFloat32);
+    
     // Accumilate Nodes per model
     std::vector<Node*> nodes[2];
     for (Environment* env : environments)
@@ -64,7 +66,8 @@ void Batcher::runNetwork()
 
         // Convert to tensor
         uint32_t batch_size = nodes[i].size();
-        torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, torch::kFloat32);
+        torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
+
         for (int index = 0; index < batch_size; index++)
         {
             torch::Tensor tensor = Node::nodeToGamestate(nodes[i][index]);

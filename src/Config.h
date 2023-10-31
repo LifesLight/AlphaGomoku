@@ -25,6 +25,8 @@
 // HD
 #define HistoryDepth 8
 
+#define TorchDevice torch::kCPU
+
 // Algorithm Hyperparameters
 #define ExplorationBias 0.2
 #define PolicyBias 0.3

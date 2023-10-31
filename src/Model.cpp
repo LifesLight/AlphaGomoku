@@ -58,7 +58,6 @@ std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
     torch::NoGradGuard no_grad_guard;
 
     // Inference
-    input = input.to(device);
     auto resnet_result = resnet.forward({input});
     auto policy_result = polhead.forward({resnet_result});
     auto value_result = valhead.forward({resnet_result});
@@ -76,7 +75,7 @@ std::string Model::getName()
     return model_name;
 }
 
-Model* Model::autoloadModel(std::string name, torch::Device device)
+Model* Model::autoloadModel(std::string name)
 {
     std::string general_path = ModelPath;
     std::string resnet_path = general_path + "ResNet/" + name;
@@ -86,7 +85,7 @@ Model* Model::autoloadModel(std::string name, torch::Device device)
     Model* loaded_model;
     try
     {
-        loaded_model = new Model(resnet_path, policy_path, value_path, device, name);
+        loaded_model = new Model(resnet_path, policy_path, value_path, TorchDevice, name);
     }
     catch(const std::exception& e)
     {

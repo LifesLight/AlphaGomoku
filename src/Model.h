@@ -19,7 +19,7 @@ public:
     std::string getName();
 
     // Creates a model from just the model name, takes rest from config path
-    static Model* autoloadModel(std::string name, torch::Device device);
+    static Model* autoloadModel(std::string name);
 
 private:
     torch::jit::script::Module resnet, polhead, valhead;

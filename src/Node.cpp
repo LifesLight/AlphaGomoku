@@ -162,8 +162,11 @@ float Node::getPolicyValue()
 
 torch::Tensor Node::nodeToGamestate(Node* node)
 {
+    // Generate Tensor on CPU
+    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(torch::kCPU).dtype(torch::kFloat32);
+
     // Init main tensor
-    torch::Tensor tensor = torch::zeros({HistoryDepth + 1, 15, 15}, torch::kFloat32);
+    torch::Tensor tensor = torch::zeros({HistoryDepth + 1, 15, 15}, default_tensor_options);
 
     // State at node
     State* current_state = node->state;
@@ -172,9 +175,9 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     torch::Tensor next_color;
 
     if (node->state->nextColor())
-        next_color = torch::ones({BoardSize, BoardSize}, torch::kFloat32);
+        next_color = torch::ones({BoardSize, BoardSize}, default_tensor_options);
     else
-        next_color = torch::zeros({BoardSize, BoardSize}, torch::kFloat32);
+        next_color = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
     tensor[0] = next_color;
 
     // Get last actions from source
@@ -198,8 +201,8 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     State* history_state;
 
     // The oldest states of each color
-    torch::Tensor history_white = torch::zeros({BoardSize, BoardSize}, torch::kFloat32);
-    torch::Tensor histroy_black = torch::zeros({BoardSize, BoardSize}, torch::kFloat32);
+    torch::Tensor history_white = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
+    torch::Tensor histroy_black = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
     if (running_node != nullptr)
     {
         history_state = running_node->state;

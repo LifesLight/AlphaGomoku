@@ -25,8 +25,8 @@ int main(int argc, const char* argv[])
     if (argc >= 6)
         rand_moves = std::stoi(argv[5]);
 
-    Model* nnb = Model::autoloadModel(argv[1], torch::kMPS);
-    Model* nnw = Model::autoloadModel(argv[2], torch::kMPS);
+    Model* nnb = Model::autoloadModel(argv[1]);
+    Model* nnw = Model::autoloadModel(argv[2]);
 
     // Make batcher with inverted second models for duel
     Batcher batcher(environment_count, nnb, nnw);
@@ -38,6 +38,7 @@ int main(int argc, const char* argv[])
 
     // Swap models back
     batcher.swapModels();
+
     batcher.freeMemory();
 
     return 1;
