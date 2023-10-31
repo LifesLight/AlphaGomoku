@@ -15,9 +15,13 @@
 #include <sstream>
 #include <initializer_list>
 #include <random>
+#include <thread>
 
 // External data paths
 #define ModelPath "../Models/scripted/"
+
+// CPU Threads
+#define ThreadCount 1
 
 // Even numbers in BoardSize will break State due to inverted colors!
 #define BoardSize 15
@@ -25,7 +29,7 @@
 // HD
 #define HistoryDepth 8
 
-#define TorchDevice torch::kCPU
+#define TorchDevice torch::kCUDA
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.2

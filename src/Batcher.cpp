@@ -46,6 +46,15 @@ void Batcher::updateNonTerminal()
             non_terminal_environments.push_back(env);
 }
 
+void toGamestateWorker(int start_index, int end_index, torch::Tensor& model_input, std::vector<Node*>& nodes) 
+{
+    for (int i = start_index; i < end_index; i++)
+    {
+        torch::Tensor tensor = Node::nodeToGamestate(nodes[i]);
+        model_input[i] = tensor;
+    }
+}
+
 void Batcher::runNetwork()
 {
     torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDevice).dtype(torch::kFloat32);
@@ -68,10 +77,20 @@ void Batcher::runNetwork()
         uint32_t batch_size = nodes[i].size();
         torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
 
-        for (int index = 0; index < batch_size; index++)
+        std::vector<std::thread> threads;
+        int itemsPerThread = batch_size / ThreadCount;
+
+        for (int t = 0; t < ThreadCount; t++) 
         {
-            torch::Tensor tensor = Node::nodeToGamestate(nodes[i][index]);
-            model_input[index] = tensor;
+            int start_index = t * itemsPerThread;
+            int end_index = (t == ThreadCount - 1) ? batch_size : start_index + itemsPerThread;
+
+            threads.emplace_back(toGamestateWorker, start_index, end_index, std::ref(model_input), std::ref(nodes[i]));
+        }
+
+        // Wait for all threads to finish
+        for (std::thread& t : threads) {
+            t.join();
         }
 
         // Run model
