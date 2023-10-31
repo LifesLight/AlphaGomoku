@@ -14,6 +14,9 @@ public:
     Batcher(int environments, Model* NN_Black, Model* NN_White);
     ~Batcher();
 
+    // Initializes all trees with their respective models
+    void init();
+
     Environment* getEnvironment(uint32_t index);
     Node* getNode(uint32_t index);
 
@@ -37,6 +40,9 @@ public:
     float averageWinner();
 
     // Evaluate models against another, use this without calling any env modifying functions before
+    // Swaps models in every second environment
+    void swapModels();
+
     float duelModels(int random_moves, int simulations);
 
 

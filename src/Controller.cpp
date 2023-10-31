@@ -28,8 +28,16 @@ int main(int argc, const char* argv[])
     Model* nnb = Model::autoloadModel(argv[1], torch::kMPS);
     Model* nnw = Model::autoloadModel(argv[2], torch::kMPS);
 
+    // Make batcher with inverted second models for duel
     Batcher batcher(environment_count, nnb, nnw);
+    batcher.swapModels();
+
+    // Duel models
+    batcher.init();
     std::cout << batcher.duelModels(rand_moves, simulations) << std::endl;
+
+    // Swap models back
+    batcher.swapModels();
     batcher.freeMemory();
 
     return 1;

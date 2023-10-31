@@ -18,14 +18,17 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
         // new envs are assumed non terminal
         non_terminal_environments.push_back(env);
     }
-        
-    runNetwork();
 }
 
 Batcher::~Batcher()
 {
     for (Environment* env : environments)
         delete env;
+}
+
+void Batcher::init()
+{
+    runNetwork();
 }
 
 bool Batcher::isTerminal()
@@ -119,17 +122,26 @@ void Batcher::runSimulations(uint32_t sim_count)
     }
 }
 
-float Batcher::duelModels(int random_actions, int simulations)
+void Batcher::swapModels()
 {
     if (environments.size() % 2 != 0)
     {
-        std::cout << "[Batcher][E]: Tried to duel models with not even environment count (" << environments.size() << ")" << std::endl << std::flush;
-        return 0;
+        std::cout << "[Batcher][E]: Tried to swap every second model with uneven environment count (" << environments.size() << ")" << std::endl << std::flush;
+        return;
     }
 
     // Invert models on every second env
     for (int i = 0; i < environments.size(); i += 2)
-        environments[i]->swapModels();
+        environments[i]->swapModels();   
+}
+
+float Batcher::duelModels(int random_actions, int simulations)
+{
+    if (environments.size() % 2 != 0)
+    {
+        std::cout << "[Batcher][E]: Tried to duel models with uneven environment count (" << environments.size() << ")" << std::endl << std::flush;
+        return 0;
+    }
 
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -192,11 +204,6 @@ float Batcher::duelModels(int random_actions, int simulations)
     }
 
     win_delta /= non_draws;
-
-    // Swap models back
-    for (int i = 0; i < environments.size(); i += 2)
-        environments[i]->swapModels();
-
     return win_delta;
 }
 
@@ -306,8 +313,13 @@ std::string Batcher::toString(int max_envs)
 
     // Show that not all envs are displayed
     if (max_envs < environments.size())
-        output << std::endl << "(" << non_terminal_environments.size() - max_envs << "/" << environments.size() - max_envs << ") ...." << std::endl;
-        
+    {
+        if (non_terminal_environments.size() > 0)
+            output << std::endl << "(" << std::max(int(non_terminal_environments.size()) - max_envs, 0) << "/" << environments.size() - max_envs << ") ...." << std::endl;
+        else
+            output << std::endl << "(" << environments.size() - max_envs << ") ...." << std::endl;
+    }
+
     return output.str();
 }
 
