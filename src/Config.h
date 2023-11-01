@@ -21,7 +21,7 @@
 #define ModelPath "../Models/scripted/"
 
 // CPU Threads
-#define ThreadCount 1
+#define ThreadCount 8
 
 // Even numbers in BoardSize will break State due to inverted colors!
 #define BoardSize 15
@@ -29,7 +29,8 @@
 // HD
 #define HistoryDepth 8
 
-#define TorchDevice torch::kCUDA
+// Default Device for torch computations
+#define TorchDevice torch::kCPU
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.2
