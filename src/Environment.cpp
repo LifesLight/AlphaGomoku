@@ -21,6 +21,14 @@ bool Environment::makeMove(uint16_t index)
     return makeMove(x, y);
 }
 
+std::vector<Node*> Environment::getRootNodes()
+{
+    std::vector<Node*> nodes;
+    for (int i = 0; i < 2; i++)
+        nodes.push_back(trees[i]->getRootNode());
+    return nodes;
+}
+
 void Environment::swapModels()
 {
     swapped_models = !swapped_models;

@@ -352,3 +352,16 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 
     return output.str();
 }
+
+std::vector<Node*> Batcher::sampleNodes(int amount)
+{
+    int total_nodes;
+
+    for (Environment* env : environments)
+    {
+        for (Node* root_node : env->getRootNodes())
+        {
+            
+        }
+    }
+}

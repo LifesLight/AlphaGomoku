@@ -49,6 +49,8 @@ public:
     // Generates duplicate envs with mirrored models. Lets them duel and outputs the win distribution between them
     float duelModels(int random_moves, int simulations);
 
+    // Get nodes for retraining
+    std::vector<Node*> sampleNodes(int amount);
 
 private:
     // Clear up all network queues

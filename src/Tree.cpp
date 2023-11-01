@@ -13,6 +13,11 @@ Tree::~Tree()
     // TODO do this
 }
 
+Node* Tree::getRootNode()
+{
+    return root_node;
+}
+
 bool Tree::makeMove(uint16_t index)
 {
     uint8_t x, y;

@@ -26,6 +26,8 @@ public:
     Node* policy();
     // <-------------------->
 
+    std::vector<Node*> getRootNodes();
+
     // These are wrappers around tree, it just translates it to the env
     // This network queue has a tuple to with network it needs to be run on
     std::vector<std::tuple<Node*, bool>> getNetworkQueue();

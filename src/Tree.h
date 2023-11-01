@@ -23,6 +23,8 @@ public:
     Node* policy();
     // <-------------------->
 
+    Node* getRootNode();
+
     // Network queue managment
     std::vector<Node*> getNetworkQueue();
     bool clearNetworkQueue();
