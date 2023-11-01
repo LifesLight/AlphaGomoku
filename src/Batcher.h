@@ -12,6 +12,7 @@ class Batcher
 {
 public:
     Batcher(int environments, Model* NN_Black, Model* NN_White);
+    Batcher(int environments, Model* only_model);
     ~Batcher();
 
     // Initializes all trees with their respective models
@@ -50,7 +51,7 @@ public:
     float duelModels(int random_moves, int simulations);
 
     // Get nodes for retraining
-    std::vector<Node*> sampleNodes(int amount);
+    void storeData(std::string Path);
 
 private:
     // Clear up all network queues
@@ -62,5 +63,5 @@ private:
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;
-    Model* models[2];
+    Model* models[2] = {nullptr, nullptr};
 };

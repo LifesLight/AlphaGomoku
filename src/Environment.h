@@ -16,7 +16,7 @@ Also has a queue for deleting obsolete nodes, this might not be neccessary.
 class Environment
 {
 public:
-    Environment();
+    Environment(bool dual_tree);
     ~Environment();
 
     // These functions can/will require a NN computation, those will be stored in trees netqueues
@@ -27,6 +27,7 @@ public:
     // <-------------------->
 
     std::vector<Node*> getRootNodes();
+    int getNodeCount();
 
     // These are wrappers around tree, it just translates it to the env
     // This network queue has a tuple to with network it needs to be run on
@@ -47,6 +48,7 @@ public:
 
     // Default current
     Node* getCurrentNode();
+    // Returns null on single tree env
     Node* getOpposingNode();
 
     // Just swaps how the model index in getNetworkQueue is set

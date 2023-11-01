@@ -1,6 +1,7 @@
 #include "Tree.h"
 
 Tree::Tree()
+    : node_count(0)
 {
     root_node = new Node();
     network_queue.push_back(root_node);
@@ -16,6 +17,11 @@ Tree::~Tree()
 Node* Tree::getRootNode()
 {
     return root_node;
+}
+
+int Tree::getNodeCount()
+{
+    return node_count;
 }
 
 bool Tree::makeMove(uint16_t index)
@@ -69,6 +75,7 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
 
         // Expand to move index
         chosen_child = current_node->expand(move_index);
+        node_count++;
 
         // Push the new node into the network queue
         network_queue.push_back(chosen_child);
@@ -95,6 +102,7 @@ Node* Tree::policy()
         if (current->untried_actions.size() > 0)
         {
             Node* new_node = current->expand();
+            node_count++;
             network_queue.push_back(new_node);
             return new_node;
         }

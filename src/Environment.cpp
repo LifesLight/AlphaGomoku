@@ -1,9 +1,12 @@
 #include "Environment.h"
 
-Environment::Environment()
+// TODO WE NEED THE OPTION TO HAVE ONE TREE FOR SELFPLAY!!!
+
+Environment::Environment(bool dual_tree)
     : next_color(false), swapped_models(false)
 {
-    for (int i = 0; i < 2; i++)
+    // We only init one tree if not in dual tree mode
+    for (int i = 0; i < dual_tree + 1; i++)
         trees[i] = new Tree();
 }
 
@@ -11,7 +14,17 @@ Environment::~Environment()
 {
     // Delete trees
     for (int i = 0; i < 2; i ++)
-        delete trees[i];
+        if (trees[i] != nullptr)
+            delete trees[i];
+}
+
+int Environment::getNodeCount()
+{
+    int sum = 0;
+    for (int i = 0; i < 2; i++)
+        if (trees[i] != nullptr)
+            sum += trees[i]->getNodeCount();
+    return sum;
 }
 
 bool Environment::makeMove(uint16_t index)
@@ -21,11 +34,31 @@ bool Environment::makeMove(uint16_t index)
     return makeMove(x, y);
 }
 
+bool Environment::makeMove(uint8_t x, uint8_t y)
+{
+    // Update all existing trees
+    for (int i = 0; i < 2; i ++)
+    {
+        if (trees[i] != nullptr)
+        {
+            // Check if move is valid
+            bool successfull = trees[i]->makeMove(x, y);
+            if (!successfull)
+                return false;
+        }
+
+    }
+
+    next_color = !next_color;
+    return true;
+}
+
 std::vector<Node*> Environment::getRootNodes()
 {
     std::vector<Node*> nodes;
     for (int i = 0; i < 2; i++)
-        nodes.push_back(trees[i]->getRootNode());
+        if (trees[i] != nullptr)
+            nodes.push_back(trees[i]->getRootNode());
     return nodes;
 }
 
@@ -37,21 +70,6 @@ void Environment::swapModels()
 bool Environment::areModelsSwapped()
 {
     return swapped_models;
-}
-
-bool Environment::makeMove(uint8_t x, uint8_t y)
-{
-    // Update all existing trees
-    for (int i = 0; i < 2; i ++)
-    {
-        // Check if move is valid
-        bool successfull = trees[i]->makeMove(x, y);
-        if (!successfull)
-            return false;
-    }
-
-    next_color = !next_color;
-    return true;
 }
 
 bool Environment::makeBestMove()
@@ -66,12 +84,14 @@ bool Environment::makeBestMove()
 
 std::deque<uint16_t> Environment::getUntriedActions()
 {
+
     return getCurrentNode()->untried_actions;
 }
 
 Node* Environment::policy()
 {
-    return trees[next_color]->policy();
+    // If only 1 tree always call policy on 1.
+    return trees[next_color * (trees[1] != nullptr)]->policy();
 }
 
 std::vector<std::tuple<Node*, bool>> Environment::getNetworkQueue()
@@ -80,11 +100,16 @@ std::vector<std::tuple<Node*, bool>> Environment::getNetworkQueue()
 
     // Get vector of queue with network ID
     for (int i = 0; i < 2; i++)
-        for (Node* node : trees[i]->getNetworkQueue())
-            if (swapped_models)
-                queue.push_back(std::tuple<Node*, bool>(node, !i));
-            else
-                queue.push_back(std::tuple<Node*, bool>(node, i));
+    {
+        if (trees[i] != nullptr)
+        {
+            for (Node* node : trees[i]->getNetworkQueue())
+                if (swapped_models)
+                    queue.push_back(std::tuple<Node*, bool>(node, !i));
+                else
+                    queue.push_back(std::tuple<Node*, bool>(node, i));
+        }
+    }
 
     return queue;
 }
@@ -93,19 +118,22 @@ bool Environment::clearNetworkQueue()
 {
     bool success = true;
     for (int i = 0; i < 2; i++)
-        if (!trees[i]->clearNetworkQueue())
-            success = false;
+        if (trees[i] != nullptr)
+            if (!trees[i]->clearNetworkQueue())
+                success = false;
     return success;
 }
 
 Node* Environment::getCurrentNode()
 {
-    return trees[next_color]->getCurrentNode();
+    return trees[next_color * (trees[1] != nullptr)]->getCurrentNode();
 }
 
 Node* Environment::getOpposingNode()
 {
-    return trees[!next_color]->getCurrentNode();
+    if (trees[1] == nullptr) 
+        return nullptr;
+    return trees[!(next_color * (trees[1] != nullptr))]->getCurrentNode();
 }
 
 void Environment::freeMemory()

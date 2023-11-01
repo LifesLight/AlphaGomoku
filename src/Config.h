@@ -30,7 +30,7 @@
 #define HistoryDepth 8
 
 // Default Device for torch computations
-#define TorchDevice torch::kCPU
+#define TorchDevice torch::kCUDA
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.2

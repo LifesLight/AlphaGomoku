@@ -32,6 +32,8 @@ public:
     Node* getCurrentNode();
     Node* getParentNode();
 
+    int getNodeCount();
+
     bool isTerminal();
     void clean();
 
@@ -40,4 +42,5 @@ private:
     std::vector<Node*> network_queue;
     Node* root_node;
     Node* current_node;
+    int node_count;
 };

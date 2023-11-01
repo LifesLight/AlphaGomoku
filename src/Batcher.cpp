@@ -12,7 +12,26 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     // Super simple, needs randomization for inital gamestates
     for (int i = 0; i < environment_count; i++)
     {
-        Environment* env = new Environment();
+        Environment* env = new Environment(true);
+        environments.push_back(env);
+
+        // new envs are assumed non terminal
+        non_terminal_environments.push_back(env);
+    }
+}
+
+Batcher::Batcher(int environment_count, Model* only_model)
+{
+    // Store model
+    models[0] = only_model;
+
+    environments.reserve(environment_count);
+    non_terminal_environments.reserve(environment_count);
+
+    // Super simple, needs randomization for inital gamestates
+    for (int i = 0; i < environment_count; i++)
+    {
+        Environment* env = new Environment(false);
         environments.push_back(env);
 
         // new envs are assumed non terminal
@@ -46,11 +65,6 @@ void Batcher::updateNonTerminal()
             non_terminal_environments.push_back(env);
 }
 
-void toGamestateWorker(int index, torch::Tensor& model_input, std::vector<Node*>& nodes) 
-{
-
-}
-
 void Batcher::runNetwork()
 {
     torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDevice).dtype(torch::kFloat32);
@@ -79,7 +93,8 @@ void Batcher::runNetwork()
         }
 
         // Run model
-        model_outputs[model_index] = models[model_index]->forward(model_input);
+        // If only 1 model run either case over same model
+        model_outputs[model_index] = models[model_index * (models[1] != nullptr)]->forward(model_input);
     }
 
     // Assign output to node
@@ -345,23 +360,73 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         output << Node::analytics(environments[i]->getCurrentNode(), distributions);
         output << std::endl;
 
-        output << " <---- Cold Tree ---->" << std::endl;
-        output << Node::analytics(environments[i]->getOpposingNode(), distributions);
-        output << std::endl;
+        // Need to check if exists before since possibility of single tree
+        Node* opposing_node = environments[i]->getOpposingNode();
+        if (opposing_node)
+        {
+            output << " <---- Cold Tree ---->" << std::endl;
+            output << Node::analytics(opposing_node, distributions);
+            output << std::endl;
+        }
+
     }
 
     return output.str();
 }
 
-std::vector<Node*> Batcher::sampleNodes(int amount)
+
+// Self play datapoints stored for further reference
+struct Datapoint
 {
-    int total_nodes;
+    torch::Tensor gamestate;
+    float search_propabilities[BoardSize * BoardSize];
+    // Black is -1 white is 1 draw is 0
+    uint8_t winner;
+};
+
+void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
+{
+    // Ignore non fully explored nodes
+    if (node->untried_actions.size() == 0)
+    {
+        Datapoint data;
+        data.gamestate = Node::nodeToGamestate(node).to(torch::kBool);
+    
+        int summed_visits = 0;
+        for (Node* child : node->children)
+            summed_visits += child->visits;
+
+        int i = 0;
+        for (Node* child : node->children)
+        {
+            data.search_propabilities[i] = float(child->visits) / summed_visits;
+            i++;
+        }
+
+        data.winner = winner;
+        datapoints.push_back(data);
+    }
+
+    for (Node* child : node->children)
+        nodeCrawler(datapoints, child, winner);
+}
+
+void Batcher::storeData(std::string Path)
+{
+    int total_nodes = 0;
+    for (Environment* env : environments)
+        total_nodes += env->getNodeCount();
+    
+    std::vector<Datapoint> datapoints;
+    // Too much since not all nodes are full expanded but whatever :)
+    datapoints.reserve(total_nodes);
+
 
     for (Environment* env : environments)
     {
+        bool winner = env->getResult();
         for (Node* root_node : env->getRootNodes())
-        {
-            
-        }
+            nodeCrawler(datapoints, root_node, winner);
     }
+
 }

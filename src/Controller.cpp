@@ -28,15 +28,16 @@ int main(int argc, const char* argv[])
     Model* nnb = Model::autoloadModel(argv[1]);
     Model* nnw = Model::autoloadModel(argv[2]);
 
-    Batcher batcher(environment_count, nnb, nnw);
+    Batcher batcher(environment_count, nnb);
     batcher.makeRandomMoves(rand_moves);
     while (!batcher.isTerminal())
     {
         batcher.runSimulations(simulations);
         batcher.makeBestMoves();
-        std::cout << batcher.toString(1) << std::endl;
+        std::cout << batcher.toStringDist({"POLICY"}) << std::endl;
     }
 
+    batcher.storeData("Hi");
 
     batcher.freeMemory();
 
