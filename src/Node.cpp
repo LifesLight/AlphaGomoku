@@ -3,6 +3,7 @@
 Node::Node(State* state, Node* parent, uint16_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), visits(0), network_status(0)
 {  
+    memset(results, 0, sizeof(uint32_t) * 3);
     untried_actions = state->getPossible();
 }
 
@@ -35,7 +36,23 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     for (int i = 0; i < BoardSize * BoardSize; i++)
         policy_evaluations[i] = policy[i].detach().item<float>();
 
-    backpropagate(evaluation);
+    uint8_t result = 2;
+    // If node is terminal use actual playout result
+    if (isTerminal())
+    {
+        result = getResult();
+    }
+    else
+    {
+        if (evaluation > -ValueConfidenceBound)
+            result = 0;
+        else if (evaluation < ValueConfidenceBound)
+            result = 1;
+    }
+
+
+    
+    backpropagate(result);
 
     network_status = true;
 }
@@ -81,14 +98,14 @@ Node* Node::expand(uint16_t action)
     return child;
 }
 
-void Node::backpropagate(float evaluation)
+void Node::backpropagate(uint8_t result)
 {
     visits++;
-    summed_evaluation += evaluation;
+    results[result] += 1;
 
     // Stop at root
     if (parent)
-        parent->backpropagate(evaluation);
+        parent->backpropagate(result);
 }
 
 float Node::meanEvaluation()
@@ -100,9 +117,9 @@ float Node::meanEvaluation()
     }
 
     if (state->nextColor())
-        return summed_evaluation / float(visits);
+        return float(results[0] - results[1]) / float(visits);
     else
-        return -(summed_evaluation / float(visits));  
+        return float(results[1] - results[0]) / float(visits);  
 }
 
 Node* Node::bestChild()
@@ -277,9 +294,9 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
         else
             result << int(float(child->visits) / float(max_visits) * 999);
     else if (type == "VALUE")
-        result << int(float(child->evaluation) * 100);
+        result << int(float(child->evaluation) * 99);
     else if (type == "MEAN")
-        result << int(float(child->meanEvaluation()) * 100);
+        result << int(float(child->meanEvaluation()) * 99);
     else if (type == "POLICY")
         result << int(float(child->getPolicyValue()) / max_policy * 999);
     else

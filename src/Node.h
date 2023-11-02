@@ -22,7 +22,8 @@ public:
     std::deque<uint16_t> untried_actions;
     bool network_status;
     float evaluation;
-    float summed_evaluation;
+    // 0 is black wins, 1 white 2 draws
+    int16_t results[3];
     float policy_evaluations[BoardSize * BoardSize];
 
     // Neural Net
@@ -69,5 +70,5 @@ public:
 
 private:
     // Gets called when network data is recieved
-    void backpropagate(float value);
+    void backpropagate(uint8_t value);
 };
