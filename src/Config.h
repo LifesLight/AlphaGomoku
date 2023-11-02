@@ -34,7 +34,7 @@
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.2
-#define PolicyBias 0.4
+#define PolicyBias 0.3
 #define ValueBias 1
 
 #define ValueConfidenceBound 0.3

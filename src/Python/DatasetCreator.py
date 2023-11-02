@@ -7,7 +7,7 @@ import os
 
 DATASET_SOURCE = '../../Datasets/HumanExamples/RenjunetDatasets/renjunet_v10.xml'
 HD = Conf.HISTORYDEPTH
-AUGMENTED = False
+AUGMENTED = True
 # ['all'] for all
 RULESETS_WHITELIST = ['all']
 RULESETS_BLACKLIST = [7]

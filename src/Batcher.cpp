@@ -428,33 +428,4 @@ void Batcher::storeData(std::string Path)
         for (Node* root_node : env->getRootNodes())
             nodeCrawler(datapoints, root_node, winner);
     }
-
-    // Find the highest id so we can store with higher ones
-    int32_t highest_datapoint_id = 0;
-    for (const auto& entry : std::filesystem::directory_iterator(Path)) 
-    {
-        if (entry.is_directory()) 
-        {
-            int32_t id = 0;
-            try
-            {
-                id = std::stoi(entry.path().filename());
-            }
-            catch(const std::exception& e)
-            {
-                std::cout << "[Batcher][W]: Failed to cast foldername to int in Store Datapoints" << std::endl << std::flush;
-            }
-            
-            if (id > highest_datapoint_id)
-                highest_datapoint_id = id;
-        }
-    }
-
-    std::cout << highest_datapoint_id << std::endl;
-
-    // Store them to files, one folder per datapoint
-    for (Datapoint data : datapoints)
-    {
-
-    }
 }

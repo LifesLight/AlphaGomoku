@@ -28,8 +28,8 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
 
     // Assign value
     evaluation = value.detach().item<float>();
-    // Normaize for black is +1 white -1
-    if (state->nextColor())
+    // Normaize for black is -1 white +1
+    if (!state->nextColor())
         evaluation *= -1;
 
     // Assign policy values
@@ -44,14 +44,12 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     }
     else
     {
-        if (evaluation > -ValueConfidenceBound)
+        if (evaluation < -ValueConfidenceBound)
             result = 0;
-        else if (evaluation < ValueConfidenceBound)
+        else if (evaluation > ValueConfidenceBound)
             result = 1;
-    }
+    }   
 
-
-    
     backpropagate(result);
 
     network_status = true;
@@ -283,6 +281,16 @@ uint8_t Node::getResult()
     return state->getResult();
 }
 
+uint8_t Node::getClippedEval()
+{
+    if (evaluation < -ValueConfidenceBound)
+        return 0;
+    else if (evaluation > ValueConfidenceBound)
+        return 1;
+    else
+        return 2;
+}
+
 // -------------- Utility Code (Not relevant for algorithm) --------------
 std::string distribution_helper(Node* child, int max_visits, float max_policy, const std::string& type)
 {
@@ -294,7 +302,10 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
         else
             result << int(float(child->visits) / float(max_visits) * 999);
     else if (type == "VALUE")
-        result << int(float(child->evaluation) * 99);
+        // Un-normalize
+        result << int(float(child->evaluation) * 99 * (1 - child->state->nextColor() * 2));
+    else if (type == "CLIPPED")
+        result << int(child->getClippedEval());
     else if (type == "MEAN")
         result << int(float(child->meanEvaluation()) * 99);
     else if (type == "POLICY")
