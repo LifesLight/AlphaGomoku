@@ -357,6 +357,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         output << std::endl << std::endl << " <---------- Environment: " << i << "---------->" << std::endl << std::endl; 
 
         output << " <--- Active Tree --->" << std::endl;
+        output << " Model: " << models[environments[i]->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
         output << Node::analytics(environments[i]->getCurrentNode(), distributions);
         output << std::endl;
 
@@ -365,6 +366,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         if (opposing_node)
         {
             output << " <---- Cold Tree ---->" << std::endl;
+            output << " Model: " << models[!environments[i]->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
             output << Node::analytics(opposing_node, distributions);
             output << std::endl;
         }

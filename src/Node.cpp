@@ -37,6 +37,7 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
         policy_evaluations[i] = policy[i].detach().item<float>();
 
     uint8_t result = 2;
+    
     // If node is terminal use actual playout result
     if (isTerminal())
     {
@@ -305,7 +306,20 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
         // Un-normalize
         result << int(float(child->evaluation) * 99 * (1 - child->state->nextColor() * 2));
     else if (type == "CLIPPED")
-        result << int(child->getClippedEval());
+    {
+        uint8_t clipped_eval = child->getClippedEval();
+        if (clipped_eval)
+            result << " D ";
+        else
+        {
+            if (child->state->nextColor())
+                clipped_eval = !clipped_eval;
+            if (clipped_eval == 0)
+                result << " L ";
+            else
+                result << " W ";
+        }
+    }
     else if (type == "MEAN")
         result << int(float(child->meanEvaluation()) * 99);
     else if (type == "POLICY")
