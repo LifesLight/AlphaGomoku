@@ -25,7 +25,7 @@ public:
     bool isTerminal();
 
     // Runs MCTS policy loop n times
-    void runSimulations(uint32_t simulations);
+    void runSimulations(int simulations);
 
     void makeBestMoves();
     void makeRandomMoves(int amount);
@@ -53,6 +53,12 @@ public:
 
     // Get nodes for retraining
     void storeData(std::string Path);
+
+    // Model that run simulations is going the called on
+    Model* getNextModel();
+
+    // Next played color
+    bool getNextColor();
 
 private:
     // Clear up all network queues

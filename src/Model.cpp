@@ -1,29 +1,25 @@
 #include "Model.h"
 
-torch::jit::script::Module load_model(std::string path, torch::Device device)
+torch::jit::script::Module load_model(std::string path)
 {
     // Always load on CPU
     torch::jit::script::Module model = torch::jit::load(path, torch::kCPU);
-    model.to(device);
+    model.to(TorchDevice);
     model.eval();  
     return model;  
 }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path)
-    : Model(resnet_path, polhead_path, valhead_path, torch::kCPU)
+    : Model(resnet_path, polhead_path, valhead_path, "unnamed")
 {   }
 
-Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, torch::Device device)
-    : Model(resnet_path, polhead_path, valhead_path, device, "unnamed")
-{   }
-
-Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, torch::Device device, std::string name)
-    : device(device), model_name(name)
+Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, std::string name)
+    : model_name(name)
 {
     // Load resnet
     try
     {
-        resnet = load_model(resnet_path, device);
+        resnet = load_model(resnet_path);
     }
     catch (const c10::Error& e)
     {
@@ -33,7 +29,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     // Load polhead
     try
     {
-        polhead = load_model(polhead_path, device);
+        polhead = load_model(polhead_path);
     }
     catch (const c10::Error& e)
     {
@@ -43,7 +39,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     // Load valhead
     try
     {
-        valhead = load_model(valhead_path, device);
+        valhead = load_model(valhead_path);
     }
     catch (const c10::Error& e)
     {
@@ -88,7 +84,7 @@ Model* Model::autoloadModel(std::string name)
     Model* loaded_model;
     try
     {
-        loaded_model = new Model(resnet_path, policy_path, value_path, TorchDevice, name);
+        loaded_model = new Model(resnet_path, policy_path, value_path, name);
     }
     catch(const std::exception& e)
     {

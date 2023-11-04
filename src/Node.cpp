@@ -19,6 +19,11 @@ Node::~Node()
     delete state;
 }
 
+bool Node::getNextColor()
+{
+    return state->getNextColor();
+}
+
 void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
 {
     // Extract each heads output
@@ -28,7 +33,7 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     // Assign value
     evaluation = value.detach().item<float>();
     // Normaize for black is -1 white +1
-    if (!state->nextColor())
+    if (!getNextColor())
         evaluation *= -1;
     valueProcessor(evaluation);
 
@@ -151,7 +156,7 @@ float Node::meanEvaluation()
         return 0;
     }
 
-    if (state->nextColor())
+    if (getNextColor())
         return -summed_evaluation / visits;
     else
         return summed_evaluation / visits;  
@@ -214,7 +219,7 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     // Next color tensor
     torch::Tensor next_color;
 
-    if (node->state->nextColor())
+    if (node->getNextColor())
         next_color = torch::ones({BoardSize, BoardSize}, default_tensor_options);
     else
         next_color = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
@@ -265,7 +270,7 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     tensor[index_white] = history_white.clone();
 
     // Init toggle for what color did what action
-    bool color_toggle = current_state->nextColor();
+    bool color_toggle = current_state->getNextColor();
 
     // Embed histroy actions
     for (index_t history_move : move_history)
@@ -317,7 +322,7 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
             result << int(float(child->visits) / float(max_visits) * 999);
     else if (type == "VALUE")
         // Un-normalize
-        result << int(float(child->evaluation) * 99 * (1 - child->state->nextColor() * 2));
+        result << int(float(child->evaluation) * 99 * (1 - child->getNextColor() * 2));
     else if (type == "MEAN")
         result << int(float(child->meanEvaluation()) * 99);
     else if (type == "POLICY")
@@ -413,7 +418,7 @@ std::string distribution(Node* current_node, const std::string& type)
 
 std::string Node::analytics(Node* node, const std::initializer_list<std::string> distributions)
 {        
-    bool color = node->state->nextColor();
+    bool color = node->getNextColor();
 
     std::ostringstream output;
     output << std::endl;
@@ -460,7 +465,7 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
 
     output << " }" << std::endl;
 
-    if (node->state->nextColor())
+    if (node->getNextColor())
         output << "Color: Black" << std::endl;
     else
         output << "Color: White" << std::endl;

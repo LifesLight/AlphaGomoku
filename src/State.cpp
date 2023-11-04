@@ -77,7 +77,7 @@ int8_t State::getCellValue(uint8_t x, uint8_t y)
     return -1;
 }
 
-bool State::nextColor()
+bool State::getNextColor()
 {
     return !(empty % 2);
 }
@@ -110,7 +110,7 @@ std::string State::toString()
 
     result += "\n   ";
     
-    for (index_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         result += " ---";
     
     result += "\n";
@@ -133,14 +133,14 @@ std::string State::toString()
         }
         result += "|\n   ";
         
-        for (index_t i = 0; i < BoardSize; i++)
+        for (int i = 0; i < BoardSize; i++)
             result += " ---";
         
         result += "\n";
     }
     
     result += "    ";
-    for (index_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         result += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
     result += "\n";
 

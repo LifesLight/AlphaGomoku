@@ -45,6 +45,18 @@ Batcher::Batcher(int environment_count, Model* only_model)
         std::cout << "[Batcher][I]: Created batcher with " << environment_count << " single tree envs" << std::endl;
 }
 
+bool Batcher::getNextColor()
+{
+    // Just use first env since all have same next color
+    return getNode(0)->getNextColor();
+}
+
+Model* Batcher::getNextModel()
+{
+    int model_index = getNextColor();
+    return models[model_index * (models[1] != nullptr)];
+}
+
 Batcher::~Batcher()
 {
     for (Environment* env : environments)
@@ -132,8 +144,7 @@ void Batcher::runNetwork()
     }
 }
 
-// Only run on non terminal environments
-void Batcher::runSimulations(uint32_t sim_count)
+void Batcher::runSimulations(int sim_count)
 {
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Running " << sim_count << " simulation(s) on " << non_terminal_environments.size() << " env(s)" << std::endl;

@@ -70,6 +70,9 @@ public:
     // Get moves that lead to this node
     std::deque<index_t> getMoveHistory();
 
+    // Next player color
+    bool getNextColor();
+
 private:
     // Gets called when network data is recieved
     void backpropagate(float eval);

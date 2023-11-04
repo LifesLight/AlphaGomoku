@@ -64,7 +64,7 @@ public:
     bool isCellEmpty(index_t index);
     bool isCellEmpty(uint8_t x, uint8_t y);
 
-    bool nextColor();
+    bool getNextColor();
 
 private:
     // 0:p0win 1:p1win 2:none
