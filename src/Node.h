@@ -25,8 +25,6 @@ public:
     float summed_evaluation;
     float policy_evaluations[BoardSize * BoardSize];
 
-    uint8_t getClippedEval();
-
     // Neural Net
     // Get inital policy evaluation for this node
     float getPolicyValue();
