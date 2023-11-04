@@ -1,13 +1,13 @@
 #include "Node.h"
 
-Node::Node(State* state, Node* parent, uint16_t parent_action)
+Node::Node(State* state, Node* parent, index_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), visits(0), network_status(0), summed_evaluation(0)
 {  
     untried_actions = state->getPossible();
 }
 
 Node::Node(State* state)
-    : Node(state, nullptr, uint16_t(-1))
+    : Node(state, nullptr, index_t(-1))
 {   }
 
 Node::Node()
@@ -39,7 +39,7 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     network_status = true;
 }
 
-void Node::removeFromUntried(uint16_t action)
+void Node::removeFromUntried(index_t action)
 {
     untried_actions.erase(
             std::remove(untried_actions.begin(), untried_actions.end(), action), untried_actions.end()
@@ -60,15 +60,15 @@ Node* Node::expand()
     }
 
     // Find highest policy action
-    uint16_t action = -1; // initialized as unreachable value
-    for (uint16_t possible : untried_actions)
-        if (action == uint16_t(-1) || policy_evaluations[action] < policy_evaluations[possible])
+    index_t action = -1; // initialized as unreachable value
+    for (index_t possible : untried_actions)
+        if (action == index_t(-1) || policy_evaluations[action] < policy_evaluations[possible])
             action = possible;
 
     return expand(action);
 }
 
-Node* Node::expand(uint16_t action)
+Node* Node::expand(index_t action)
 {
     removeFromUntried(action);
 
@@ -188,6 +188,18 @@ void Node::valueProcessor(float normalized_value)
 // -------------- Utlility Code --------------
 #pragma region
 
+std::deque<index_t> Node::getMoveHistory()
+{
+    std::deque<index_t> history;
+    Node* node = this;
+    while (node->parent)
+    {
+        history.push_front(node->parent_action);
+        node = node->parent;
+    }
+    return history;
+}
+
 torch::Tensor Node::nodeToGamestate(Node* node)
 {
     // Generate Tensor on CPU
@@ -209,14 +221,14 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     tensor[0] = next_color;
 
     // Get last actions from source
-    std::deque<uint16_t> move_history;
+    std::deque<index_t> move_history;
     Node* running_node = node; 
-    for (uint16_t i = 0; i < HistoryDepth - 2; i++)
+    for (index_t i = 0; i < HistoryDepth - 2; i++)
     {
         if (running_node == nullptr)
         {
             // Is max number which will never be reached
-            move_history.push_front(uint16_t(-1));
+            move_history.push_front(index_t(-1));
         }
         else
         {
@@ -256,13 +268,13 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     bool color_toggle = current_state->nextColor();
 
     // Embed histroy actions
-    for (uint16_t history_move : move_history)
+    for (index_t history_move : move_history)
     {
         // If white did HM
         if (color_toggle)
         {
             index_white++;
-            if (history_move != uint16_t(-1))
+            if (history_move != index_t(-1))
             {
                 uint8_t x, y;
                 Utils::indexToCords(history_move, x, y);
@@ -274,7 +286,7 @@ torch::Tensor Node::nodeToGamestate(Node* node)
         else
         {
             index_black++;
-            if (history_move != uint16_t(-1))
+            if (history_move != index_t(-1))
             {
                 uint8_t x, y;
                 Utils::indexToCords(history_move, x, y);
@@ -322,12 +334,12 @@ std::string distribution(Node* current_node, const std::string& type)
     Node* parent = current_node->parent;
 
     result << "\n      <";
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         result << "-";
     result << " " << type;
     result << " DISTRIBUTION ";
 
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         result << "-";
     result << ">\n    ";
 
@@ -340,7 +352,7 @@ std::string distribution(Node* current_node, const std::string& type)
         if (child->getPolicyValue() > max_policy)
             max_policy = child->getPolicyValue();
 
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         result << " ---";
     result << "\n";
     for (int y = BoardSize - 1; y >= 0; y--)
@@ -354,7 +366,7 @@ std::string distribution(Node* current_node, const std::string& type)
                 bool matched = false;
                 for (Node* child : parent->children)
                 {
-                    uint16_t index;
+                    index_t index;
                     Utils::cordsToIndex(index, x, y);
                     if (child->parent_action == index)
                     {
@@ -382,17 +394,17 @@ std::string distribution(Node* current_node, const std::string& type)
             }
         }
         result << "|\n    ";
-        for (uint16_t i = 0; i < BoardSize; i++)
+        for (int i = 0; i < BoardSize; i++)
             result << " ---";
         result << "\n";
     }
 
     result << "   ";
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         result << " " << std::setw(3) << std::setfill(' ') << i;
 
     result << "\n    <";
-    for (uint16_t i = 0; i < BoardSize * 2 + 26; i++)
+    for (int i = 0; i < BoardSize * 2 + 26; i++)
         result << "-";
     result << ">\n";
 
@@ -407,15 +419,15 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
     output << std::endl;
 
     // Static window
-    uint16_t window_width = 40;
-    for (uint16_t i = 0; i < window_width; i++)
+    int window_width = 40;
+    for (int i = 0; i < window_width; i++)
         output << "#";
     // Stat header
     output << std::endl << "#";
-    for (uint16_t i = 0; i < ((window_width - 11) / 2); i++)
+    for (int i = 0; i < ((window_width - 11) / 2); i++)
         output << " ";
     output << "STATISTICS";
-    for (uint16_t i = 0; i < ((window_width - 11) / 2); i++)
+    for (int i = 0; i < ((window_width - 11) / 2); i++)
         output << " ";
     output << "#" << std::endl;
     // Total sims
@@ -430,7 +442,7 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
     output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->evaluation << " #" << std::endl;
     output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->meanEvaluation() << " #" << std::endl;
     
-    for (uint16_t i = 0; i < window_width; i++)
+    for (int i = 0; i < window_width; i++)
         output << "#";
     output << std::endl;
 
@@ -497,7 +509,7 @@ std::string Node::sliceNodeHistory(Node* node, uint8_t depth)
     }
 
     output += "\n   ";
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         output += " ---";
     output += "\n";
 
@@ -514,13 +526,13 @@ std::string Node::sliceNodeHistory(Node* node, uint8_t depth)
             }
         }
         output += "|\n   ";
-        for (uint16_t i = 0; i < BoardSize; i++)
+        for (int i = 0; i < BoardSize; i++)
             output += " ---";
         output += "\n";
     }
 
     output += "    ";
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (int i = 0; i < BoardSize; i++)
         output += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
     output += "\n";
 

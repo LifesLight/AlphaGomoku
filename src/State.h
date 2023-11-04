@@ -42,15 +42,15 @@ public:
     // Color
     BLOCK c_array[BoardSize * 6];
     // Last is last played move, empty is remaining empty fields
-    uint16_t last, empty;
+    index_t last, empty;
 
     State();
     State(State*);
 
     // Make move
-    void makeMove(uint16_t);
+    void makeMove(index_t);
     // Get list of remaining empty fields as indecies
-    std::deque<uint16_t> getPossible();
+    std::deque<index_t> getPossible();
     // Is terminal game state
     bool isTerminal();
     // Black is 0 White is 1 Draw is 2
@@ -58,10 +58,10 @@ public:
     // String representation of state
     std::string toString();
     // Value of field
-    int8_t getCellValue(uint16_t index);
+    int8_t getCellValue(index_t index);
     int8_t getCellValue(uint8_t x, uint8_t y);
 
-    bool isCellEmpty(uint16_t index);
+    bool isCellEmpty(index_t index);
     bool isCellEmpty(uint8_t x, uint8_t y);
 
     bool nextColor();

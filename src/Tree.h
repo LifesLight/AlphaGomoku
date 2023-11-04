@@ -19,7 +19,7 @@ public:
 
     // These functions can/will require a NN computation, those will be stored in network queue
     bool makeMove(uint8_t x, uint8_t y);
-    bool makeMove(uint16_t index);
+    bool makeMove(index_t index);
     Node* policy();
     // <-------------------->
 

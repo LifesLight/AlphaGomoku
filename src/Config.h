@@ -36,3 +36,10 @@
 #define ExplorationBias 0.2
 #define PolicyBias 0.3
 #define ValueBias 1
+
+// Save memory if 2d -> 1d index mapping fits in 2^8
+#if Boardsize < 16
+typedef uint8_t index_t;
+#else
+typedef uint16_t index_t;
+#endif

@@ -176,13 +176,13 @@ float Batcher::duelModels(int random_actions, int simulations)
             // Select random move for both envs
             Environment* env1 = non_terminal_environments[i];
             Environment* env2 = non_terminal_environments[i + 1];
-            std::deque<uint16_t> untried;
+            std::deque<index_t> untried;
             untried = env1->getUntriedActions();
 
             int action_count = untried.size();
 
             std::uniform_int_distribution<int> uni(0, action_count - 1);
-            uint16_t action_index = untried[uni(rng)];
+            index_t action_index = untried[uni(rng)];
 
             // Make move for both envs
             env1->makeMove(action_index);
@@ -271,12 +271,12 @@ void Batcher::makeRandomMoves(int amount)
     {
         for (Environment* env : non_terminal_environments)
         {   
-            std::deque<uint16_t> untried = env->getUntriedActions();
+            std::deque<index_t> untried = env->getUntriedActions();
             int action_count = untried.size();
 
             std::uniform_int_distribution<int> uni(0, action_count - 1);
 
-            uint16_t action = untried[uni(rng)];
+            index_t action = untried[uni(rng)];
             env->makeMove(action);
         }
 
@@ -380,8 +380,8 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 // Self play datapoints stored for further reference
 struct Datapoint
 {
-    torch::Tensor gamestate;
-    float search_propabilities[BoardSize * BoardSize];
+    std::vector<index_t> moves;
+    index_t best_move;
     // Black is -1 white is 1 draw is 0
     uint8_t winner;
 };
@@ -392,19 +392,8 @@ void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
     if (node->untried_actions.size() == 0)
     {
         Datapoint data;
-        data.gamestate = Node::nodeToGamestate(node).to(torch::kBool);
-    
-        int summed_visits = 0;
-        for (Node* child : node->children)
-            summed_visits += child->visits;
 
-        int i = 0;
-        for (Node* child : node->children)
-        {
-            data.search_propabilities[i] = float(child->visits) / summed_visits;
-            i++;
-        }
-
+        data.best_move = node->absBestChild()->parent_action;
         data.winner = winner;
         datapoints.push_back(data);
     }

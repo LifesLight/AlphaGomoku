@@ -15,11 +15,11 @@ class Node
 {
 public:
     Node* parent;
-    uint16_t parent_action;
+    index_t parent_action;
     State* state;
     uint32_t visits;
     std::list<Node*> children;
-    std::deque<uint16_t> untried_actions;
+    std::deque<index_t> untried_actions;
     bool network_status;
     float evaluation;
     float summed_evaluation;
@@ -34,7 +34,7 @@ public:
     void setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input);
 
     // Constructors
-    Node(State* state, Node* parent, uint16_t parent_action);
+    Node(State* state, Node* parent, index_t parent_action);
     Node(State* state);
     Node();
     ~Node();
@@ -43,14 +43,14 @@ public:
     // Auto expand by policy values
     Node* expand();
     // Manual expand with move_index
-    Node* expand(uint16_t move_index);
+    Node* expand(index_t move_index);
     float meanEvaluation();
     Node* bestChild();
     bool isTerminal();
 
     // Other
     // Removes action from untried_actions
-    void removeFromUntried(uint16_t action);
+    void removeFromUntried(index_t action);
 
     // Best child without exploration biases
     Node* absBestChild();
@@ -66,6 +66,9 @@ public:
     // Convert node to tensor Gamestate representation
     static torch::Tensor nodeToGamestate(Node* node);
     static std::string sliceNodeHistory(Node* node, uint8_t depth);
+
+    // Get moves that lead to this node
+    std::deque<index_t> getMoveHistory();
 
 private:
     // Gets called when network data is recieved

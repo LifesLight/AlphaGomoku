@@ -27,7 +27,7 @@ int Environment::getNodeCount()
     return sum;
 }
 
-bool Environment::makeMove(uint16_t index)
+bool Environment::makeMove(index_t index)
 {
     uint8_t x, y;
     Utils::indexToCords(index, x, y);
@@ -82,7 +82,7 @@ bool Environment::makeBestMove()
     return false;
 }
 
-std::deque<uint16_t> Environment::getUntriedActions()
+std::deque<index_t> Environment::getUntriedActions()
 {
 
     return getCurrentNode()->untried_actions;

@@ -40,7 +40,7 @@ int Tree::getNodeCount()
     return node_count;
 }
 
-bool Tree::makeMove(uint16_t index)
+bool Tree::makeMove(index_t index)
 {
     uint8_t x, y;
     Utils::indexToCords(index, x, y);
@@ -49,7 +49,7 @@ bool Tree::makeMove(uint16_t index)
 
 bool Tree::makeMove(uint8_t x, uint8_t y)
 {
-    uint16_t move_index;
+    index_t move_index;
     Utils::cordsToIndex(move_index, x, y);
 
     State* current_state = current_node->state;

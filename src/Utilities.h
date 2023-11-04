@@ -7,7 +7,7 @@ class Utils
 {
 public:
     template <typename T>
-    static void indexToCords(uint16_t index, T& x, T& y)
+    static void indexToCords(index_t index, T& x, T& y)
     {
         x = index / BoardSize;
         y = index % BoardSize;
@@ -15,7 +15,7 @@ public:
 
 
     template <typename T>
-    static void cordsToIndex(uint16_t& index, T x, T y)
+    static void cordsToIndex(index_t& index, T x, T y)
     {
         index = x * BoardSize + y;
     }

@@ -14,7 +14,7 @@ State::State(State* source)
     memcpy(c_array, source->c_array, sizeof(BLOCK) * BoardSize * 6);
 }
 
-void State::makeMove(uint16_t index)
+void State::makeMove(index_t index)
 {
     --empty;
     last = index;
@@ -30,13 +30,13 @@ void State::makeMove(uint16_t index)
     // RDiagonal
     m_array[BoardSize - 1 - x + BoardSize - 1 - y + BoardSize * 4] |= (BLOCK(1) << x);
     // Flip Colors
-    for (uint16_t i = 0; i < BoardSize * 6; i++) c_array[i] ^= m_array[i];
+    for (index_t i = 0; i < BoardSize * 6; i++) c_array[i] ^= m_array[i];
 
     // Check for 5-Stone alignment
     result = checkForWin() ? empty % 2 : 2;
 }
 
-bool State::isCellEmpty(uint16_t index)
+bool State::isCellEmpty(index_t index)
 {
     uint8_t x, y;
     Utils::cordsToIndex(index, x, y);
@@ -48,7 +48,7 @@ bool State::isCellEmpty(uint8_t x, uint8_t y)
     return !(m_array[y] & (BLOCK(1) << x));
 }
 
-int8_t State::getCellValue(uint16_t index)
+int8_t State::getCellValue(index_t index)
 {
     uint8_t x, y;
     Utils::indexToCords(index, x, y);
@@ -87,11 +87,11 @@ uint8_t State::getResult()
     return result;
 }
 
-std::deque<uint16_t> State::getPossible()
+std::deque<index_t> State::getPossible()
 {
-    std::deque<uint16_t> actions;
+    std::deque<index_t> actions;
     uint8_t x, y;
-    for (uint16_t i = 0; i < BoardSize * BoardSize; i++)
+    for (index_t i = 0; i < BoardSize * BoardSize; i++)
     {
         Utils::indexToCords(i, x, y);
         if (isCellEmpty(x, y)) actions.push_back(i);
@@ -110,7 +110,7 @@ std::string State::toString()
 
     result += "\n   ";
     
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (index_t i = 0; i < BoardSize; i++)
         result += " ---";
     
     result += "\n";
@@ -133,14 +133,14 @@ std::string State::toString()
         }
         result += "|\n   ";
         
-        for (uint16_t i = 0; i < BoardSize; i++)
+        for (index_t i = 0; i < BoardSize; i++)
             result += " ---";
         
         result += "\n";
     }
     
     result += "    ";
-    for (uint16_t i = 0; i < BoardSize; i++)
+    for (index_t i = 0; i < BoardSize; i++)
         result += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
     result += "\n";
 

@@ -21,7 +21,7 @@ public:
 
     // These functions can/will require a NN computation, those will be stored in trees netqueues
     bool makeMove(uint8_t x, uint8_t y);
-    bool makeMove(uint16_t index);
+    bool makeMove(index_t index);
     bool makeBestMove();
     Node* policy();
     // <-------------------->
@@ -37,7 +37,7 @@ public:
     uint8_t getResult();
 
     // Get all possible actions from node
-    std::deque<uint16_t> getUntriedActions();
+    std::deque<index_t> getUntriedActions();
 
     // Display state
     std::string toString();
