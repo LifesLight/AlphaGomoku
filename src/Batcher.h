@@ -2,6 +2,8 @@
 #include "Environment.h"
 #include "Model.h"
 #include "Node.h"
+#include "Datapoint.h"
+#include "Storage.h"
 
 /*
 Host class for the entire selfplay.
@@ -51,6 +53,9 @@ public:
     // Generates duplicate envs with mirrored models. Lets them duel and outputs the win distribution between them
     float duelModels(int random_moves, int simulations);
 
+    // Play model against itself, highly recommended to use in single tree mode
+    void selfplay(int simulations);
+
     // Get nodes for retraining
     void storeData(std::string Path);
 
@@ -67,6 +72,9 @@ private:
 
     // Clears non_terminal_environments of terminals
     void updateNonTerminal();
+
+    // Play until batcher is terminal
+    void runGameloop(int simulations);
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;

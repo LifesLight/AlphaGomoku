@@ -4,6 +4,8 @@
 #include "Model.h"
 #include "Environment.h"
 #include "Batcher.h"
+#include "Storage.h"
+#include "Datapoint.h"
 
 int main(int argc, const char* argv[])
 {
@@ -28,24 +30,10 @@ int main(int argc, const char* argv[])
     Model* nnb = Model::autoloadModel(argv[1]);
     Model* nnw = Model::autoloadModel(argv[2]);
 
-    Batcher batcher(environment_count, nnb, nnw);
-    batcher.swapModels();
-    batcher.duelModels(rand_moves, simulations);
-
-/*
-    {
-        Batcher batcher(environment_count, nnb, nnw);
+    Batcher batcher(environment_count, nnb);
+    batcher.makeRandomMoves(rand_moves);
+    batcher.selfplay(simulations);
+    batcher.storeData("../Datasets/Selfplay/data.txt");
     
-        batcher.makeRandomMoves(rand_moves);
-        while (!batcher.isTerminal())
-        {
-            batcher.runSimulations(simulations);
-            batcher.makeBestMoves();
-            std::cout << batcher.toStringDist({"POLICY", "VISITS", "MEAN", "VALUE"}) << std::endl;
-        }
-
-        std::cout << batcher.averageWinner() << std::endl;
-    }
-*/
     return 0;
 }

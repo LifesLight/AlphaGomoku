@@ -1,1 +1,0 @@
-## Here the datapoints from selfplay should be stored

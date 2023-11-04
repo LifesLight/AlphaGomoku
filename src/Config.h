@@ -29,6 +29,9 @@
 // HD
 #define HistoryDepth 8
 
+// How many datapoints should be stored in a selfplay dataset
+#define MaxDatapoints 50'000
+
 // Default Device for torch computations
 #define TorchDevice torch::kCPU
 
