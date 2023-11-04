@@ -20,22 +20,8 @@ Node::~Node()
     delete state;
 }
 
-void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
+void Node::valueProcessor(float normalized_value)
 {
-    // Extract each heads output
-    torch::Tensor policy = std::get<0>(input);
-    torch::Tensor value = std::get<1>(input);
-
-    // Assign value
-    evaluation = value.detach().item<float>();
-    // Normaize for black is -1 white +1
-    if (!state->nextColor())
-        evaluation *= -1;
-
-    // Assign policy values
-    for (int i = 0; i < BoardSize * BoardSize; i++)
-        policy_evaluations[i] = policy[i].detach().item<float>();
-
     uint8_t result = 2;
     
     // If node is terminal use actual playout result
@@ -52,6 +38,24 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     }   
 
     backpropagate(result);
+}
+
+void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
+{
+    // Extract each heads output
+    torch::Tensor policy = std::get<0>(input);
+    torch::Tensor value = std::get<1>(input);
+
+    // Assign value
+    evaluation = value.detach().item<float>();
+    // Normaize for black is -1 white +1
+    if (!state->nextColor())
+        evaluation *= -1;
+    valueProcessor(evaluation);
+
+    // Assign policy values
+    for (int i = 0; i < BoardSize * BoardSize; i++)
+        policy_evaluations[i] = policy[i].detach().item<float>();
 
     network_status = true;
 }

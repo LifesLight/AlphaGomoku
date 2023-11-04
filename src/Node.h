@@ -73,4 +73,6 @@ public:
 private:
     // Gets called when network data is recieved
     void backpropagate(uint8_t value);
+    // Figures out what to do with the valHeads output
+    void valueProcessor(float normalized_value);
 };
