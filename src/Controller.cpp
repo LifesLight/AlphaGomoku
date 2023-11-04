@@ -28,6 +28,11 @@ int main(int argc, const char* argv[])
     Model* nnb = Model::autoloadModel(argv[1]);
     Model* nnw = Model::autoloadModel(argv[2]);
 
+    Batcher batcher(environment_count, nnb, nnw);
+    batcher.swapModels();
+    batcher.duelModels(rand_moves, simulations);
+
+/*
     {
         Batcher batcher(environment_count, nnb, nnw);
     
@@ -41,6 +46,6 @@ int main(int argc, const char* argv[])
 
         std::cout << batcher.averageWinner() << std::endl;
     }
-
+*/
     return 0;
 }

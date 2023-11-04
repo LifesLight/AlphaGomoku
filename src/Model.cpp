@@ -77,6 +77,9 @@ std::string Model::getName()
 
 Model* Model::autoloadModel(std::string name)
 {
+    if (Utils::checkEnv("LOGGING", "INFO"))
+        std::cout << "[Model][I]: Autoloading: " << name << std::endl;
+
     std::string general_path = ModelPath;
     std::string resnet_path = general_path + "ResNet/" + name;
     std::string policy_path = general_path + "PolHead/" + name;
@@ -89,7 +92,7 @@ Model* Model::autoloadModel(std::string name)
     }
     catch(const std::exception& e)
     {
-        std::cerr << "[Utils]: Failed to autoload Model" << '\n' << e.what() << '\n';
+        std::cerr << "[Model][E]: Failed to autoload Model" << '\n' << e.what() << '\n';
     }
     return loaded_model;
 }

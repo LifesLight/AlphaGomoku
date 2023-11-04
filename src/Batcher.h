@@ -39,6 +39,7 @@ public:
     std::string toString(int max_envs);
     // Outputs a distribution for each env
     std::string toStringDist(const std::initializer_list<std::string> distributions);
+    std::string toStringDist(const std::initializer_list<std::string> distributions, int amount);
 
     // -1 is black
     float averageWinner();

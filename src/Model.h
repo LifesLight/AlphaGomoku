@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "Utilities.h"
 
 /*
 Wrapper around a pytorch multi module model.
