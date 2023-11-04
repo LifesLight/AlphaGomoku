@@ -10,8 +10,24 @@ Tree::Tree()
 
 Tree::~Tree()
 {
-    // Not correct?
-    // TODO do this
+    std::vector<Node*> all_nodes = getAllNodes();
+    for (Node* node : all_nodes)
+        delete node;
+}
+
+void nodeCrawler(std::vector<Node*>& node_vector, Node* node)
+{
+    node_vector.push_back(node);
+    for (Node* child : node->children)
+        nodeCrawler(node_vector, child);
+}
+
+std::vector<Node*> Tree::getAllNodes()
+{
+    std::vector<Node*> tree_nodes;
+    Node* root = getRootNode();
+    nodeCrawler(tree_nodes, root);
+    return tree_nodes;
 }
 
 Node* Tree::getRootNode()

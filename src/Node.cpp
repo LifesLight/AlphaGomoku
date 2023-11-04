@@ -1,9 +1,8 @@
 #include "Node.h"
 
 Node::Node(State* state, Node* parent, uint16_t parent_action)
-    : parent(parent), parent_action(parent_action), state(state), visits(0), network_status(0)
+    : parent(parent), parent_action(parent_action), state(state), visits(0), network_status(0), summed_evaluation(0)
 {  
-    memset(results, 0, sizeof(uint32_t) * 3);
     untried_actions = state->getPossible();
 }
 
@@ -18,26 +17,6 @@ Node::Node()
 Node::~Node()
 {
     delete state;
-}
-
-void Node::valueProcessor(float normalized_value)
-{
-    uint8_t result = 2;
-    
-    // If node is terminal use actual playout result
-    if (isTerminal())
-    {
-        result = getResult();
-    }
-    else
-    {
-        if (evaluation < -ValueConfidenceBound)
-            result = 0;
-        else if (evaluation > ValueConfidenceBound)
-            result = 1;
-    }   
-
-    backpropagate(result);
 }
 
 void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
@@ -101,30 +80,6 @@ Node* Node::expand(uint16_t action)
     return child;
 }
 
-void Node::backpropagate(uint8_t result)
-{
-    visits++;
-    results[result] += 1;
-
-    // Stop at root
-    if (parent)
-        parent->backpropagate(result);
-}
-
-float Node::meanEvaluation()
-{
-    if (visits == 0)
-    {
-        std::cout << "[Node][W]: Tried to get meanEvaluation from node with 0 visits?" << std::endl << std::flush;
-        return 0;
-    }
-
-    if (state->nextColor())
-        return float(results[0] - results[1]) / float(visits);
-    else
-        return float(results[1] - results[0]) / float(visits);  
-}
-
 Node* Node::bestChild()
 {
     Node* best_child = nullptr;
@@ -179,6 +134,59 @@ float Node::getPolicyValue()
 {
     return parent->policy_evaluations[parent_action];
 }
+
+uint8_t Node::getResult()
+{
+    return state->getResult();
+}
+
+// ------------ Value aggregation ------------
+#pragma region
+
+float Node::meanEvaluation()
+{
+    if (visits == 0)
+    {
+        std::cout << "[Node][W]: Tried to get meanEvaluation from node with 0 visits?" << std::endl << std::flush;
+        return 0;
+    }
+
+    if (state->nextColor())
+        return -summed_evaluation / visits;
+    else
+        return summed_evaluation / visits;  
+}
+
+void Node::backpropagate(float eval)
+{
+    visits++;
+    summed_evaluation += eval;
+
+    // Stop at root
+    if (parent)
+        parent->backpropagate(eval);
+}
+
+void Node::valueProcessor(float normalized_value)
+{
+    if (isTerminal())
+    {
+        uint8_t result = getResult();
+        if (result == 2)
+            normalized_value = 0.0f;
+        else if (result == 0)
+            normalized_value = -1.0f;
+        else
+            normalized_value = 1.0f;
+    }
+
+    backpropagate(normalized_value);
+}
+
+#pragma endregion
+
+// -------------- Utlility Code --------------
+#pragma region
 
 torch::Tensor Node::nodeToGamestate(Node* node)
 {
@@ -281,22 +289,11 @@ torch::Tensor Node::nodeToGamestate(Node* node)
     return tensor;
 }
 
-uint8_t Node::getResult()
-{
-    return state->getResult();
-}
+#pragma endregion
 
-uint8_t Node::getClippedEval()
-{
-    if (evaluation < -ValueConfidenceBound)
-        return 0;
-    else if (evaluation > ValueConfidenceBound)
-        return 1;
-    else
-        return 2;
-}
+// -------------- Analysis Code --------------
+#pragma region 
 
-// -------------- Utility Code (Not relevant for algorithm) --------------
 std::string distribution_helper(Node* child, int max_visits, float max_policy, const std::string& type)
 {
     std::ostringstream result;
@@ -309,21 +306,6 @@ std::string distribution_helper(Node* child, int max_visits, float max_policy, c
     else if (type == "VALUE")
         // Un-normalize
         result << int(float(child->evaluation) * 99 * (1 - child->state->nextColor() * 2));
-    else if (type == "CLIPPED")
-    {
-        uint8_t clipped_eval = child->getClippedEval();
-        if (clipped_eval)
-            result << " D ";
-        else
-        {
-            if (child->state->nextColor())
-                clipped_eval = !clipped_eval;
-            if (clipped_eval == 0)
-                result << " L ";
-            else
-                result << " W ";
-        }
-    }
     else if (type == "MEAN")
         result << int(float(child->meanEvaluation()) * 99);
     else if (type == "POLICY")
@@ -544,3 +526,5 @@ std::string Node::sliceNodeHistory(Node* node, uint8_t depth)
 
     return output;
 }
+
+#pragma endregion

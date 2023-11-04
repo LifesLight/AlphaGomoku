@@ -33,6 +33,7 @@ public:
     Node* getParentNode();
 
     int getNodeCount();
+    std::vector<Node*> getAllNodes();
 
     bool isTerminal();
     void clean();

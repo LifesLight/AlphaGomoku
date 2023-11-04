@@ -28,24 +28,19 @@ int main(int argc, const char* argv[])
     Model* nnb = Model::autoloadModel(argv[1]);
     Model* nnw = Model::autoloadModel(argv[2]);
 
-    Batcher batcher(environment_count, nnb);
-    /*
-    batcher.swapModels();
-    std::cout << batcher.duelModels(rand_moves, simulations) << std::endl;
-    */
-    //batcher.storeData(argv[2]);
-    
-    batcher.makeRandomMoves(rand_moves);
-    while (!batcher.isTerminal())
     {
-        batcher.runSimulations(simulations);
-        batcher.makeBestMoves();
-        std::cout << batcher.toStringDist({"POLICY", "VISITS", "MEAN", "VALUE", "CLIPPED"}) << std::endl;
+        Batcher batcher(environment_count, nnb, nnw);
+    
+        batcher.makeRandomMoves(rand_moves);
+        while (!batcher.isTerminal())
+        {
+            batcher.runSimulations(simulations);
+            batcher.makeBestMoves();
+            std::cout << batcher.toStringDist({"POLICY", "VISITS", "MEAN", "VALUE"}) << std::endl;
+        }
+
+        std::cout << batcher.averageWinner() << std::endl;
     }
 
-    std::cout << batcher.averageWinner() << std::endl;
-    
-    batcher.freeMemory();
-
-    return 1;
+    return 0;
 }

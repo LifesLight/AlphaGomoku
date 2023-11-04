@@ -22,8 +22,7 @@ public:
     std::deque<uint16_t> untried_actions;
     bool network_status;
     float evaluation;
-    // 0 is black wins, 1 white 2 draws
-    int16_t results[3];
+    float summed_evaluation;
     float policy_evaluations[BoardSize * BoardSize];
 
     uint8_t getClippedEval();
@@ -72,7 +71,7 @@ public:
 
 private:
     // Gets called when network data is recieved
-    void backpropagate(uint8_t value);
+    void backpropagate(float eval);
     // Figures out what to do with the valHeads output
     void valueProcessor(float normalized_value);
 };
