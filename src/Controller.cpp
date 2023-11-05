@@ -44,8 +44,10 @@ int main(int argc, const char* argv[])
     }
     else
     {
-        Model* nnb = Model::autoloadModel(argv[1]);
-        Model* nnw = Model::autoloadModel(argv[2]);
+        Model* nnb = Model::autoloadModel(argv[1], 1);
+        nnb->setName("Jimmy");
+        Model* nnw = Model::autoloadModel(argv[2], 800);
+        nnw->setName("Chady");
         batcher = new Batcher(environment_count, nnb, nnw);
     }
 

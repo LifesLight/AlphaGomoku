@@ -51,10 +51,13 @@ bool Batcher::getNextColor()
     return getNode(0)->getNextColor();
 }
 
-Model* Batcher::getNextModel()
+bool Batcher::getNextModelIndex(Environment* env)
 {
     int model_index = getNextColor();
-    return models[model_index * (models[1] != nullptr)];
+    model_index = (model_index * (models[1] != nullptr));
+    if (env->areModelsSwapped())
+        model_index = !model_index;
+    return model_index;
 }
 
 Batcher::~Batcher()
@@ -144,11 +147,43 @@ void Batcher::runNetwork()
     }
 }
 
+void Batcher::runSimulationsOnEnvironments(std::vector<Environment*> envs, int simulations)
+{
+    for (int sim_step = 0; sim_step < simulations; sim_step++)
+    {
+        // Run policy on all envs
+        for (Environment* env : envs)
+        {
+            Node* selected = env->policy();
+            // If node has network data it wont be auto backpropagated so we manually do it again
+            if (selected->getNetworkStatus())
+                selected->callBackpropagate();
+        }
+
+        // Run network for all envs
+        runNetwork();
+    }
+}
+
 void Batcher::runSimulations()
 {
-    //int simulations = getNextModel()->getSimulations();
-    // TODO split run simulations to per model
-    //runNetwork(simulations);
+    std::vector<Environment*> envsByModel[2];
+
+    for (Environment* env : non_terminal_environments)
+        envsByModel[getNextModelIndex(env)].push_back(env);
+
+    for (int i = 0; i < 2; i++)
+    {
+        if (models[i] == nullptr)
+        {
+            if (envsByModel[i].size() != 0)
+                std::cout << "[Batcher][W]: Skipping simulation(s) for environment(s) in uncuppler" << std::endl << std::flush;
+            continue;
+        }
+        int simulations = models[i]->getSimulations();
+        std::cout << "Running " << simulations << " on " << models[i]->getName() << std::endl <<std::flush;
+        runSimulationsOnEnvironments(envsByModel[i], simulations);
+    }
 }
 
 void Batcher::runSimulations(int sim_count)
@@ -156,7 +191,8 @@ void Batcher::runSimulations(int sim_count)
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Running " << sim_count << " simulation(s) on " << non_terminal_environments.size() << " env(s)" << std::endl;
 
-    std::cout << "Next model: " << getNextModel()->getName() << std::endl;
+    //std::cout << "Next model: " << getNextModel()->getName() << std::endl;
+    
 
     // Simulation loop / MCTS loop
     uint32_t env_count = non_terminal_environments.size();
@@ -199,7 +235,7 @@ void Batcher::runGameloop(int simulations)
     // Gameplay Loop
     while(!isTerminal())
     {
-        runSimulations(simulations);
+        runSimulations();
         makeBestMoves();
 
         if (Utils::checkEnv("RENDER_ENVS", "TRUE"))
@@ -265,7 +301,7 @@ float Batcher::duelModels(int random_actions, int simulations)
     }
 
     runNetwork();
-    
+
     // Run until terminal
     runGameloop(simulations);
 

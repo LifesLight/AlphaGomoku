@@ -10,11 +10,19 @@ torch::jit::script::Module load_model(std::string path)
 }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path)
-    : Model(resnet_path, polhead_path, valhead_path, "unnamed")
+    : Model(resnet_path, polhead_path, valhead_path, 400)
+{   }
+
+Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations)
+    : Model(resnet_path, polhead_path, valhead_path, simulations, "unnamed")
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, std::string name)
-    : model_name(name)
+    : Model(resnet_path, polhead_path, valhead_path, 400, name)
+{   }
+
+Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations, std::string name)
+    : model_name(name), simulations(simulations)
 {
     // Load resnet
     try
@@ -71,7 +79,22 @@ std::string Model::getName()
     return model_name;
 }
 
+void Model::setName(std::string name)
+{
+    model_name = name;
+}
+
+int Model::getSimulations()
+{
+    return simulations;
+}
+
 Model* Model::autoloadModel(std::string name)
+{
+    return autoloadModel(name, 400);
+}
+
+Model* Model::autoloadModel(std::string name, int simulations)
 {
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Model][I]: Autoloading: " << name << std::endl;
@@ -84,7 +107,7 @@ Model* Model::autoloadModel(std::string name)
     Model* loaded_model;
     try
     {
-        loaded_model = new Model(resnet_path, policy_path, value_path, name);
+        loaded_model = new Model(resnet_path, policy_path, value_path, simulations, name);
     }
     catch(const std::exception& e)
     {

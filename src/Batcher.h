@@ -62,12 +62,15 @@ public:
     void storeData(std::string Path);
 
     // Model that run simulations is going the called on
-    Model* getNextModel();
+    bool getNextModelIndex(Environment* env);
 
     // Next played color
     bool getNextColor();
 
 private:
+    // Run simulation loop on provided environments
+    void runSimulationsOnEnvironments(std::vector<Environment*> envs, int simulations);
+
     // Clear up all network queues
     // Should never be a need to call manually
     void runNetwork();

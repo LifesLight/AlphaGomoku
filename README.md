@@ -7,7 +7,7 @@ White is 1 and 1.0 is white winning evaluation<br>
 (Draw is 2 and 0.0 is drawn evaluation)<br>
 
 ## Algorithm
-The general idea is to use a variation of MCTS which uses a Neural Network with policy and value-head.<br>
+The general idea is to use a variation of MCTS, which uses a Neural Network with policy and value-head.<br>
 The Neural Networks parameters are improved over time via selfplay. The model is retrained on better moves calculated by the MCTS.
 If the new model wins at least 55% of games against the old one keep it.<br>
 
