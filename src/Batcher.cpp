@@ -87,13 +87,13 @@ void Batcher::updateNonTerminal()
             std::cout << "[Batcher][I]: " << non_terminal_environments.size() - new_non_terminal.size() << 
                             " env(s) turned terminal (" << new_non_terminal.size() << "/" << environments.size() << ")" <<  std::endl;
 
-    non_terminal_environments = new_non_terminal;        
+    non_terminal_environments = new_non_terminal;
 }
 
 void Batcher::runNetwork()
 {
     torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDevice).dtype(torch::kFloat32);
-    
+
     // Accumilate Nodes per model
     std::vector<Node*> nodes[2];
     for (Environment* env : environments)
@@ -144,16 +144,22 @@ void Batcher::runNetwork()
     }
 }
 
+void Batcher::runSimulations()
+{
+    //int simulations = getNextModel()->getSimulations();
+    // TODO split run simulations to per model
+    //runNetwork(simulations);
+}
+
 void Batcher::runSimulations(int sim_count)
 {
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Running " << sim_count << " simulation(s) on " << non_terminal_environments.size() << " env(s)" << std::endl;
 
+    std::cout << "Next model: " << getNextModel()->getName() << std::endl;
+
     // Simulation loop / MCTS loop
     uint32_t env_count = non_terminal_environments.size();
-
-    std::vector<Node*> simulation_nodes;
-    simulation_nodes.reserve(env_count);
 
     for (uint32_t sim_step = 0; sim_step < sim_count; sim_step++)
     {
@@ -161,13 +167,14 @@ void Batcher::runSimulations(int sim_count)
         for (uint32_t i = 0; i < env_count; i++)
         {
             Environment* env = non_terminal_environments[i];
-            simulation_nodes.push_back(env->policy());
+            Node* selected = env->policy();
+            // If node has network data it wont be auto backpropagated so we manually do it again
+            if (selected->getNetworkStatus())
+                selected->callBackpropagate();
         }
 
         // Run network for all envs
         runNetwork();
-
-        simulation_nodes.clear();
     }
 }
 

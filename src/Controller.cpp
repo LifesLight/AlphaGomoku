@@ -62,7 +62,7 @@ int main(int argc, const char* argv[])
         batcher->selfplay(simulations);
         float average_winner = batcher->averageWinner();
         std::cout << "Average Winner: " << average_winner << std::endl;
-        batcher->storeData("../Datasets/Selfplay/data.txt");
+        batcher->storeData(DatapointPath);
     }
 
     delete batcher;

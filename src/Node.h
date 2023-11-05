@@ -20,7 +20,6 @@ public:
     uint32_t visits;
     std::list<Node*> children;
     std::deque<index_t> untried_actions;
-    bool network_status;
     float evaluation;
     float summed_evaluation;
     float policy_evaluations[BoardSize * BoardSize];
@@ -28,8 +27,6 @@ public:
     // Neural Net
     // Get inital policy evaluation for this node
     float getPolicyValue();
-    // Has network data
-    bool getNetworkStatus();
     // Provide model output
     void setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input);
 
@@ -44,16 +41,23 @@ public:
     Node* expand();
     // Manual expand with move_index
     Node* expand(index_t move_index);
+    // Evaluation of node according to MCTS
     float meanEvaluation();
-    Node* bestChild();
+    // Node is in terminal state
     bool isTerminal();
+    // Calls backpropagate with value calculation
+    void callBackpropagate();
 
     // Other
     // Removes action from untried_actions
     void removeFromUntried(index_t action);
+    // Has node recieved network data
+    bool getNetworkStatus();
 
     // Best child without exploration biases
     Node* absBestChild();
+    // Best child for policy
+    Node* bestChild();
 
     // Black is 0, 1 is White, Draw is 2
     uint8_t getResult();
@@ -74,8 +78,10 @@ public:
     bool getNextColor();
 
 private:
+    // Has network data or not
+    bool network_status;
     // Gets called when network data is recieved
     void backpropagate(float eval);
     // Figures out what to do with the valHeads output
-    void valueProcessor(float normalized_value);
+    float valueProcessor(float normalized_value);
 };

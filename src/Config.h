@@ -19,9 +19,7 @@
 
 // External data paths
 #define ModelPath "../Models/scripted/"
-
-// CPU Threads
-#define ThreadCount 8
+#define DatapointPath "../Datasets/Selfplay/data.txt"
 
 // Even numbers in BoardSize will break State due to inverted colors!
 #define BoardSize 15
@@ -36,7 +34,7 @@
 #define TorchDevice torch::kCPU
 
 // Algorithm Hyperparameters
-#define ExplorationBias 0.2
+#define ExplorationBias 0.25
 #define PolicyBias 0.3
 #define ValueBias 1
 

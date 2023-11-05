@@ -26,7 +26,9 @@ public:
     // Are all environments terminal
     bool isTerminal();
 
-    // Runs MCTS policy loop n times
+    // Run simulations according to model
+    void runSimulations();
+    // Override models target simulations
     void runSimulations(int simulations);
 
     void makeBestMoves();

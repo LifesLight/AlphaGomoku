@@ -35,13 +35,15 @@ void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
     // Normaize for black is -1 white +1
     if (!getNextColor())
         evaluation *= -1;
-    valueProcessor(evaluation);
 
     // Assign policy values
     for (int i = 0; i < BoardSize * BoardSize; i++)
         policy_evaluations[i] = policy[i].detach().item<float>();
 
     network_status = true;
+
+    // Inital backprop
+    callBackpropagate();
 }
 
 void Node::removeFromUntried(index_t action)
@@ -49,11 +51,6 @@ void Node::removeFromUntried(index_t action)
     untried_actions.erase(
             std::remove(untried_actions.begin(), untried_actions.end(), action), untried_actions.end()
         );
-}
-
-bool Node::getNetworkStatus()
-{
-    return network_status;
 }
 
 Node* Node::expand()
@@ -85,6 +82,18 @@ Node* Node::expand(index_t action)
     return child;
 }
 
+void Node::callBackpropagate()
+{
+    if (!getNetworkStatus())
+    {
+        std::cout << "[Node][W]: Tried to call Backpropagate on node without network data" << std::endl << std::flush;
+        return;
+    }
+
+    float value = valueProcessor(evaluation);
+    backpropagate(value);
+}
+
 Node* Node::bestChild()
 {
     Node* best_child = nullptr;
@@ -114,6 +123,11 @@ Node* Node::bestChild()
 bool Node::isTerminal()
 {
     return state->isTerminal();
+}
+
+bool Node::getNetworkStatus()
+{
+    return network_status;
 }
 
 Node* Node::absBestChild()
@@ -172,7 +186,7 @@ void Node::backpropagate(float eval)
         parent->backpropagate(eval);
 }
 
-void Node::valueProcessor(float normalized_value)
+float Node::valueProcessor(float normalized_value)
 {
     if (isTerminal())
     {
@@ -185,7 +199,7 @@ void Node::valueProcessor(float normalized_value)
             normalized_value = 1.0f;
     }
 
-    backpropagate(normalized_value);
+    return normalized_value;
 }
 
 #pragma endregion
@@ -338,7 +352,7 @@ std::string distribution(Node* current_node, const std::string& type)
 
     Node* parent = current_node->parent;
 
-    result << "\n      <";
+    result << "\n        <";
     for (int i = 0; i < BoardSize; i++)
         result << "-";
     result << " " << type;

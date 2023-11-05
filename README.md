@@ -48,7 +48,7 @@ They are stored in a text file, reading and writing is only recommended via the 
 Filter and Layer count are by user choice<br><br>
 [**Gamestate**](#gs)<br>
 &nbsp; &nbsp; &nbsp; &nbsp; ↓<br>
-&nbsp; &nbsp;[**ResNet**](#resnet)<br>
+&nbsp; &nbsp;[**ResNet**](#resnet) ↺<br>
 &nbsp; &nbsp; &nbsp; &nbsp; ↓ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;↓<br>
 [**Policy Head**](#polhead) &nbsp;&nbsp; [**Value Head**](#valhead)
 
