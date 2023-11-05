@@ -20,7 +20,7 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     }
 
     if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Created batcher with " << environment_count << " dual tree envs" << std::endl;
+        std::cout << "[Batcher][I]: Created batcher with " << environment_count << " dual tree env(s)" << std::endl;
 }
 
 Batcher::Batcher(int environment_count, Model* only_model)
@@ -42,7 +42,7 @@ Batcher::Batcher(int environment_count, Model* only_model)
     }
 
     if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Created batcher with " << environment_count << " single tree envs" << std::endl;
+        std::cout << "[Batcher][I]: Created batcher with " << environment_count << " single tree env(s)" << std::endl;
 }
 
 bool Batcher::getNextColor()
