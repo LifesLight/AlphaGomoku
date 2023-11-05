@@ -76,7 +76,11 @@ std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
 
 std::string Model::getName()
 {
-    return model_name;
+    std::string name_with_sims = model_name;
+    name_with_sims += " (";
+    name_with_sims += std::to_string(getSimulations());
+    name_with_sims += ")";
+    return name_with_sims;
 }
 
 void Model::setName(std::string name)

@@ -28,8 +28,6 @@ public:
 
     // Run simulations according to model
     void runSimulations();
-    // Override models target simulations
-    void runSimulations(int simulations);
 
     void makeBestMoves();
     void makeRandomMoves(int amount);

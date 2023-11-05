@@ -172,6 +172,16 @@ void Batcher::runSimulations()
     for (Environment* env : non_terminal_environments)
         envsByModel[getNextModelIndex(env)].push_back(env);
 
+    if (Utils::checkEnv("LOGGING", "INFO"))
+    {
+        std::cout << "[Batcher][I]: Running:" << std::endl;
+        if (models[0] != nullptr && envsByModel[0].size() != 0)
+            std::cout << "  " << models[0]->getName() << " on " << envsByModel[0].size() << " env(s)" << std::endl;
+        if (models[1] != nullptr && envsByModel[1].size() != 0)
+            std::cout << "  " << models[1]->getName() << " on " << envsByModel[1].size() << " env(s)" << std::endl;
+    }
+        
+
     for (int i = 0; i < 2; i++)
     {
         if (models[i] == nullptr)
@@ -180,37 +190,15 @@ void Batcher::runSimulations()
                 std::cout << "[Batcher][W]: Skipping simulation(s) for environment(s) in uncuppler" << std::endl << std::flush;
             continue;
         }
+
+        if (envsByModel[i].size() == 0)
+            continue;
+
         int simulations = models[i]->getSimulations();
-        std::cout << "Running " << simulations << " on " << models[i]->getName() << std::endl <<std::flush;
+
+
+
         runSimulationsOnEnvironments(envsByModel[i], simulations);
-    }
-}
-
-void Batcher::runSimulations(int sim_count)
-{
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Running " << sim_count << " simulation(s) on " << non_terminal_environments.size() << " env(s)" << std::endl;
-
-    //std::cout << "Next model: " << getNextModel()->getName() << std::endl;
-    
-
-    // Simulation loop / MCTS loop
-    uint32_t env_count = non_terminal_environments.size();
-
-    for (uint32_t sim_step = 0; sim_step < sim_count; sim_step++)
-    {
-        // Run policy on all envs
-        for (uint32_t i = 0; i < env_count; i++)
-        {
-            Environment* env = non_terminal_environments[i];
-            Node* selected = env->policy();
-            // If node has network data it wont be auto backpropagated so we manually do it again
-            if (selected->getNetworkStatus())
-                selected->callBackpropagate();
-        }
-
-        // Run network for all envs
-        runNetwork();
     }
 }
 

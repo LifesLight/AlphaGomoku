@@ -12,6 +12,7 @@
 #include <cstring>
 #include <tuple>
 #include <functional>
+#include <filesystem>
 #include <sstream>
 #include <initializer_list>
 #include <random>
@@ -35,7 +36,7 @@
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.25
-#define PolicyBias 0.0
+#define PolicyBias 0.3
 #define ValueBias 1
 
 // Save memory if 2d -> 1d index mapping fits in 2^8
