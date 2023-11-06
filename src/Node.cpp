@@ -24,22 +24,18 @@ bool Node::getNextColor()
     return state->getNextColor();
 }
 
-void Node::setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input)
+void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
 {
-    // Extract each heads output
-    torch::Tensor policy = std::get<0>(input);
-    torch::Tensor value = std::get<1>(input);
-
     // Assign value
-    evaluation = value.detach().item<float>();
+    evaluation = value.item<float>();
     // Normaize for black is -1 white +1
     if (!getNextColor())
         evaluation *= -1;
 
-    // Assign policy values
-    for (int i = 0; i < BoardSize * BoardSize; i++)
-        policy_evaluations[i] = policy[i].detach().item<float>();
+    // Store policy values
+    policy_evaluations = policy;
 
+    // Tell node that it has network data
     network_status = true;
 
     // Inital backprop
@@ -53,6 +49,16 @@ void Node::removeFromUntried(index_t action)
         );
 }
 
+float Node::getMovePolicy(index_t action)
+{
+    if (getNetworkStatus() == 0)
+    {
+        std::cout << "[Node][W]: Tried to get policy eval for move on node without net data" << std::endl << std::flush;
+        return 0.0f;
+    }
+    return policy_evaluations[action].item<float>();
+}
+
 Node* Node::expand()
 {
     if (!network_status)
@@ -64,7 +70,7 @@ Node* Node::expand()
     // Find highest policy action
     index_t action = -1; // initialized as unreachable value
     for (index_t possible : untried_actions)
-        if (action == index_t(-1) || policy_evaluations[action] < policy_evaluations[possible])
+        if (action == index_t(-1) || getMovePolicy(action) < getMovePolicy(possible))
             action = possible;
 
     return expand(action);
@@ -151,7 +157,7 @@ Node* Node::absBestChild()
 
 float Node::getPolicyValue()
 {
-    return parent->policy_evaluations[parent_action];
+    return parent->policy_evaluations[parent_action].item<float>();
 }
 
 uint8_t Node::getResult()

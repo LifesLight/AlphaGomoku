@@ -10,7 +10,7 @@ torch::jit::script::Module load_model(std::string path)
 }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path)
-    : Model(resnet_path, polhead_path, valhead_path, 400)
+    : Model(resnet_path, polhead_path, valhead_path, DefaultSimulations)
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations)
@@ -18,7 +18,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, std::string name)
-    : Model(resnet_path, polhead_path, valhead_path, 400, name)
+    : Model(resnet_path, polhead_path, valhead_path, DefaultSimulations, name)
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations, std::string name)
@@ -67,9 +67,11 @@ std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
     auto value_result = valhead.forward({resnet_result});
 
     // Extract policy and value outputs
-    torch::Tensor policy_output = policy_result.toTensor();
-    torch::Tensor value_output = value_result.toTensor();
+    torch::Tensor policy_output = policy_result.toTensor().detach();
+    torch::Tensor value_output = value_result.toTensor().detach();
     policy_output = torch::softmax(policy_output, -1);
+    policy_output = policy_output.to(torch::kCPU);
+    value_output = value_output.to(torch::kCPU);
 
     return std::tuple<torch::Tensor, torch::Tensor>(policy_output, value_output);
 }
@@ -95,7 +97,7 @@ int Model::getSimulations()
 
 Model* Model::autoloadModel(std::string name)
 {
-    return autoloadModel(name, 400);
+    return autoloadModel(name, DefaultSimulations);
 }
 
 Model* Model::autoloadModel(std::string name, int simulations)

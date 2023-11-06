@@ -22,13 +22,13 @@ public:
     std::deque<index_t> untried_actions;
     float evaluation;
     float summed_evaluation;
-    float policy_evaluations[BoardSize * BoardSize];
+    torch::Tensor policy_evaluations;
 
     // Neural Net
     // Get inital policy evaluation for this node
     float getPolicyValue();
     // Provide model output
-    void setModelOutput(std::tuple<torch::Tensor, torch::Tensor> input);
+    void setModelOutput(torch::Tensor policy, torch::Tensor value);
 
     // Constructors
     Node(State* state, Node* parent, index_t parent_action);
@@ -78,6 +78,8 @@ public:
     bool getNextColor();
 
 private:
+    // Get policy for this nodes moves
+    float getMovePolicy(index_t action);
     // Has network data or not
     bool network_status;
     // Gets called when network data is recieved

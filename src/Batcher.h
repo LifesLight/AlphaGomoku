@@ -17,9 +17,6 @@ public:
     Batcher(int environments, Model* only_model);
     ~Batcher();
 
-    // Initializes all trees with their respective models
-    void init();
-
     Environment* getEnvironment(uint32_t index);
     Node* getNode(uint32_t index);
 

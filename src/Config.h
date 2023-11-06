@@ -31,8 +31,13 @@
 // How many datapoints should be stored in a selfplay dataset
 #define MaxDatapoints 50'000
 
-// Default Device for torch computations
+// Torch Settings
 #define TorchDevice torch::kCPU
+#define MaxBatchsize 4096
+
+// MCTS Master parameters
+#define DefaultSimulations 1600
+#define DefaultEnvironments 10
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.25

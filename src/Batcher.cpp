@@ -66,11 +66,6 @@ Batcher::~Batcher()
         delete env;
 }
 
-void Batcher::init()
-{
-    runNetwork();
-}
-
 bool Batcher::isTerminal()
 {
     if (non_terminal_environments.size() == 0)
@@ -104,37 +99,51 @@ void Batcher::runNetwork()
             nodes[std::get<1>(node)].push_back(std::get<0>(node));
 
     // Output of each model
-    std::tuple<torch::Tensor, torch::Tensor> model_outputs[2];
+    std::vector<std::tuple<torch::Tensor, torch::Tensor>> model_outputs[2];
     for (int model_index = 0; model_index < 2; model_index++)
     {
         // If no nodes, skip model call
         if (nodes[model_index].size() == 0)
             continue;
 
-        // Convert to tensor
-        uint32_t batch_size = nodes[model_index].size();
-        torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
-
-        for (int index = 0; index < batch_size; index++) 
+        // Batchsize limiting to not explode memory
+        int element_count = nodes[model_index].size();
+        model_outputs[model_index].reserve(element_count / MaxBatchsize);
+        int processed_element_count = 0;
+        while (processed_element_count != element_count)
         {
-            model_input[index] = Node::nodeToGamestate(nodes[model_index][index]);
-        }
+            int unprocessed_count = element_count - processed_element_count;
+            int batch_size = std::min(unprocessed_count, MaxBatchsize);
+            
+            // Convert to tensor
+            torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
+            for (int index = 0; index < batch_size; index++) 
+            {
+                model_input[index] = Node::nodeToGamestate(nodes[model_index][index + processed_element_count]);
+            }
 
-        // Run model
-        // If only 1 model run either case over same model
-        model_outputs[model_index] = models[model_index * (models[1] != nullptr)]->forward(model_input);
+            // Run model
+            // If only 1 model run either case over same model
+            auto output = models[model_index * (models[1] != nullptr)]->forward(model_input);
+            model_outputs[model_index].push_back(output);
+            processed_element_count += batch_size;
+        }
     }
 
     // Assign output to node
     for (int ii = 0; ii < 2; ii++)
     {
-        torch::Tensor policy_data = std::get<0>(model_outputs[ii]);
-        torch::Tensor value_data = std::get<1>(model_outputs[ii]);
-
-        for (int i = 0; i < nodes[ii].size(); i++)
+        int index = 0;
+        for (std::tuple<torch::Tensor, torch::Tensor> chunk : model_outputs[ii])
         {
-            std::tuple input = std::tuple<torch::Tensor, torch::Tensor>(policy_data[i], value_data[i]);
-            nodes[ii][i]->setModelOutput(input);
+            torch::Tensor policy_data = std::get<0>(chunk);
+            torch::Tensor value_data = std::get<1>(chunk);
+
+            for (int i = 0; i < policy_data.size(0); i++)
+            {
+                nodes[ii][index]->setModelOutput(policy_data[i], value_data[i]);
+                index++;
+            }
         }
     }
 
@@ -526,7 +535,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 
     }
 
-    return output.str();   
+    return output.str();
 }
 
 void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)

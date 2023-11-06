@@ -18,8 +18,8 @@ int main(int argc, const char* argv[])
             single_tree = 0;
 
     // Get hyperparameters
-    int simulations = BoardSize * BoardSize;
-    int environment_count = 10;
+    int simulations = DefaultSimulations;
+    int environment_count = DefaultEnvironments;
     int rand_moves = 0;
     bool duel = 0;
 
@@ -44,7 +44,7 @@ int main(int argc, const char* argv[])
     }
     else
     {
-        Model* nnb = Model::autoloadModel(argv[1], 1);
+        Model* nnb = Model::autoloadModel(argv[1], simulations);
         Model* nnw = Model::autoloadModel(argv[2], simulations);
         batcher = new Batcher(environment_count, nnb, nnw);
     }
