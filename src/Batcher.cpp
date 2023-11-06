@@ -174,7 +174,7 @@ void Batcher::runSimulations()
 
     if (Utils::checkEnv("LOGGING", "INFO"))
     {
-        std::cout << "[Batcher][I]: Running:" << std::endl;
+        std::cout << "[Batcher][I]: Running simulations:" << std::endl;
         if (models[0] != nullptr && envsByModel[0].size() != 0)
             std::cout << "  " << models[0]->getName() << " on " << envsByModel[0].size() << " env(s)" << std::endl;
         if (models[1] != nullptr && envsByModel[1].size() != 0)

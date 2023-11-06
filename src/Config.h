@@ -36,7 +36,7 @@
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.25
-#define PolicyBias 0.3
+#define PolicyBias 0.1
 #define ValueBias 1
 
 // Save memory if 2d -> 1d index mapping fits in 2^8
