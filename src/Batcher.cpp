@@ -106,21 +106,30 @@ void Batcher::runNetwork()
         if (nodes[model_index].size() == 0)
             continue;
 
-        // Batchsize limiting to not explode memory
         int element_count = nodes[model_index].size();
+        // Compute gamestates with multithreading
+        std::vector<torch::Tensor> gamestates;
+        gamestates.reserve(element_count);
+        for (int index = 0; index < element_count; index++) 
+        {
+            gamestates.push_back(Node::nodeToGamestate(nodes[model_index][index]));
+        }
+
+        // Batchsize limiting to not explode memory
         model_outputs[model_index].reserve(element_count / MaxBatchsize);
         int processed_element_count = 0;
         while (processed_element_count != element_count)
         {
             int unprocessed_count = element_count - processed_element_count;
             int batch_size = std::min(unprocessed_count, MaxBatchsize);
-            
+
             // Convert to tensor
-            torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
-            for (int index = 0; index < batch_size; index++) 
-            {
-                model_input[index] = Node::nodeToGamestate(nodes[model_index][index + processed_element_count]);
-            }
+            // Init tensor on CPU
+            torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize});
+            for (int i = 0; i < batch_size; i++)
+                model_input[i] = gamestates[i + processed_element_count];
+            // Move to device for inference
+            model_input = model_input.to(TorchDevice);
 
             // Run model
             // If only 1 model run either case over same model

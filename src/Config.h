@@ -33,7 +33,7 @@
 
 // Torch Settings
 #define TorchDevice torch::kCPU
-#define MaxBatchsize 4096
+#define MaxBatchsize 16384
 
 // MCTS Master parameters
 #define DefaultSimulations 1600

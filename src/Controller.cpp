@@ -39,7 +39,7 @@ int main(int argc, const char* argv[])
     Batcher* batcher = nullptr;
     if (single_tree)
     {
-        Model* nn = Model::autoloadModel(argv[1]);
+        Model* nn = Model::autoloadModel(argv[1], simulations);
         batcher = new Batcher(environment_count, nn);
     }
     else
