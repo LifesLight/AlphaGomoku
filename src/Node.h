@@ -69,6 +69,7 @@ public:
     
     // Convert node to tensor Gamestate representation
     static torch::Tensor nodeToGamestate(Node* node);
+    static torch::Tensor nodeToGamestate(Node* node, torch::ScalarType dtype);
     static std::string sliceNodeHistory(Node* node, uint8_t depth);
 
     // Get moves that lead to this node

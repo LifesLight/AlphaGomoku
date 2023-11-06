@@ -90,8 +90,6 @@ void Batcher::updateNonTerminal()
 
 void Batcher::runNetwork()
 {
-    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDevice).dtype(torch::kFloat32);
-
     // Accumilate Nodes per model
     std::vector<Node*> nodes[2];
     for (Environment* env : environments)
@@ -106,14 +104,16 @@ void Batcher::runNetwork()
         if (nodes[model_index].size() == 0)
             continue;
 
+        // Save to index into models
+        int checked_model_index = model_index * (models[1] != nullptr);
+
+        // Maybe models with different precs
+        torch::ScalarType dtype = models[checked_model_index]->getPrec();
+        torch::TensorOptions default_tensor_options = torch::TensorOptions().dtype(dtype);
+
         int element_count = nodes[model_index].size();
         // Compute gamestates with multithreading
-        std::vector<torch::Tensor> gamestates;
-        gamestates.reserve(element_count);
-        for (int index = 0; index < element_count; index++) 
-        {
-            gamestates.push_back(Node::nodeToGamestate(nodes[model_index][index]));
-        }
+        std::vector<torch::Tensor> gamestates = convertNodesToGamestates(nodes[model_index], dtype);
 
         // Batchsize limiting to not explode memory
         model_outputs[model_index].reserve(element_count / MaxBatchsize);
@@ -125,15 +125,15 @@ void Batcher::runNetwork()
 
             // Convert to tensor
             // Init tensor on CPU
-            torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize});
+            torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
             for (int i = 0; i < batch_size; i++)
                 model_input[i] = gamestates[i + processed_element_count];
             // Move to device for inference
-            model_input = model_input.to(TorchDevice);
+            model_input = model_input.to(TorchDefaultDevice);
 
             // Run model
             // If only 1 model run either case over same model
-            auto output = models[model_index * (models[1] != nullptr)]->forward(model_input);
+            auto output = models[checked_model_index]->forward(model_input);
             model_outputs[model_index].push_back(output);
             processed_element_count += batch_size;
         }
@@ -165,18 +165,35 @@ void Batcher::runNetwork()
     }
 }
 
+std::vector<torch::Tensor> Batcher::convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype)
+{
+    int element_count = nodes.size();
+    std::vector<torch::Tensor> gamestates;
+    gamestates.reserve(element_count);
+    for (Node* node : nodes) 
+    {
+        gamestates.push_back(Node::nodeToGamestate(node, dtype));
+    }
+    return gamestates;
+}
+
+void Batcher::runSimulationOnEnvVector(std::vector<Environment*> envs)
+{
+    for (Environment* env : envs)
+    {
+        Node* selected = env->policy();
+        // If node has network data it wont be auto backpropagated so we manually do it again
+        if (selected->getNetworkStatus())
+            selected->callBackpropagate();
+    }
+}
+
 void Batcher::runSimulationsOnEnvironments(std::vector<Environment*> envs, int simulations)
 {
     for (int sim_step = 0; sim_step < simulations; sim_step++)
     {
         // Run policy on all envs
-        for (Environment* env : envs)
-        {
-            Node* selected = env->policy();
-            // If node has network data it wont be auto backpropagated so we manually do it again
-            if (selected->getNetworkStatus())
-                selected->callBackpropagate();
-        }
+        runSimulationOnEnvVector(envs);
 
         // Run network for all envs
         runNetwork();
@@ -192,7 +209,7 @@ void Batcher::runSimulations()
 
     if (Utils::checkEnv("LOGGING", "INFO"))
     {
-        std::cout << "[Batcher][I]: Running simulations:" << std::endl;
+        std::cout << "[Batcher][I]: Running simulation(s):" << std::endl;
         if (models[0] != nullptr && envsByModel[0].size() != 0)
             std::cout << "  " << models[0]->getName() << " on " << envsByModel[0].size() << " env(s)" << std::endl;
         if (models[1] != nullptr && envsByModel[1].size() != 0)

@@ -17,8 +17,21 @@ public:
     Model(std::string resnet_path, std::string polhead_path, std::string valhead_path);
 
     std::tuple<torch::Tensor, torch::Tensor> forward(torch::Tensor input);
-    std::string getName();
+    
+    // Name config
     void setName(std::string);
+    std::string getName();
+    
+    // Device config
+    void setDevice(torch::Device device);
+    torch::Device getDevice();
+
+    // Precision config
+    void setPrec(torch::ScalarType type);
+    torch::ScalarType getPrec();
+
+    // Simulation config
+    void setSimulations(int simulations);
     int getSimulations();
 
     // Creates a model from just the model name, takes rest from config path with 400 sims
@@ -28,6 +41,9 @@ public:
     static Model* autoloadModel(std::string name, int simulations);
 
 private:
+    torch::Device device;
+    torch::ScalarType dtype;
+
     int simulations;
     torch::jit::script::Module resnet, polhead, valhead;
     std::string model_name;

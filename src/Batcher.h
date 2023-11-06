@@ -63,8 +63,15 @@ public:
     bool getNextColor();
 
 private:
+    void runSimulationOnEnvVector(std::vector<Environment*> envs);
+    
+    // -------- Need to be multithreaded --------
+    std::vector<torch::Tensor> convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype);
+
     // Run simulation loop on provided environments
     void runSimulationsOnEnvironments(std::vector<Environment*> envs, int simulations);
+
+    // ------------------------------------------
 
     // Clear up all network queues
     // Should never be a need to call manually

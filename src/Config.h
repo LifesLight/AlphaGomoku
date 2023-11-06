@@ -32,7 +32,8 @@
 #define MaxDatapoints 50'000
 
 // Torch Settings
-#define TorchDevice torch::kCPU
+#define TorchDefaultDevice torch::kCPU
+#define TorchDefaultScalar torch::kFloat16
 #define MaxBatchsize 16384
 
 // MCTS Master parameters

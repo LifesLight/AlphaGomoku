@@ -4,7 +4,8 @@ torch::jit::script::Module load_model(std::string path)
 {
     // Always load on CPU
     torch::jit::script::Module model = torch::jit::load(path, torch::kCPU);
-    model.to(TorchDevice);
+    model.to(TorchDefaultDevice);
+    model.to(TorchDefaultScalar);
     model.eval();  
     return model;  
 }
@@ -22,7 +23,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations, std::string name)
-    : model_name(name), simulations(simulations)
+    : model_name(name), simulations(simulations), device(TorchDefaultDevice), dtype(TorchDefaultScalar)
 {
     // Load resnet
     try
@@ -76,18 +77,53 @@ std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
     return std::tuple<torch::Tensor, torch::Tensor>(policy_output, value_output);
 }
 
-std::string Model::getName()
+void Model::setDevice(torch::Device device)
 {
-    std::string name_with_sims = model_name;
-    name_with_sims += " (";
-    name_with_sims += std::to_string(getSimulations());
-    name_with_sims += ")";
-    return name_with_sims;
+    this->device = device;
+    resnet.to(device);
+    valhead.to(device);
+    polhead.to(device);
+}
+
+torch::Device Model::getDevice()
+{
+    return device;
+}
+
+void Model::setPrec(torch::ScalarType type)
+{
+    dtype = type;
+    resnet.to(type);
+    valhead.to(type);
+    polhead.to(type);
+}
+
+torch::ScalarType Model::getPrec()
+{
+    return dtype;
 }
 
 void Model::setName(std::string name)
 {
     model_name = name;
+}
+
+std::string Model::getName()
+{
+    std::string name = model_name;
+    name += " (";
+    name += std::to_string(getSimulations());
+    name += "|";
+    name += torch::toString(dtype);
+    name += "|";
+    name += c10::DeviceTypeName(device.type());
+    name += ")";
+    return name;
+}
+
+void Model::setSimulations(int sims)
+{
+    simulations = sims;
 }
 
 int Model::getSimulations()
