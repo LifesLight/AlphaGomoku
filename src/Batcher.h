@@ -23,6 +23,9 @@ public:
     // Are all environments terminal
     bool isTerminal();
 
+    // Check weather env is in single or dual tree mode
+    bool isSingleTree();
+
     // Run simulations according to model
     void runSimulations();
 
@@ -74,7 +77,7 @@ private:
     // ------------------------------------------
 
     // Clear up all network queues
-    // Should never be a need to call manually
+    // You should never need to call it manually
     void runNetwork();
 
     // Clears non_terminal_environments of terminals

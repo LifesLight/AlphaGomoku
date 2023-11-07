@@ -1,13 +1,13 @@
 #include "Model.h"
 
-torch::jit::script::Module load_model(std::string path)
+torch::jit::script::Module Model::load_module(std::string path)
 {
     // Always load on CPU
-    torch::jit::script::Module model = torch::jit::load(path, torch::kCPU);
-    model.to(TorchDefaultDevice);
+    torch::jit::script::Module model = torch::jit::load(path, TorchDefaultDevice);
+    model.to(TorchInferenceDevice);
     model.to(TorchDefaultScalar);
-    model.eval();  
-    return model;  
+    model.eval();
+    return model;
 }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path)
@@ -23,12 +23,12 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations, std::string name)
-    : model_name(name), simulations(simulations), device(TorchDefaultDevice), dtype(TorchDefaultScalar)
+    : model_name(name), simulations(simulations), device(TorchInferenceDevice), dtype(TorchDefaultScalar)
 {
     // Load resnet
     try
     {
-        resnet = load_model(resnet_path);
+        resnet = load_module(resnet_path);
     }
     catch (const c10::Error& e)
     {
@@ -38,7 +38,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     // Load polhead
     try
     {
-        polhead = load_model(polhead_path);
+        polhead = load_module(polhead_path);
     }
     catch (const c10::Error& e)
     {
@@ -48,7 +48,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     // Load valhead
     try
     {
-        valhead = load_model(valhead_path);
+        valhead = load_module(valhead_path);
     }
     catch (const c10::Error& e)
     {
@@ -71,8 +71,8 @@ std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
     torch::Tensor policy_output = policy_result.toTensor().detach();
     torch::Tensor value_output = value_result.toTensor().detach();
     policy_output = torch::softmax(policy_output, -1);
-    policy_output = policy_output.to(torch::kCPU);
-    value_output = value_output.to(torch::kCPU);
+    policy_output = policy_output.to(TorchDefaultDevice);
+    value_output = value_output.to(TorchDefaultDevice);
 
     return std::tuple<torch::Tensor, torch::Tensor>(policy_output, value_output);
 }

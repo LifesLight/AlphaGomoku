@@ -41,6 +41,8 @@ public:
     static Model* autoloadModel(std::string name, int simulations);
 
 private:
+    torch::jit::script::Module load_module(std::string path);
+
     torch::Device device;
     torch::ScalarType dtype;
 

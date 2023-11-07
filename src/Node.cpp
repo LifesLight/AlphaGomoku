@@ -233,7 +233,7 @@ torch::Tensor Node::nodeToGamestate(Node* node)
 torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
 {
     // Generate Tensor on CPU
-    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(torch::kCPU).dtype(dtype);
+    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
 
     // Init main tensor
     torch::Tensor tensor = torch::zeros({HistoryDepth + 1, 15, 15}, default_tensor_options);

@@ -25,19 +25,11 @@
 // Even numbers in BoardSize will break State due to inverted colors!
 #define BoardSize 15
 
-// HD
+// At least 2 and even number
 #define HistoryDepth 8
 
 // How many datapoints should be stored in a selfplay dataset
 #define MaxDatapoints 50'000
-
-// How many CPU threads can exist at once
-#define MaxThreads 8
-
-// Torch Settings
-#define TorchDefaultDevice torch::kCPU
-#define TorchDefaultScalar torch::kFloat16
-#define MaxBatchsize 4096
 
 // MCTS Master parameters
 #define DefaultSimulations 1600
@@ -47,6 +39,23 @@
 #define ExplorationBias 0.25
 #define PolicyBias 0.1
 #define ValueBias 1
+
+// ---- Performance Settings ----
+#define MaxThreads 8
+// These are target values, will not always be matched
+#define PerThreadSimulations 256
+#define PerThreadGamestateConvertions 128
+
+// Torch Settings
+// This is where tensors are created and simmelar
+#define TorchDefaultDevice torch::kCPU
+// This is the device computations will be run on
+#define TorchInferenceDevice torch::kCPU
+// Floating point precision for Inference
+#define TorchDefaultScalar torch::kFloat16
+// Higher is better if VRAM/RAM can handle
+#define MaxBatchsize 4096
+// -------------------------------
 
 // Save memory if 2d -> 1d index mapping fits in 2^8
 #if Boardsize < 16

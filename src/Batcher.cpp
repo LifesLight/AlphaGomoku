@@ -109,7 +109,8 @@ void Batcher::runNetwork()
 
         // Maybe models with different precs
         torch::ScalarType dtype = models[checked_model_index]->getPrec();
-        torch::TensorOptions default_tensor_options = torch::TensorOptions().dtype(dtype);
+        torch::Device device = models[checked_model_index]->getDevice();
+        torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
 
         int element_count = nodes[model_index].size();
         // Compute gamestates with multithreading
@@ -128,8 +129,9 @@ void Batcher::runNetwork()
             torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
             for (int i = 0; i < batch_size; i++)
                 model_input[i] = gamestates[i + processed_element_count];
+
             // Move to device for inference
-            model_input = model_input.to(TorchDefaultDevice);
+            model_input = model_input.to(device);
 
             // Run model
             // If only 1 model run either case over same model
@@ -176,7 +178,7 @@ std::vector<torch::Tensor> Batcher::convertNodesToGamestates(std::vector<Node*>&
     int element_count = nodes.size();
 
     // Compute "optimal" thread count
-    int thread_count = std::max(1, element_count / 128);
+    int thread_count = std::max(1, element_count / PerThreadGamestateConvertions);
     thread_count = std::min(thread_count, MaxThreads);
 
     // Final output vector
@@ -218,7 +220,7 @@ void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>& envs, int 
     int element_count = envs.size();
 
     // Compute "optimal" thread count
-    int thread_count = std::max(1, element_count / 256);
+    int thread_count = std::max(1, element_count / PerThreadSimulations);
     thread_count = std::min(thread_count, MaxThreads);
 
     // Calculate index ranges
@@ -261,7 +263,6 @@ void Batcher::runSimulations()
         if (models[1] != nullptr && envsByModel[1].size() != 0)
             std::cout << "  " << models[1]->getName() << " on " << envsByModel[1].size() << " env(s)" << std::endl;
     }
-        
 
     for (int i = 0; i < 2; i++)
     {
@@ -324,11 +325,22 @@ void Batcher::runGameloop(int simulations)
     }
 }
 
+bool Batcher::isSingleTree()
+{
+    return models[1] == nullptr;
+}
+
 float Batcher::duelModels(int random_actions, int simulations)
 {
     if (environments.size() % 2 != 0)
     {
         std::cout << "[Batcher][E]: Tried to duel models with uneven environment count (" << environments.size() << ")" << std::endl << std::flush;
+        return 0;
+    }
+
+    if (isSingleTree())
+    {
+        std::cout << "[Batcher][E]: Tried to duel models in single tree mode (Create batcher with 2 models to fix this)" << std::endl << std::flush;
         return 0;
     }
 
