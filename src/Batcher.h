@@ -62,14 +62,14 @@ public:
     // Next played color
     bool getNextColor();
 
-private:
-    void runSimulationOnEnvVector(std::vector<Environment*> envs);
-    
+private:    
     // -------- Need to be multithreaded --------
+    static void nodeToGamestateWorker(std::vector<torch::Tensor>& output, std::vector<Node*>& input, torch::ScalarType dtype, int start_index, int end_index);
     std::vector<torch::Tensor> convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype);
 
     // Run simulation loop on provided environments
-    void runSimulationsOnEnvironments(std::vector<Environment*> envs, int simulations);
+    static void runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index);
+    void runSimulationsOnEnvironments(std::vector<Environment*>& envs, int simulations);
 
     // ------------------------------------------
 

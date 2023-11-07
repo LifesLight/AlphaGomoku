@@ -31,10 +31,13 @@
 // How many datapoints should be stored in a selfplay dataset
 #define MaxDatapoints 50'000
 
+// How many CPU threads can exist at once
+#define MaxThreads 8
+
 // Torch Settings
 #define TorchDefaultDevice torch::kCPU
 #define TorchDefaultScalar torch::kFloat16
-#define MaxBatchsize 16384
+#define MaxBatchsize 4096
 
 // MCTS Master parameters
 #define DefaultSimulations 1600

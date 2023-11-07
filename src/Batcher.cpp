@@ -165,37 +165,83 @@ void Batcher::runNetwork()
     }
 }
 
+void Batcher::nodeToGamestateWorker(std::vector<torch::Tensor>& output, std::vector<Node*>& input, torch::ScalarType dtype, int start_index, int end_index)
+{
+    for (int i = start_index; i < end_index; i++)
+        output[i] = Node::nodeToGamestate(input[i], dtype);
+}
+
 std::vector<torch::Tensor> Batcher::convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype)
 {
     int element_count = nodes.size();
+
+    // Compute "optimal" thread count
+    int thread_count = std::max(1, element_count / 128);
+    thread_count = std::min(thread_count, MaxThreads);
+
+    // Final output vector
     std::vector<torch::Tensor> gamestates;
-    gamestates.reserve(element_count);
-    for (Node* node : nodes) 
+    gamestates.resize(element_count);
+
+    // Calculate index ranges
+    int batch_size = int(std::ceil(float(element_count) / thread_count));
+
+    // Threading
+    std::vector<std::thread> threads;
+    threads.reserve(thread_count);
+
+    for (int i = 0; i < thread_count; i++)
     {
-        gamestates.push_back(Node::nodeToGamestate(node, dtype));
+        int start_index  = i * batch_size;
+        int end_index = std::min(start_index + batch_size, element_count);
+        threads.emplace_back(nodeToGamestateWorker, std::ref(gamestates), std::ref(nodes), dtype, start_index, end_index);
     }
+
+    for (int i = 0; i < thread_count; i++)
+        threads[i].join();
+
     return gamestates;
 }
 
-void Batcher::runSimulationOnEnvVector(std::vector<Environment*> envs)
+void Batcher::runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index)
 {
-    for (Environment* env : envs)
+    for (int i = start_index; i < end_index; i++)
     {
-        Node* selected = env->policy();
-        // If node has network data it wont be auto backpropagated so we manually do it again
+        Node* selected = envs[i]->policy();
         if (selected->getNetworkStatus())
             selected->callBackpropagate();
     }
 }
 
-void Batcher::runSimulationsOnEnvironments(std::vector<Environment*> envs, int simulations)
+void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>& envs, int simulations)
 {
-    for (int sim_step = 0; sim_step < simulations; sim_step++)
-    {
-        // Run policy on all envs
-        runSimulationOnEnvVector(envs);
+    int element_count = envs.size();
 
-        // Run network for all envs
+    // Compute "optimal" thread count
+    int thread_count = std::max(1, element_count / 256);
+    thread_count = std::min(thread_count, MaxThreads);
+
+    // Calculate index ranges
+    int batch_size = int(std::ceil(float(element_count) / thread_count));
+
+    // Threading
+    std::vector<std::thread> threads;
+    threads.reserve(thread_count);
+
+    for (int simstep = 0; simstep < simulations; simstep++)
+    {
+        for (int i = 0; i < thread_count; i++)
+        {
+            int start_index  = i * batch_size;
+            int end_index = std::min(start_index + batch_size, element_count);
+            threads.emplace_back(runSimulationsOnEnvironmentsWorker, std::ref(envs), start_index, end_index);
+        }
+
+        for (int i = 0; i < thread_count; i++)
+            threads[i].join();
+
+        threads.clear();
+
         runNetwork();
     }
 }
@@ -230,9 +276,6 @@ void Batcher::runSimulations()
             continue;
 
         int simulations = models[i]->getSimulations();
-
-
-
         runSimulationsOnEnvironments(envsByModel[i], simulations);
     }
 }
@@ -272,7 +315,7 @@ void Batcher::runGameloop(int simulations)
             {
                 count = 2;
             }
-            
+
             if (Utils::checkEnv("RENDER_ANALYTICS", "TRUE"))
                 std::cout << toStringDist({"VISITS", "POLICY", "VALUE", "MEAN"}, count) << std::endl;
             else
