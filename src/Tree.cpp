@@ -170,11 +170,13 @@ void Tree::clean()
 {
     for (Node* garbage : deletion_queue)
     {
-        // Remove node from parent children list
-        garbage->parent->children.remove(garbage);
+        Node* parent = garbage->parent;
         delete garbage;
+
+        // Delete child pointer from children list
+        parent->optimizeMemory();
     }
-        
+
     deletion_queue.clear();
 }
 

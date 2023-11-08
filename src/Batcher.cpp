@@ -92,7 +92,7 @@ void Batcher::runNetwork()
 {
     // Accumilate Nodes per model
     std::vector<Node*> nodes[2];
-    for (Environment* env : environments)
+    for (Environment* env : non_terminal_environments)
         for (std::tuple<Node*, bool> node : env->getNetworkQueue())
             nodes[std::get<1>(node)].push_back(std::get<0>(node));
 
@@ -159,7 +159,7 @@ void Batcher::runNetwork()
     }
 
     // Clear network queue
-    for (Environment* env : environments)
+    for (Environment* env : non_terminal_environments)
     {
         bool success = env->clearNetworkQueue();
         if (!success)
@@ -322,6 +322,8 @@ void Batcher::runGameloop(int simulations)
             else
                 std::cout << toString(count) << std::endl;
         }
+
+        freeMemory();
     }
 }
 

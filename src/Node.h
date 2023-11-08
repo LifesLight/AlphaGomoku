@@ -53,6 +53,8 @@ public:
     void removeFromUntried(index_t action);
     // Has node recieved network data
     bool getNetworkStatus();
+    // Shrinks data structures to new requirements
+    void optimizeMemory();
 
     // Best child without exploration biases
     Node* absBestChild();

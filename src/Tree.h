@@ -39,7 +39,7 @@ public:
     void clean();
 
 private:
-    std::vector<Node*> deletion_queue;
+    std::list<Node*> deletion_queue;
     std::vector<Node*> network_queue;
     Node* root_node;
     Node* current_node;

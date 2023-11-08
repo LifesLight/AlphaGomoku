@@ -1,0 +1,21 @@
+ExplorationBias 0.5
+PolicyBias 0.1
+ValueBias 1
+"test2.pt" "test2.pt" 1600 2000 10 1
+:
+  Draws:       8
+  Model1 wins: 1065 (test2.pt (1|Half|CUDA))
+  Model2 wins: 927 (test2.pt (1600|Half|CUDA))
+  Delta:       -0.0692771 (-1 is Model1 wins)
+Win delta: -0.0692771
+
+ExplorationBias 0.25
+PolicyBias 0.2
+ValueBias 1
+"test2.pt" "test2.pt" 1600 2000 10 1
+:
+  Draws:       3
+  Model1 wins: 867 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1130 (test2.pt (1600|Half|CUDA))
+  Delta:       0.131698 (-1 is Model1 wins)
+Win delta: 0.131698

@@ -19,6 +19,18 @@ Node::~Node()
     delete state;
 }
 
+void Node::optimizeMemory()
+{
+    untried_actions.shrink_to_fit();
+    policy_evaluations.reset();
+
+    std::list<Node*> new_children;
+    for (Node* child : children)
+        if (child != nullptr)
+            new_children.push_back(child);
+    children = new_children;
+}
+
 bool Node::getNextColor()
 {
     return state->getNextColor();
@@ -336,7 +348,7 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
 // -------------- Analysis Code --------------
 #pragma region 
 
-std::string distribution_helper(Node* child, float max_value, const std::string& type)
+std::string distribution_helper(Node* child, float max_value, const std::string& type, bool color_me)
 {
     std::ostringstream result;
     if      (type == "VISITS")
@@ -353,7 +365,7 @@ std::string distribution_helper(Node* child, float max_value, const std::string&
     {
         // Un-normalize
         float value = child->evaluation * (1 - child->getNextColor() * 2);
-        if (value == max_value)
+        if (value == max_value && color_me)
             result << "\033[1;33m";
         result << std::setw(3) << std::setfill(' ');
         result << int(value * 99);
@@ -361,7 +373,7 @@ std::string distribution_helper(Node* child, float max_value, const std::string&
     else if (type == "MEAN")
     {
         float value = child->meanEvaluation();
-        if (value == max_value)
+        if (value == max_value && color_me)
             result << "\033[1;33m";
         result << std::setw(3) << std::setfill(' ');
         result << int(float(value) * 99);
@@ -369,7 +381,7 @@ std::string distribution_helper(Node* child, float max_value, const std::string&
     else if (type == "POLICY")
     {
         float value = child->getPolicyValue();
-        if (value == max_value)
+        if (value == max_value && color_me)
             result << "\033[1;33m";
         result << std::setw(3) << std::setfill(' ');
         result << int(float(value) / max_value * 999);
@@ -435,7 +447,7 @@ std::string distribution(Node* current_node, const std::string& type)
                         // If this child was the performed action color
                         if (child == current_node)
                             result << "\033[1;32m";
-                        result << distribution_helper(child, max_value, type); 
+                        result << distribution_helper(child, max_value, type, child != current_node); 
                         result << "\033[0m";
                         break;
                     }
