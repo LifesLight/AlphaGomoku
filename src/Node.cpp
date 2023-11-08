@@ -336,22 +336,44 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
 // -------------- Analysis Code --------------
 #pragma region 
 
-std::string distribution_helper(Node* child, int max_visits, float max_policy, const std::string& type)
+std::string distribution_helper(Node* child, float max_value, const std::string& type)
 {
     std::ostringstream result;
-    result << std::setw(3) << std::setfill(' ');
     if      (type == "VISITS")
-        if (max_visits == 0)
+    {
+        result << std::setw(3) << std::setfill(' ');
+        if (int(max_value) == 0)
             result << 0;
         else
-            result << int(float(child->visits) / float(max_visits) * 999);
+            result << int(float(child->visits) / max_value * 999);
+    }
+
+    // Cases where we need a max value for "max value of type"
     else if (type == "VALUE")
+    {
         // Un-normalize
-        result << int(float(child->evaluation) * 99 * (1 - child->getNextColor() * 2));
+        float value = child->evaluation * (1 - child->getNextColor() * 2);
+        if (value == max_value)
+            result << "\033[1;33m";
+        result << std::setw(3) << std::setfill(' ');
+        result << int(value * 99);
+    }
     else if (type == "MEAN")
-        result << int(float(child->meanEvaluation()) * 99);
+    {
+        float value = child->meanEvaluation();
+        if (value == max_value)
+            result << "\033[1;33m";
+        result << std::setw(3) << std::setfill(' ');
+        result << int(float(value) * 99);
+    }
     else if (type == "POLICY")
-        result << int(float(child->getPolicyValue()) / max_policy * 999);
+    {
+        float value = child->getPolicyValue();
+        if (value == max_value)
+            result << "\033[1;33m";
+        result << std::setw(3) << std::setfill(' ');
+        result << int(float(value) / max_value * 999);
+    }
     else
         result << "ERR";
     return result.str();
@@ -373,14 +395,23 @@ std::string distribution(Node* current_node, const std::string& type)
         result << "-";
     result << ">\n    ";
 
-    float max_visits = 0;
-    float max_policy = 0;
+    float max_value = 0.0f;
     for (Node* child : parent->children)
-        if (child->visits > max_visits)
-            max_visits = child->visits;
-    for (Node* child : parent->children)
-        if (child->getPolicyValue() > max_policy)
-            max_policy = child->getPolicyValue();
+    {
+        float val = 0;
+        if (type == "VALUE")
+            val = child ->evaluation * (1 - child->getNextColor() * 2);
+        else if (type == "MEAN")
+            val = child->meanEvaluation();
+        else if (type == "POLICY")
+            val = child->getPolicyValue();
+        else if (type == "VISITS")
+            val = child->visits;
+
+        if (val > max_value)
+            max_value = val;
+    }
+
 
     for (int i = 0; i < BoardSize; i++)
         result << " ---";
@@ -404,13 +435,10 @@ std::string distribution(Node* current_node, const std::string& type)
                         // If this child was the performed action color
                         if (child == current_node)
                             result << "\033[1;32m";
-
-                        result << distribution_helper(child, max_visits, max_policy, type); 
-
-                        if (child == current_node)
-                            result << "\033[0m";
+                        result << distribution_helper(child, max_value, type); 
+                        result << "\033[0m";
                         break;
-                    }        
+                    }
                 }
                 if (!matched)
                     result << "   ";
