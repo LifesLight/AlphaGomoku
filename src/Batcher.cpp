@@ -90,6 +90,9 @@ void Batcher::updateNonTerminal()
 
 void Batcher::runNetwork()
 {
+    // Disable gradients for this scope
+    torch::NoGradGuard no_grad_guard;
+
     // Accumilate Nodes per model
     std::vector<Node*> nodes[2];
     for (Environment* env : non_terminal_environments)
@@ -624,7 +627,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
 {
     // Ignore non fully explored nodes
-    if (node->untried_actions.size() == 0)
+    if (node->getUntriedActions().size() == 0)
     {
         Datapoint data;
         data.moves = node->getMoveHistory();

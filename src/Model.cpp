@@ -68,11 +68,15 @@ std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
     auto value_result = valhead.forward({resnet_result});
 
     // Extract policy and value outputs
-    torch::Tensor policy_output = policy_result.toTensor().detach();
-    torch::Tensor value_output = value_result.toTensor().detach();
+    torch::Tensor policy_output = policy_result.toTensor();
+    torch::Tensor value_output = value_result.toTensor();
     policy_output = torch::softmax(policy_output, -1);
     policy_output = policy_output.to(TorchDefaultDevice);
     value_output = value_output.to(TorchDefaultDevice);
+
+    // Detach for grad safety
+    policy_output = policy_output.detach();
+    value_output = value_output.detach();
 
     return std::tuple<torch::Tensor, torch::Tensor>(policy_output, value_output);
 }

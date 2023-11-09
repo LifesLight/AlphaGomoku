@@ -39,7 +39,7 @@ void State::makeMove(index_t index)
 bool State::isCellEmpty(index_t index)
 {
     uint8_t x, y;
-    Utils::cordsToIndex(index, x, y);
+    Utils::indexToCords(index, x, y);
     return isCellEmpty(x, y);
 }
 

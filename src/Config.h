@@ -37,7 +37,7 @@
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.25
-#define PolicyBias 0.3
+#define PolicyBias 0.4
 #define ValueBias 1
 
 // ---- Performance Settings ----

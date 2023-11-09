@@ -12,7 +12,10 @@ Tree::~Tree()
 {
     std::vector<Node*> all_nodes = getAllNodes();
     for (Node* node : all_nodes)
+    {
         delete node;
+        node = nullptr;
+    }
 }
 
 void nodeCrawler(std::vector<Node*>& node_vector, Node* node)
@@ -115,7 +118,7 @@ Node* Tree::policy()
     Node* current = current_node;
     while (!current->isTerminal())
     {
-        if (current->untried_actions.size() > 0)
+        if (current->getUntriedActions().size() > 0)
         {
             Node* new_node = current->expand();
             node_count++;
@@ -130,7 +133,7 @@ Node* Tree::policy()
     return current;
 }
 
-std::vector<Node*> Tree::getNetworkQueue()
+std::list<Node*> Tree::getNetworkQueue()
 {
     return network_queue;
 }
@@ -170,11 +173,14 @@ void Tree::clean()
 {
     for (Node* garbage : deletion_queue)
     {
-        Node* parent = garbage->parent;
-        delete garbage;
+        // Delete node from queue
+        network_queue.remove(garbage);
 
-        // Delete child pointer from children list
-        parent->optimizeMemory();
+        // Delete child pointer from children list and switch to frozzen status
+        garbage->parent->removeNodeFromChildren(garbage);
+        garbage->parent->shrinkNode();
+
+        delete garbage;
     }
 
     deletion_queue.clear();

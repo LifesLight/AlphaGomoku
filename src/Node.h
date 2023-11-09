@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "State.h"
 #include "Model.h"
+#include "NodeData.h"
 
 /*
 Node is a singular element in a Tree, it represents a unique board position.
@@ -11,22 +12,36 @@ It requires a model output for most actions.
 This model output is not calculated on creation since we want to batch model calls.
 */
 
+// Data which is not needed after 
+
+
 class Node
 {
 public:
+    // Permanent Node data
     Node* parent;
     index_t parent_action;
     State* state;
-    uint32_t visits;
     std::list<Node*> children;
-    std::deque<index_t> untried_actions;
-    float evaluation;
-    float summed_evaluation;
-    torch::Tensor policy_evaluations;
 
-    // Neural Net
-    // Get inital policy evaluation for this node
-    float getPolicyValue();
+    // Interface to data struct
+    // Original evaluation
+    float getValueHeadEval();
+    // Sum of backprob evals
+    float getSummedEvaluation();
+    // How often node was visited
+    uint32_t getVisits();
+    // Get untried actions
+    std::deque<index_t>& getUntriedActions();
+
+private:
+    // Temporary Node data
+    NodeData* temp_data;
+
+public:
+    // Deletes temp data
+    void shrinkNode();
+
     // Provide model output
     void setModelOutput(torch::Tensor policy, torch::Tensor value);
 
@@ -42,7 +57,10 @@ public:
     // Manual expand with move_index
     Node* expand(index_t move_index);
     // Evaluation of node according to MCTS
-    float meanEvaluation();
+    float getMeanEvaluation();
+    // Get this nodes inital policy eval
+    float getNodesPolicyEval();
+
     // Node is in terminal state
     bool isTerminal();
     // Calls backpropagate with value calculation
@@ -53,8 +71,9 @@ public:
     void removeFromUntried(index_t action);
     // Has node recieved network data
     bool getNetworkStatus();
-    // Shrinks data structures to new requirements
-    void optimizeMemory();
+
+    // Still in active MCTS tree
+    bool isShrunk();
 
     // Best child without exploration biases
     Node* absBestChild();
@@ -63,6 +82,9 @@ public:
 
     // Black is 0, 1 is White, Draw is 2
     uint8_t getResult();
+
+    // Removes a node from children
+    void removeNodeFromChildren(Node* node);
 
     // Statics
     // Create string representation of node parameters
@@ -81,8 +103,8 @@ public:
     bool getNextColor();
 
 private:
-    // Get policy for this nodes moves
-    float getMovePolicy(index_t action);
+    // Get value from policy out tensor
+    float getPolicyValue(index_t move);
     // Has network data or not
     bool network_status;
     // Gets called when network data is recieved

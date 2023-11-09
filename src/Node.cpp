@@ -1,9 +1,12 @@
 #include "Node.h"
 
 Node::Node(State* state, Node* parent, index_t parent_action)
-    : parent(parent), parent_action(parent_action), state(state), visits(0), network_status(0), summed_evaluation(0)
-{  
-    untried_actions = state->getPossible();
+    : parent(parent), parent_action(parent_action), state(state), network_status(0)
+{
+    temp_data = new NodeData();
+    temp_data->untried_actions = state->getPossible();
+    temp_data->visits = 0;
+    temp_data->summed_evaluation = 0.0f;
 }
 
 Node::Node(State* state)
@@ -17,18 +20,94 @@ Node::Node()
 Node::~Node()
 {
     delete state;
+    delete temp_data;
 }
 
-void Node::optimizeMemory()
-{
-    untried_actions.shrink_to_fit();
-    policy_evaluations.reset();
+#pragma region DataInterface
 
-    std::list<Node*> new_children;
-    for (Node* child : children)
-        if (child != nullptr)
-            new_children.push_back(child);
-    children = new_children;
+float Node::getValueHeadEval()
+{
+    if (temp_data)
+        return temp_data->evaluation;
+    else
+    {
+        std::cout << "[Node][E]: Tried to get value head eval from shrunk node" << std::endl << std::flush;
+        return 0;
+    }
+}
+
+float Node::getSummedEvaluation()
+{
+    if (temp_data)
+        return temp_data->summed_evaluation;
+    else
+    {
+        std::cout << "[Node][E]: Tried to get summed value from shrunk node" << std::endl << std::flush;
+        return 0;
+    }
+}
+
+uint32_t Node::getVisits()
+{
+    if (temp_data)
+        return temp_data->visits;
+    else
+    {
+        std::cout << "[Node][E]: Tried to get visits from shrunk node" << std::endl << std::flush;
+        return 0;
+    }
+}
+
+float Node::getPolicyValue(index_t move)
+{
+    if (network_status)
+    {
+        if (temp_data)
+        {
+            torch::NoGradGuard no_grad_guard;
+            return temp_data->policy_evaluations[move].item<float>();
+        }
+        else
+        {
+            std::cout << "[Node][E]: Tried to get policy value form shrunk node" << std::endl << std::flush;
+            return 0;
+        }
+    }
+    else
+    {
+        std::cout << "[Node][E]: Tried to get policy value form node without net data" << std::endl << std::flush;
+        return 0;
+    }
+}
+
+std::deque<index_t>& Node::getUntriedActions()
+{
+    if (temp_data)
+        return temp_data->untried_actions;
+    else
+    {
+        std::cout << "[Node][E]: Tried to get untried actions from shrunk node" << std::endl << std::flush;
+        // Will crash but whatever
+        return temp_data->untried_actions;
+    }
+}
+
+#pragma endregion
+
+void Node::shrinkNode()
+{
+    delete temp_data;
+    temp_data = nullptr;
+}
+
+bool Node::isShrunk()
+{
+    return temp_data == nullptr;
+}
+
+void Node::removeNodeFromChildren(Node* node)
+{
+    children.remove(node);
 }
 
 bool Node::getNextColor()
@@ -36,16 +115,36 @@ bool Node::getNextColor()
     return state->getNextColor();
 }
 
+float Node::getNodesPolicyEval()
+{
+    if (parent)
+        return parent->getPolicyValue(parent_action);
+    else
+    {
+        std::cout << "[Node][E]: Tried to get parent less nodes policy eval" << std::endl << std::flush;
+        return 0.0f;
+    }
+}
+
 void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
 {
+    if (temp_data == nullptr)
+    {
+        std::cout << "[Node][E]: Tried to assign net data to shrunk node" << std::endl << std::flush;
+        return;
+    }
+    // Disable gradients for this scope
+    torch::NoGradGuard no_grad_guard;
+
     // Assign value
-    evaluation = value.item<float>();
+    float evaluation = value.item<float>();
     // Normaize for black is -1 white +1
     if (!getNextColor())
         evaluation *= -1;
+    temp_data->evaluation = evaluation;
 
     // Store policy values
-    policy_evaluations = policy;
+    temp_data->policy_evaluations = policy;
 
     // Tell node that it has network data
     network_status = true;
@@ -56,19 +155,10 @@ void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
 
 void Node::removeFromUntried(index_t action)
 {
-    untried_actions.erase(
-            std::remove(untried_actions.begin(), untried_actions.end(), action), untried_actions.end()
+    std::deque<index_t>& untried = getUntriedActions();
+    untried.erase(
+            std::remove(untried.begin(), untried.end(), action), untried.end()
         );
-}
-
-float Node::getMovePolicy(index_t action)
-{
-    if (getNetworkStatus() == 0)
-    {
-        std::cout << "[Node][W]: Tried to get policy eval for move on node without net data" << std::endl << std::flush;
-        return 0.0f;
-    }
-    return policy_evaluations[action].item<float>();
 }
 
 Node* Node::expand()
@@ -78,12 +168,25 @@ Node* Node::expand()
         std::cout << "Tried to auto expand node without policy data" << std::endl << std::flush;
         return nullptr;
     }
+    if (!temp_data)
+    {
+        std::cout << "Tried to auto expand shrunk node" << std::endl << std::flush;
+        return nullptr;
+    }
+    
 
     // Find highest policy action
     index_t action = -1; // initialized as unreachable value
-    for (index_t possible : untried_actions)
-        if (action == index_t(-1) || getMovePolicy(action) < getMovePolicy(possible))
+    float action_val = 0;
+    for (index_t possible : getUntriedActions())
+    {
+        float policy_val = getPolicyValue(possible);
+        if (action == index_t(-1) || action_val < policy_val)
+        {
+            action_val = policy_val;
             action = possible;
+        }
+    }
 
     return expand(action);
 }
@@ -108,7 +211,7 @@ void Node::callBackpropagate()
         return;
     }
 
-    float value = valueProcessor(evaluation);
+    float value = valueProcessor(getValueHeadEval());
     backpropagate(value);
 }
 
@@ -116,16 +219,16 @@ Node* Node::bestChild()
 {
     Node* best_child = nullptr;
     float best_result = -100.0;
-    float log_visits = 2 * std::log(visits);
+    float log_visits = 2 * std::log(getVisits());
     float result, value, exploration, policy;
 
     // Get child with best value
     for (Node* child : children)
     {
         // Calculate value
-        value = ValueBias * child->meanEvaluation();
-        exploration = ExplorationBias * std::sqrt(log_visits / float(child->visits));
-        policy = PolicyBias * child->getPolicyValue();
+        value = ValueBias * child->getMeanEvaluation();
+        exploration = ExplorationBias * std::sqrt(log_visits / float(child->getVisits()));
+        policy = PolicyBias * child->getNodesPolicyEval();
         result = value + exploration + policy;
 
         if (result > best_result)
@@ -156,7 +259,7 @@ Node* Node::absBestChild()
 
     for (Node* child : children)
     {
-        result = child->visits;
+        result = child->getVisits();
         if (result > best_result)
         {
             best_result = result;
@@ -167,11 +270,6 @@ Node* Node::absBestChild()
     return best_child;
 }
 
-float Node::getPolicyValue()
-{
-    return parent->policy_evaluations[parent_action].item<float>();
-}
-
 uint8_t Node::getResult()
 {
     return state->getResult();
@@ -180,28 +278,29 @@ uint8_t Node::getResult()
 // ------------ Value aggregation ------------
 #pragma region
 
-float Node::meanEvaluation()
+float Node::getMeanEvaluation()
 {
-    if (visits == 0)
+    if (getVisits() == 0)
     {
         std::cout << "[Node][W]: Tried to get meanEvaluation from node with 0 visits?" << std::endl << std::flush;
         return 0;
     }
 
     if (getNextColor())
-        return -summed_evaluation / visits;
+        return -getSummedEvaluation() / getVisits();
     else
-        return summed_evaluation / visits;  
+        return getSummedEvaluation() / getVisits();  
 }
 
 void Node::backpropagate(float eval)
 {
-    visits++;
-    summed_evaluation += eval;
+    temp_data->visits++;
+    temp_data->summed_evaluation += eval;
 
     // Stop at root
     if (parent)
-        parent->backpropagate(eval);
+        if (!parent->isShrunk())
+            parent->backpropagate(eval);
 }
 
 float Node::valueProcessor(float normalized_value)
@@ -244,6 +343,9 @@ torch::Tensor Node::nodeToGamestate(Node* node)
 
 torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
 {
+    // Disable gradients for this scope
+    torch::NoGradGuard no_grad_guard;
+
     // Generate Tensor on CPU
     torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
 
@@ -357,14 +459,14 @@ std::string distribution_helper(Node* child, float max_value, const std::string&
         if (int(max_value) == 0)
             result << 0;
         else
-            result << int(float(child->visits) / max_value * 999);
+            result << int(float(child->getVisits()) / max_value * 999);
     }
 
     // Cases where we need a max value for "max value of type"
     else if (type == "VALUE")
     {
         // Un-normalize
-        float value = child->evaluation * (1 - child->getNextColor() * 2);
+        float value = child->getValueHeadEval() * (1 - child->getNextColor() * 2);
         if (value == max_value && color_me)
             result << "\033[1;33m";
         result << std::setw(3) << std::setfill(' ');
@@ -372,7 +474,7 @@ std::string distribution_helper(Node* child, float max_value, const std::string&
     }
     else if (type == "MEAN")
     {
-        float value = child->meanEvaluation();
+        float value = child->getMeanEvaluation();
         if (value == max_value && color_me)
             result << "\033[1;33m";
         result << std::setw(3) << std::setfill(' ');
@@ -380,7 +482,7 @@ std::string distribution_helper(Node* child, float max_value, const std::string&
     }
     else if (type == "POLICY")
     {
-        float value = child->getPolicyValue();
+        float value = child->getNodesPolicyEval();
         if (value == max_value && color_me)
             result << "\033[1;33m";
         result << std::setw(3) << std::setfill(' ');
@@ -412,13 +514,13 @@ std::string distribution(Node* current_node, const std::string& type)
     {
         float val = 0;
         if (type == "VALUE")
-            val = child ->evaluation * (1 - child->getNextColor() * 2);
+            val = child ->getValueHeadEval() * (1 - child->getNextColor() * 2);
         else if (type == "MEAN")
-            val = child->meanEvaluation();
+            val = child->getMeanEvaluation();
         else if (type == "POLICY")
-            val = child->getPolicyValue();
+            val = child->getNodesPolicyEval();
         else if (type == "VISITS")
-            val = child->visits;
+            val = child->getVisits();
 
         if (val > max_value)
             max_value = val;
@@ -482,9 +584,7 @@ std::string distribution(Node* current_node, const std::string& type)
 }
 
 std::string Node::analytics(Node* node, const std::initializer_list<std::string> distributions)
-{        
-    bool color = node->getNextColor();
-
+{
     std::ostringstream output;
     output << std::endl;
 
@@ -503,14 +603,14 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
     // Total sims
     output << "# Visits" << std::setw(window_width - 8) << std::setfill(' ') << "#" << std::endl; 
     if (node->parent)
-        output << "# Parent:" << std::setw(window_width - 11) << std::setfill(' ') << int(node->parent->visits) << " #" << std::endl;
-    output << "# Current:" << std::setw(window_width - 12) << std::setfill(' ') << int(node->visits) << " #" << std::endl;
+        output << "# Parent:" << std::setw(window_width - 11) << std::setfill(' ') << int(node->parent->getVisits()) << " #" << std::endl;
+    output << "# Current:" << std::setw(window_width - 12) << std::setfill(' ') << int(node->getVisits()) << " #" << std::endl;
     // Evaluations
     output << "# Evaluations" << std::setw(window_width - 13) << std::setfill(' ') << "#" << std::endl; 
     if (node->parent)
-        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->getPolicyValue() << " #" << std::endl;
-    output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->evaluation << " #" << std::endl;
-    output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->meanEvaluation() << " #" << std::endl;
+        output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->getNodesPolicyEval() << " #" << std::endl;
+    output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->getValueHeadEval() << " #" << std::endl;
+    output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->getMeanEvaluation() << " #" << std::endl;
     
     for (int i = 0; i < window_width; i++)
         output << "#";

@@ -19,3 +19,12 @@ ValueBias 1
   Model2 wins: 1130 (test2.pt (1600|Half|CUDA))
   Delta:       0.131698 (-1 is Model1 wins)
 Win delta: 0.131698
+
+ExplorationBias 0.25
+PolicyBias 0.3
+ValueBias 1
+  Draws:       4
+  Model1 wins: 770 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1226 (test2.pt (1600|Half|CUDA))
+  Delta:       0.228457 (-1 is Model1 wins)
+Win delta: 0.228457
