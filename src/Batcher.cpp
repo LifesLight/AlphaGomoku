@@ -45,6 +45,18 @@ Batcher::Batcher(int environment_count, Model* only_model)
         std::cout << "[Batcher][I]: Created batcher with " << environment_count << " single tree env(s)" << std::endl;
 }
 
+Batcher::~Batcher()
+{
+    if (Utils::checkEnv("LOGGING", "INFO"))
+        std::cout << "[Batcher][I]: Started deconstructing batcher ... " << std::flush;
+
+    for (Environment* env : environments)
+        delete env;
+
+    if (Utils::checkEnv("LOGGING", "INFO"))
+        std::cout << "Finished" << std::endl << std::flush;
+}
+
 bool Batcher::getNextColor()
 {
     // Just use first env since all have same next color
@@ -58,12 +70,6 @@ bool Batcher::getNextModelIndex(Environment* env)
     if (env->areModelsSwapped())
         model_index = !model_index;
     return model_index;
-}
-
-Batcher::~Batcher()
-{
-    for (Environment* env : environments)
-        delete env;
 }
 
 bool Batcher::isTerminal()
@@ -300,7 +306,7 @@ void Batcher::swapModels()
         environments[i]->swapModels();   
 }
 
-void Batcher::runGameloop(int simulations)
+void Batcher::runGameloop()
 {
     // Gameplay Loop
     while(!isTerminal())
@@ -317,7 +323,7 @@ void Batcher::runGameloop(int simulations)
             }
             catch(const std::exception& e)
             {
-                count = 2;
+                count = 1;
             }
 
             if (Utils::checkEnv("RENDER_ANALYTICS", "TRUE"))
@@ -335,7 +341,7 @@ bool Batcher::isSingleTree()
     return models[1] == nullptr;
 }
 
-float Batcher::duelModels(int random_actions, int simulations)
+float Batcher::duelModels(int random_actions)
 {
     if (environments.size() % 2 != 0)
     {
@@ -386,7 +392,7 @@ float Batcher::duelModels(int random_actions, int simulations)
     runNetwork();
 
     // Run until terminal
-    runGameloop(simulations);
+    runGameloop();
 
     int total_games = environments.size();
     int draws = 0;
@@ -403,7 +409,7 @@ float Batcher::duelModels(int random_actions, int simulations)
 
         if (winner_color == 2)
             continue;
-        
+
         if (is_swapped)
             winner_color = !winner_color;
 
@@ -431,12 +437,73 @@ float Batcher::duelModels(int random_actions, int simulations)
     return win_delta;
 }
 
-void Batcher::selfplay(int simulations)
+void Batcher::selfplay()
 {
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Started selfplay" << std::endl;
     // Run until terminal
-    runGameloop(simulations);
+    runGameloop();
+
+    // Log outcome
+    if (Utils::checkEnv("LOGGING", "INFO"))
+        std::cout << "[Batcher][I]: Selfplay result: " << averageWinner() << " average winning color" << std::endl;
+}
+
+void Batcher::humanplay(int human_color)
+{
+    runNetwork();
+    while (!isTerminal())
+    {
+        if (getNextColor() == human_color)
+        {
+            std::string string_x, string_y;
+            std::cout << "X: ";
+            std::cin >> string_x;
+            std::cout << "Y: ";
+            std::cin >> string_y;
+
+            int x, y;
+
+            try
+            {
+                x = std::stoi(string_x);
+                y = std::stoi(string_y);
+            }
+            catch (const std::exception& e)
+            {
+                std::cout << "Invalid format" << std::endl;
+                continue;
+            }
+
+            environments[0]->makeMove(x, y);
+            runNetwork();
+        }
+        else
+        {
+            runSimulations();
+            makeBestMoves();
+        }
+
+        if (Utils::checkEnv("RENDER_ENVS", "TRUE"))
+        {
+            int count;
+            try
+            {
+                count = std::stoi(Utils::getEnv("RENDER_ENVS_COUNT"));
+            }
+            catch(const std::exception& e)
+            {
+                count = 1;
+            }
+
+            if (Utils::checkEnv("RENDER_ANALYTICS", "TRUE"))
+                std::cout << toStringDist({"VISITS", "POLICY", "VALUE", "MEAN"}, count) << std::endl;
+            else
+                std::cout << toString(count) << std::endl;
+        }
+
+        freeMemory();
+    }
 }
 
 Environment* Batcher::getEnvironment(uint32_t index)
@@ -581,6 +648,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 
 std::string Batcher::toStringDist(const std::initializer_list<std::string> distributions, int amount)
 {
+    // Clipping to non terminal environments so we dont render "dead" envs
     if (amount > non_terminal_environments.size())
         amount = non_terminal_environments.size();
 
@@ -588,7 +656,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
     for (int i = 0; i < amount; i++)
     {
         Environment* env = non_terminal_environments[i];
-        
+
         int real_id = 0;
         for (int ii = 0; ii < environments.size(); ii++)
         {
@@ -601,7 +669,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 
         for (int i = 0; i < BoardSize; i++)
             output << "#-#-";
-        
+
         output << std::endl << std::endl << " <---------- Environment: " << real_id << "---------->" << std::endl << std::endl; 
 
         output << " <--- Active Tree --->" << std::endl;
@@ -618,21 +686,19 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
             output << Node::analytics(opposing_node, distributions);
             output << std::endl;
         }
-
     }
 
     return output.str();
 }
 
-void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
+void nodeCrawler(std::list<Datapoint>& datapoints, Node* node, uint8_t winner)
 {
     // Ignore non fully explored nodes
-    if (node->getUntriedActions().size() == 0)
+    if (node->isFullyExpanded())
     {
         Datapoint data;
         data.moves = node->getMoveHistory();
         data.best_move = node->absBestChild()->parent_action;
-
         // Change to reflect if current play won
         if (winner == 2)
         {
@@ -656,13 +722,8 @@ void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
 
 void Batcher::storeData(std::string Path)
 {
-    int total_nodes = 0;
-    for (Environment* env : environments)
-        total_nodes += env->getNodeCount();
-    
-    std::vector<Datapoint> datapoints;
-    // Too much since not all nodes are full expanded but whatever :)
-    datapoints.reserve(total_nodes);
+    // Datapoints to be stored
+    std::list<Datapoint> datapoints;
 
     // Get all nodes which are fully expanded and convert them into datapoints
     for (Environment* env : environments)

@@ -7,62 +7,108 @@ int main(int argc, const char* argv[])
     if (argc < 2)
     {
         std::cout << "[FATAL]: Missing arguments" << std::endl;
-        std::cout << "Usage: [Model1 Path] (Model2 Path) (Simulations) (Environments) (Random Moves) (Duel 1 / 0)" << std::endl;
+        std::cout << "Usage: [DUEL, SELFPLAY, HUMAN] ..." << std::endl;
         return 0;
     }
 
-    // Determine Tree mode
-    bool single_tree = 1;
-    if (argc > 2)
-        if (!std::isdigit(argv[2][0]))
-            single_tree = 0;
+    // Selected game mode
+    std::string mode = argv[1];
+    Batcher* batcher;
 
-    // Get hyperparameters
-    int simulations = DefaultSimulations;
-    int environment_count = DefaultEnvironments;
-    int rand_moves = 0;
-    bool duel = 0;
-
-    if (argc >= 4 - single_tree)
-        simulations = std::stoi(argv[3 - single_tree]);
-
-    if (argc >= 5 - single_tree)
-        environment_count = std::stoi(argv[4 - single_tree]);
-
-    if (argc >= 6 - single_tree)
-        rand_moves = std::stoi(argv[5 - single_tree]);
-
-    if (argc >= 7 - single_tree)
-        duel = std::stoi(argv[6 - single_tree]);
-
-    // Load models
-    Batcher* batcher = nullptr;
-    if (single_tree)
+    // Duel is evaluate 2 models against each other
+    if (mode == "DUEL")
     {
-        Model* nn = Model::autoloadModel(argv[1], simulations);
-        batcher = new Batcher(environment_count, nn);
-    }
-    else
-    {
-        Model* nnb = Model::autoloadModel(argv[1], simulations);
-        Model* nnw = Model::autoloadModel(argv[2], simulations);
-        batcher = new Batcher(environment_count, nnb, nnw);
-    }
+        if (argc < 4)
+        {
+            std::cout << "[FATAL]: Missing arguments" << std::endl;
+            std::cout << "Usage: DUEL [Model1] [Model2] [Simulations] [Environments] [Rand Moves Count]" << std::endl;
+            return 0;
+        }
 
-    // Either duel or selfplay
-    if (duel)
-    {
+        Model* model_1 = Model::autoloadModel(argv[2]);
+        Model* model_2 = Model::autoloadModel(argv[3]);
+
+        // Get hyperparameters
+        int simulations = DefaultSimulations;
+        int environment_count = DefaultEnvironments;
+        int rand_moves = 0;
+
+        if (argc > 4)
+            simulations = std::stoi(argv[4]);
+
+        if (argc > 5)
+            environment_count = std::stoi(argv[5]);
+
+        if (argc > 6)
+            rand_moves = std::stoi(argv[6]);
+
+        model_1->setSimulations(1);
+        model_2->setSimulations(simulations);
+
+        batcher = new Batcher(environment_count, model_1, model_2);
         batcher->swapModels();
-        float win_delta = batcher->duelModels(rand_moves, simulations);
-        std::cout << "Win delta: " << win_delta << std::endl;
+        batcher->duelModels(rand_moves);
     }
-    else
+
+    // Selfplay
+    if (mode == "SELFPLAY")
     {
+        if (argc < 3)
+        {
+            std::cout << "[FATAL]: Missing arguments" << std::endl;
+            std::cout << "Usage: SELFPLAY [Model] [Simulations] [Environments] [Rand Moves Count]" << std::endl;
+            return 0;
+        }
+
+        Model* model_1 = Model::autoloadModel(argv[2]);
+
+        // Get hyperparameters
+        int simulations = DefaultSimulations;
+        int environment_count = DefaultEnvironments;
+        int rand_moves = 0;
+
+        if (argc > 3)
+            simulations = std::stoi(argv[3]);
+
+        if (argc > 4)
+            environment_count = std::stoi(argv[4]);
+
+        if (argc > 5)
+            rand_moves = std::stoi(argv[5]);
+
+        model_1->setSimulations(simulations);
+
+        batcher = new Batcher(environment_count, model_1);
         batcher->makeRandomMoves(rand_moves);
-        batcher->selfplay(simulations);
-        float average_winner = batcher->averageWinner();
-        std::cout << "Average Winner: " << average_winner << std::endl;
+        batcher->selfplay();
         batcher->storeData(DatapointPath);
+    }
+
+    // Human play
+    if (mode == "HUMAN")
+    {
+        if (argc < 3)
+        {
+            std::cout << "[FATAL]: Missing arguments" << std::endl;
+            std::cout << "Usage: SELFPLAY [Model] [Simulations] [Human Color]" << std::endl;
+            return 0;
+        }
+
+        Model* model_1 = Model::autoloadModel(argv[2]);
+
+        int simulations = DefaultSimulations;
+        int human_color = 0;
+
+        if (argc > 3)
+            simulations = std::stoi(argv[3]);
+
+        if (argc > 4)
+            human_color = std::stoi(argv[4]);
+
+        model_1->setSimulations(simulations);
+
+        batcher = new Batcher(1, model_1);
+        batcher->humanplay(human_color);
     }
 
     delete batcher;

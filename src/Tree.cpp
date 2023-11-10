@@ -10,12 +10,8 @@ Tree::Tree()
 
 Tree::~Tree()
 {
-    std::vector<Node*> all_nodes = getAllNodes();
-    for (Node* node : all_nodes)
-    {
-        delete node;
-        node = nullptr;
-    }
+    // Will recursively delete all nodes
+    delete root_node;
 }
 
 void nodeCrawler(std::vector<Node*>& node_vector, Node* node)
@@ -64,7 +60,7 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         ))
     {
         std::cout << "[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")" << std::endl << std::flush;
-        return false;     
+        return false;
     }
 
     Node* chosen_child = nullptr;
@@ -118,7 +114,7 @@ Node* Tree::policy()
     Node* current = current_node;
     while (!current->isTerminal())
     {
-        if (current->getUntriedActions().size() > 0)
+        if (!current->isFullyExpanded())
         {
             Node* new_node = current->expand();
             node_count++;

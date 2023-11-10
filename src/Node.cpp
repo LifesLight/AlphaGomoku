@@ -21,6 +21,10 @@ Node::~Node()
 {
     delete state;
     delete temp_data;
+
+    // Recursively delete all children
+    for (Node* child : children)
+        delete child;
 }
 
 #pragma region DataInterface
@@ -53,7 +57,7 @@ uint32_t Node::getVisits()
         return temp_data->visits;
     else
     {
-        std::cout << "[Node][E]: Tried to get visits from shrunk node" << std::endl << std::flush;
+        std::cout << "[Node][W]: Tried to get visits from shrunk node" << std::endl << std::flush;
         return 0;
     }
 }
@@ -78,6 +82,15 @@ float Node::getPolicyValue(index_t move)
         std::cout << "[Node][E]: Tried to get policy value form node without net data" << std::endl << std::flush;
         return 0;
     }
+}
+
+bool Node::isFullyExpanded()
+{
+    if (isShrunk())
+        return true;
+    if (getUntriedActions().size() == 0)
+        return true;
+    return false;
 }
 
 std::deque<index_t>& Node::getUntriedActions()
@@ -253,13 +266,26 @@ bool Node::getNetworkStatus()
 
 Node* Node::absBestChild()
 {
+    // If node is shrunk it should usually only have one remaining child, so default to that one
+    if (isShrunk())
+    {
+        if (children.size() > 1)
+            std::cout << "[Node][W]: Got abs best child from shrunk node, which had more then one child" << std::endl << std::flush;
+        return children.front();
+    }
+
     Node* best_child = nullptr;
     uint32_t result;
     uint32_t best_result = 0;
 
     for (Node* child : children)
     {
-        result = child->getVisits();
+        // TODO investigate why this can even happen
+        if (child->isShrunk())
+            result = 1;
+        else
+            result = child->getVisits();
+
         if (result > best_result)
         {
             best_result = result;

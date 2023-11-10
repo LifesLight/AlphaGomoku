@@ -51,13 +51,16 @@ public:
     void swapModels();
 
     // Generates duplicate envs with mirrored models. Lets them duel and outputs the win distribution between them
-    float duelModels(int random_moves, int simulations);
+    float duelModels(int random_moves);
 
     // Play model against itself, highly recommended to use in single tree mode
-    void selfplay(int simulations);
+    void selfplay();
+
+    // Play as human vs model
+    void humanplay(int human_color);
 
     // Get nodes for retraining
-    void storeData(std::string Path);
+    void storeData(std::string path);
 
     // Model that run simulations is going the called on
     bool getNextModelIndex(Environment* env);
@@ -84,7 +87,7 @@ private:
     void updateNonTerminal();
 
     // Play until batcher is terminal
-    void runGameloop(int simulations);
+    void runGameloop();
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;

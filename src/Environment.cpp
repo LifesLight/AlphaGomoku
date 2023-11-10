@@ -1,7 +1,5 @@
 #include "Environment.h"
 
-// TODO WE NEED THE OPTION TO HAVE ONE TREE FOR SELFPLAY!!!
-
 Environment::Environment(bool dual_tree)
     : next_color(false), swapped_models(false)
 {

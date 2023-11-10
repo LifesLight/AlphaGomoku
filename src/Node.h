@@ -75,6 +75,9 @@ public:
     // Still in active MCTS tree
     bool isShrunk();
 
+    // Has no untried actions left, if node is shrunk assume fully expanded
+    bool isFullyExpanded();
+
     // Best child without exploration biases
     Node* absBestChild();
     // Best child for policy
