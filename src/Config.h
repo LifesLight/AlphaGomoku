@@ -37,7 +37,7 @@
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.25
-#define PolicyBias 0.4
+#define PolicyBias 0.3
 #define ValueBias 1
 
 // ---- Performance Settings ----
@@ -52,7 +52,7 @@
 // This is where tensors are created and simmelar
 #define TorchDefaultDevice torch::kCPU
 // This is the device computations will be run on
-#define TorchInferenceDevice torch::kMPS
+#define TorchInferenceDevice torch::kCPU
 // Floating point precision for Inference
 #define TorchDefaultScalar torch::kFloat16
 // Higher is better if VRAM/RAM can handle

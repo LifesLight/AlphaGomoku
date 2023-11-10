@@ -1,3 +1,5 @@
+Gameplay performance in relation to hyperparameters tuning logs
+
 ExplorationBias 0.5
 PolicyBias 0.1
 ValueBias 1
@@ -21,8 +23,32 @@ ValueBias 1
 Win delta: 0.131698
 
 ExplorationBias 0.25
+PolicyBias 0.5
+ValueBias 1
+"test2.pt" "test2.pt" 1600 2000 10 1
+:
+  Draws:       13
+  Model1 wins: 825 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1162 (test2.pt (1600|Half|CUDA))
+  Delta:       0.169602 (-1 is Model1 wins)
+Win delta: 0.169602
+
+ExplorationBias 0.1
 PolicyBias 0.3
 ValueBias 1
+"test2.pt" "test2.pt" 1600 2000 10 1
+:
+  Draws:       10
+  Model1 wins: 795 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1195 (test2.pt (1600|Half|CUDA))
+  Delta:       0.201005 (-1 is Model1 wins)
+Win delta: 0.201005
+
+ExplorationBias 0.25
+PolicyBias 0.3
+ValueBias 1
+"test2.pt" "test2.pt" 1600 2000 10 1
+:
   Draws:       4
   Model1 wins: 770 (test2.pt (1|Half|CUDA))
   Model2 wins: 1226 (test2.pt (1600|Half|CUDA))
