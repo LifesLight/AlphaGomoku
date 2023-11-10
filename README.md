@@ -6,6 +6,17 @@ Black is 0 and -1.0 is black winning evaluation<br>
 White is 1 and 1.0 is white winning evaluation<br>
 (Draw is 2 and 0.0 is drawn evaluation)<br>
 
+## C++ Modes
+The AlphaGomoku executable can be called with 1 of 3 modes:<br>
+- **DUEL:** Evaluate 2 models against each other (used in retrain validation).<br>
+Usage: DUEL [Model 1 name] [Model 2 name] [Simulations] [Environments] [Random move amount]
+- **SELFPLAY:** Let model play against itself to generate datapoints for retraining.<br>
+Usage: SELFPLAY [Model name] [Simulations] [Environments] [Random move amount]
+- **HUMAN:** Lets you play against a model with MCTS.<br>
+USAGE: HUMAN [Model name] [Simulations] [Human players color]
+
+Model names should match the names of the scripted modules in "Models" for autoloading.
+
 ## Algorithm
 The general idea is to use a variation of MCTS, which uses a Neural Network with policy and value-head.<br>
 The Neural Networks parameters are improved over time via selfplay. The model is retrained on better moves calculated by the MCTS.
