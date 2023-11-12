@@ -57,18 +57,16 @@ Batcher::~Batcher()
         std::cout << "Finished" << std::endl << std::flush;
 }
 
-bool Batcher::getNextColor()
-{
-    // Just use first env since all have same next color
-    return getNode(0)->getNextColor();
-}
-
 bool Batcher::getNextModelIndex(Environment* env)
 {
-    int model_index = getNextColor();
-    model_index = (model_index * (models[1] != nullptr));
+    bool model_index = env->getNextColor();
+
     if (env->areModelsSwapped())
         model_index = !model_index;
+
+    if (models[1] == nullptr)
+        model_index = 0;
+
     return model_index;
 }
 
@@ -194,22 +192,30 @@ std::vector<torch::Tensor> Batcher::convertNodesToGamestates(std::vector<Node*>&
     std::vector<torch::Tensor> gamestates;
     gamestates.resize(element_count);
 
-    // Calculate index ranges
-    int batch_size = int(std::ceil(float(element_count) / thread_count));
-
-    // Threading
-    std::vector<std::thread> threads;
-    threads.reserve(thread_count);
-
-    for (int i = 0; i < thread_count; i++)
+    // If only one thread would be used just stay on this one
+    if (thread_count == 1)
     {
-        int start_index  = i * batch_size;
-        int end_index = std::min(start_index + batch_size, element_count);
-        threads.emplace_back(nodeToGamestateWorker, std::ref(gamestates), std::ref(nodes), dtype, start_index, end_index);
+        nodeToGamestateWorker(std::ref(gamestates), std::ref(nodes), dtype, 0, element_count);
     }
+    else
+    {
+        // Calculate index ranges
+        int batch_size = int(std::ceil(float(element_count) / thread_count));
 
-    for (int i = 0; i < thread_count; i++)
-        threads[i].join();
+        // Threading
+        std::vector<std::thread> threads;
+        threads.reserve(thread_count);
+
+        for (int i = 0; i < thread_count; i++)
+        {
+            int start_index  = i * batch_size;
+            int end_index = std::min(start_index + batch_size, element_count);
+            threads.emplace_back(nodeToGamestateWorker, std::ref(gamestates), std::ref(nodes), dtype, start_index, end_index);
+        }
+
+        for (int i = 0; i < thread_count; i++)
+            threads[i].join();
+    }
 
     return gamestates;
 }
@@ -232,31 +238,44 @@ void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>& envs, int 
     int thread_count = std::max(1, element_count / PerThreadSimulations);
     thread_count = std::min(thread_count, MaxThreads);
 
-    // Calculate index ranges
-    int batch_size = int(std::ceil(float(element_count) / thread_count));
-
-    // Threading
-    std::vector<std::thread> threads;
-    threads.reserve(thread_count);
-
-    for (int simstep = 0; simstep < simulations; simstep++)
+     // If only one thread would be used just stay on this one
+    if (thread_count == 1)
     {
-        for (int i = 0; i < thread_count; i++)
+        for (int simstep = 0; simstep < simulations; simstep++)
         {
-            int start_index  = i * batch_size;
-            int end_index = std::min(start_index + batch_size, element_count);
-            threads.emplace_back(runSimulationsOnEnvironmentsWorker, std::ref(envs), start_index, end_index);
+            runSimulationsOnEnvironmentsWorker(std::ref(envs), 0, element_count);
+            runNetwork();
         }
+    }
+    else
+    {
+        // Calculate index ranges
+        int batch_size = int(std::ceil(float(element_count) / thread_count));
 
-        for (int i = 0; i < thread_count; i++)
-            threads[i].join();
+        // Threading
+        std::vector<std::thread> threads;
+        threads.reserve(thread_count);
 
-        threads.clear();
+        for (int simstep = 0; simstep < simulations; simstep++)
+        {
+            for (int i = 0; i < thread_count; i++)
+            {
+                int start_index  = i * batch_size;
+                int end_index = std::min(start_index + batch_size, element_count);
+                threads.emplace_back(runSimulationsOnEnvironmentsWorker, std::ref(envs), start_index, end_index);
+            }
 
-        runNetwork();
+            for (int i = 0; i < thread_count; i++)
+                threads[i].join();
+
+            threads.clear();
+
+            runNetwork();
+        }
     }
 }
 
+// TODO make cuppled option
 void Batcher::runSimulations()
 {
     std::vector<Environment*> envsByModel[2];
@@ -421,7 +440,7 @@ void Batcher::humanplay(bool human_color)
     runNetwork();
     while (!isTerminal())
     {
-        if (getNextColor() == human_color)
+        if (environments[0]->getNextColor() == human_color)
         {
             std::string string_x, string_y;
             std::cout << "X: ";

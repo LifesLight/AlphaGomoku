@@ -65,9 +65,6 @@ public:
     // Model that run simulations is going the called on
     bool getNextModelIndex(Environment* env);
 
-    // Next played color
-    bool getNextColor();
-
 private:
     // ------------- Multithreaded -------------
     static void nodeToGamestateWorker(std::vector<torch::Tensor>& output, std::vector<Node*>& input, torch::ScalarType dtype, int start_index, int end_index);

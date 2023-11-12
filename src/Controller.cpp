@@ -42,7 +42,7 @@ int main(int argc, const char* argv[])
         if (argc > 6)
             rand_moves = std::stoi(argv[6]);
 
-        model_1->setSimulations(3200);
+        model_1->setSimulations(800);
         model_2->setSimulations(simulations);
 
         batcher = new Batcher(environment_count, model_1, model_2);
