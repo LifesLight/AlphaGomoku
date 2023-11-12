@@ -59,7 +59,7 @@ public:
     void freeMemory();
 
 private:
-    Tree* trees[2] = {nullptr, nullptr};
+    Tree* trees[2];
     bool next_color;
     bool swapped_models;
 };

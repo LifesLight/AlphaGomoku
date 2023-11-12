@@ -88,5 +88,5 @@ private:
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;
-    Model* models[2] = {nullptr, nullptr};
+    Model* models[2];
 };

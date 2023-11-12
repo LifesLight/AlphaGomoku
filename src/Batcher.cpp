@@ -27,6 +27,7 @@ Batcher::Batcher(int environment_count, Model* only_model)
 {
     // Store model
     models[0] = only_model;
+    models[1] = nullptr;
 
     environments.reserve(environment_count);
     non_terminal_environments.reserve(environment_count);

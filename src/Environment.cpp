@@ -2,7 +2,9 @@
 
 Environment::Environment(bool dual_tree)
     : next_color(false), swapped_models(false)
-{
+{ 
+    trees[1] = nullptr;
+
     // We only init one tree if not in dual tree mode
     for (int i = 0; i < dual_tree + 1; i++)
         trees[i] = new Tree();
