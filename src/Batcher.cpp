@@ -322,7 +322,7 @@ void Batcher::swapModels()
 
     // Invert models on every second env
     for (int i = 0; i < environments.size(); i += 2)
-        environments[i]->swapModels();   
+        environments[i]->swapModels();
 }
 
 void Batcher::runGameloop()
@@ -496,7 +496,7 @@ Environment* Batcher::getEnvironment(uint32_t index)
 {
     if (index < environments.size())
         return environments[index];
-    
+
     std::cout << "Tried to get environment with out of bounds index" << std::endl;
     return nullptr;
 }
@@ -505,7 +505,7 @@ Node* Batcher::getNode(uint32_t index)
 {
     if (index < environments.size())
         return environments[index]->getCurrentNode();
-    
+
     std::cout << "Tried to get node with out of bounds index" << std::endl;
     return nullptr;
 }
@@ -575,6 +575,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
             updateNonTerminal();
         }
     }
+    else
     {
         if (Utils::checkEnv("LOGGING", "INFO"))
             std::cout << "[Batcher][I]: Making " << amount << " random moves" << std::endl;
@@ -707,7 +708,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         for (int i = 0; i < BoardSize; i++)
             output << "#-#-";
 
-        output << std::endl << std::endl << " <---------- Environment: " << real_id << "---------->" << std::endl << std::endl; 
+        output << std::endl << std::endl << " <---------- Environment: " << real_id << " ---------->" << std::endl << std::endl; 
 
         output << " <--- Active Tree --->" << std::endl;
         output << " Model: " << models[env->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
