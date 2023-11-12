@@ -42,12 +42,13 @@ int main(int argc, const char* argv[])
         if (argc > 6)
             rand_moves = std::stoi(argv[6]);
 
-        model_1->setSimulations(1);
+        model_1->setSimulations(3200);
         model_2->setSimulations(simulations);
 
         batcher = new Batcher(environment_count, model_1, model_2);
         batcher->swapModels();
-        batcher->duelModels(rand_moves);
+        batcher->makeRandomMoves(rand_moves, true);
+        batcher->duelModels();
     }
 
     // Selfplay
@@ -79,7 +80,7 @@ int main(int argc, const char* argv[])
         model_1->setSimulations(simulations);
 
         batcher = new Batcher(environment_count, model_1);
-        batcher->makeRandomMoves(rand_moves);
+        batcher->makeRandomMoves(rand_moves, false);
         batcher->selfplay();
         batcher->storeData(DatapointPath);
     }

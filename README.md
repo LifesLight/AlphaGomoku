@@ -13,7 +13,7 @@ Usage: DUEL [Model 1 name] [Model 2 name] [Simulations] [Environments] [Random m
 - **SELFPLAY:** Let model play against itself to generate datapoints for retraining.<br>
 Usage: SELFPLAY [Model name] [Simulations] [Environments] [Random move amount]
 - **HUMAN:** Lets you play against a model with MCTS.<br>
-USAGE: HUMAN [Model name] [Simulations] [Human players color]
+Usage: HUMAN [Model name] [Simulations] [Human players color]
 
 Model names should match the names of the scripted modules in "Models" for autoloading.
 

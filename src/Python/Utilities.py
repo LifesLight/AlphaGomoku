@@ -74,37 +74,26 @@ class Utilities:
     def cordsToIndex(x, y):
         return x * 15 + y
 
-    def modelLoader(model_name,
-                    Filters = Conf.NN_FILTERS, 
-                    LinFilters = Conf.NN_LINFILTERS,
-                    Layers = Conf.NN_RESNETLAYERS, 
-                    HistoryDepth = Conf.HISTORYDEPTH, 
-                    Device = Conf.DEVICE, 
-                    Type = 'Human'
-                    ):
+    def modelLoader(model_path, model_name):
 
-        general_path = '../../Models/Human'
-        if Type == 'Selfplay':
-            general_path = '../../Models/Selfplay'
+        resnetPath = f'{model_path}/ResNet/{model_name}'
+        policyPath = f'{model_path}/PolHead/{model_name}'
+        valuePath = f'{model_path}/ValHead/{model_name}'
 
-        resnetPath = f'{general_path}/ResNet/{model_name}.pt'
-        policyPath = f'{general_path}/PolHead/{model_name}.pt'
-        valuePath = f'{general_path}/ValHead/{model_name}.pt'
-
-        resnetModel = Resnet(Filters, Layers, HistoryDepth + 1)
+        resnetModel = Resnet(Conf.NN_FILTERS, Conf.NN_RESNETLAYERS, Conf.HISTORYDEPTH + 1)
         resnetModel.load_state_dict(torch.load(resnetPath, map_location=torch.device('cpu')))
         resnetModel.eval()
-        resnetModel.to(Device)
+        resnetModel.to(Conf.DEVICE)
 
-        policyModel = PolHead(Filters)
+        policyModel = PolHead(Conf.NN_FILTERS)
         policyModel.load_state_dict(torch.load(policyPath, map_location=torch.device('cpu')))
         policyModel.eval()
-        policyModel.to(Device)
+        policyModel.to(Conf.DEVICE)
 
-        valueModel = ValHead(Filters, LinFilters)
+        valueModel = ValHead(Conf.NN_FILTERS, Conf.NN_LINFILTERS)
         valueModel.load_state_dict(torch.load(valuePath, map_location=torch.device('cpu')))
         valueModel.eval()
-        valueModel.to(Device)
+        valueModel.to(Conf.DEVICE)
 
         return resnetModel, policyModel, valueModel
     

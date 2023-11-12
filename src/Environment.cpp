@@ -36,16 +36,8 @@ bool Environment::makeMove(uint8_t x, uint8_t y)
 {
     // Update all existing trees
     for (int i = 0; i < 2; i ++)
-    {
         if (trees[i] != nullptr)
-        {
-            // Check if move is valid
-            bool successfull = trees[i]->makeMove(x, y);
-            if (!successfull)
-                return false;
-        }
-
-    }
+            trees[i]->makeMove(x, y);
 
     next_color = !next_color;
     return true;
@@ -120,6 +112,13 @@ bool Environment::clearNetworkQueue()
             if (!trees[i]->clearNetworkQueue())
                 success = false;
     return success;
+}
+
+void Environment::forceClearNetworkQueue()
+{
+    for (int i = 0; i < 2; i++)
+        if (trees[i] != nullptr)
+            trees[i]->forceClearNetworkQueue();
 }
 
 Node* Environment::getCurrentNode()

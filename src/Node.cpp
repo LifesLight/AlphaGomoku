@@ -181,12 +181,13 @@ Node* Node::expand()
         std::cout << "Tried to auto expand node without policy data" << std::endl << std::flush;
         return nullptr;
     }
+
     if (!temp_data)
     {
         std::cout << "Tried to auto expand shrunk node" << std::endl << std::flush;
         return nullptr;
     }
-    
+
 
     // Find highest policy action
     index_t action = -1; // initialized as unreachable value
@@ -280,11 +281,7 @@ Node* Node::absBestChild()
 
     for (Node* child : children)
     {
-        // TODO investigate why this can even happen
-        if (child->isShrunk())
-            result = 1;
-        else
-            result = child->getVisits();
+        result = child->getVisits();
 
         if (result > best_result)
         {

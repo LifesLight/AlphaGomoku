@@ -23,7 +23,7 @@ class ResidualLayer(nn.Module):
         x = self.relu(x)
 
         return x
-    
+
 class ConvolutionLayer(nn.Module):
     def __init__(self, infilters, outfilters, kernal_size=3):
         super().__init__()
@@ -37,7 +37,7 @@ class ConvolutionLayer(nn.Module):
     def forward(self, x):
         x = self.conv2d_sequential(x)
         return x
-    
+
 class ConvolutionLayerNoPad(nn.Module):
     def __init__(self, infilters, outfilters, kernal_size=3):
         super().__init__()
@@ -51,7 +51,7 @@ class ConvolutionLayerNoPad(nn.Module):
     def forward(self, x):
         x = self.conv2d_sequential(x)
         return x
-    
+
 class PolicyHead(nn.Module):
     def __init__(self, filters):
         super().__init__()
@@ -97,7 +97,7 @@ class ValueHead(nn.Module):
     def forward(self, x):
         for layer in self.conv_layers:
             x = layer(x)
-            
+
         x = self.value(x)
         return x
 

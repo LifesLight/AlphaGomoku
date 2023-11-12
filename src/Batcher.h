@@ -30,7 +30,7 @@ public:
     void runSimulations();
 
     void makeBestMoves();
-    void makeRandomMoves(int amount);
+    void makeRandomMoves(int amount, bool mirrored);
 
     // Clears all nodes flagged for deletion
     void freeMemory();
@@ -51,13 +51,13 @@ public:
     void swapModels();
 
     // Generates duplicate envs with mirrored models. Lets them duel and outputs the win distribution between them
-    float duelModels(int random_moves);
+    float duelModels();
 
     // Play model against itself, highly recommended to use in single tree mode
     void selfplay();
 
     // Play as human vs model
-    void humanplay(int human_color);
+    void humanplay(bool human_color);
 
     // Get nodes for retraining
     void storeData(std::string path);
@@ -68,8 +68,8 @@ public:
     // Next played color
     bool getNextColor();
 
-private:    
-    // -------- Need to be multithreaded --------
+private:
+    // ------------- Multithreaded -------------
     static void nodeToGamestateWorker(std::vector<torch::Tensor>& output, std::vector<Node*>& input, torch::ScalarType dtype, int start_index, int end_index);
     std::vector<torch::Tensor> convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype);
 

@@ -33,6 +33,7 @@ public:
     // This network queue has a tuple to with network it needs to be run on
     std::vector<std::tuple<Node*, bool>> getNetworkQueue();
     bool clearNetworkQueue();
+    void forceClearNetworkQueue();
     // Black is 0, White is 1, Draw is 2
     uint8_t getResult();
 

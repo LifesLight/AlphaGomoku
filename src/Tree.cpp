@@ -21,6 +21,45 @@ void nodeCrawler(std::vector<Node*>& node_vector, Node* node)
         nodeCrawler(node_vector, child);
 }
 
+void Tree::updateCurrentNode(index_t action)
+{
+    index_t x, y;
+    Utils::indexToCords(action, x, y);
+
+    Node* chosen_child = nullptr;
+    State* current_state = current_node->state;
+
+    // Put all other children in deletion queue and try to find matching child
+    for (Node* child : current_node->children)
+        if (child->parent_action != action)
+            deletion_queue.push_back(child);
+        else
+            chosen_child = child;
+
+    // We check for if node exists first, if it does the field will be alloctated
+    if (!current_state->isCellEmpty(x, y) && chosen_child == nullptr)
+    {
+        std::cout << "[Tree][E]: Error in update current child, missmatch between empty cell and child: (" << int(x) << "," << int(y) << ") on:" << std::endl;
+        std::cout << current_state->toString() << std::endl << std::flush;
+        return;
+    }
+
+    // Node does not have desired child
+    if (chosen_child == nullptr)
+    {
+        // Expand to move index
+        chosen_child = current_node->expand(action);
+        node_count++;
+
+        // Push the new node into the network queue
+        network_queue.push_back(chosen_child);
+    }
+
+    if (current_node->parent)
+        current_node->parent->shrinkNode();
+    current_node = chosen_child;
+}
+
 std::vector<Node*> Tree::getAllNodes()
 {
     std::vector<Node*> tree_nodes;
@@ -39,17 +78,17 @@ int Tree::getNodeCount()
     return node_count;
 }
 
-bool Tree::makeMove(index_t index)
+void Tree::makeMove(index_t index)
 {
     uint8_t x, y;
     Utils::indexToCords(index, x, y);
-    return makeMove(x, y);
+    makeMove(x, y);
 }
 
-bool Tree::makeMove(uint8_t x, uint8_t y)
+void Tree::makeMove(uint8_t x, uint8_t y)
 {
-    index_t move_index;
-    Utils::cordsToIndex(move_index, x, y);
+    index_t action;
+    Utils::cordsToIndex(action, x, y);
 
     State* current_state = current_node->state;
 
@@ -60,52 +99,10 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         ))
     {
         std::cout << "[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")" << std::endl << std::flush;
-        return false;
+        return;
     }
 
-    Node* chosen_child = nullptr;
-
-    // Get matching child
-    for (Node* child : current_node->children)
-        if (child->parent_action == move_index)
-        {
-            chosen_child = child;
-            break;
-        }
-
-    // We check for if node exists first, if it does the field will be alloctated
-    if (!current_state->isCellEmpty(x, y) && chosen_child == nullptr)
-    {
-        std::cout << "[Tree][W]: Tried to perform illegal move (Allocated field): (" << int(x) << "," << int(y) << ") on:" << std::endl;
-        std::cout << current_state->toString() << std::endl << std::flush;
-        return false;
-    }
-
-    // Node does not have desired child
-    if (chosen_child == nullptr)
-    {
-        // Clear parent children
-        for (Node* child : current_node->children)
-            deletion_queue.push_back(child);
-
-        // Expand to move index
-        chosen_child = current_node->expand(move_index);
-        node_count++;
-
-        // Push the new node into the network queue
-        network_queue.push_back(chosen_child);
-    }
-    // Node does have child
-    else
-    {
-        // Delete other children
-        for (Node* child : current_node->children)
-            if (child != chosen_child)
-                deletion_queue.push_back(child);
-    }
-
-    current_node = chosen_child;
-    return true;
+    updateCurrentNode(action);
 }
 
 Node* Tree::policy()
@@ -122,7 +119,7 @@ Node* Tree::policy()
             return new_node;
         }
         else
-        {   
+        {
             current = current->bestChild();
         }
     }
@@ -140,7 +137,7 @@ bool Tree::clearNetworkQueue()
     for (Node* node : network_queue)
         if (!node->getNetworkStatus())
             unsuccessfull.push_back(node);
-    
+
     network_queue.clear();
 
     // All queued nodes are sucessfully initialized
@@ -151,6 +148,11 @@ bool Tree::clearNetworkQueue()
     for (Node* node : unsuccessfull)
         network_queue.push_back(node);
     return false;
+}
+
+void Tree::forceClearNetworkQueue()
+{
+    network_queue.clear();
 }
 
 Node* Tree::getCurrentNode()
@@ -172,10 +174,8 @@ void Tree::clean()
         // Delete node from queue
         network_queue.remove(garbage);
 
-        // Delete child pointer from children list and switch to frozzen status
+        // Delete child pointer from children list and switch to frozen status
         garbage->parent->removeNodeFromChildren(garbage);
-        garbage->parent->shrinkNode();
-
         delete garbage;
     }
 

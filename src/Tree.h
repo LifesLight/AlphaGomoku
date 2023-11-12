@@ -18,8 +18,8 @@ public:
     ~Tree();
 
     // These functions can/will require a NN computation, those will be stored in network queue
-    bool makeMove(uint8_t x, uint8_t y);
-    bool makeMove(index_t index);
+    void makeMove(uint8_t x, uint8_t y);
+    void makeMove(index_t index);
     Node* policy();
     // <-------------------->
 
@@ -28,7 +28,8 @@ public:
     // Network queue managment
     std::list<Node*> getNetworkQueue();
     bool clearNetworkQueue();
-    
+    void forceClearNetworkQueue();
+
     Node* getCurrentNode();
     Node* getParentNode();
 
@@ -39,6 +40,8 @@ public:
     void clean();
 
 private:
+    void updateCurrentNode(index_t action);
+
     std::list<Node*> deletion_queue;
     std::list<Node*> network_queue;
     Node* root_node;

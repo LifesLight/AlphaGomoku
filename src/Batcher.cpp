@@ -341,7 +341,7 @@ bool Batcher::isSingleTree()
     return models[1] == nullptr;
 }
 
-float Batcher::duelModels(int random_actions)
+float Batcher::duelModels()
 {
     if (environments.size() % 2 != 0)
     {
@@ -357,39 +357,6 @@ float Batcher::duelModels(int random_actions)
 
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Dueling models" << std::endl;
-
-    std::random_device rd;
-    std::mt19937 rng(rd());
-
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        if (random_actions > 0)
-            std::cout << "[Batcher][I]: Making " << random_actions << " mirrored random moves" << std::endl;
-
-    for (int ii = 0; ii < random_actions; ii++)
-    {
-        // Itterate in steps of  2
-        for (int i = 0; i < non_terminal_environments.size(); i += 2)
-        {
-            // Select random move for both envs
-            Environment* env1 = non_terminal_environments[i];
-            Environment* env2 = non_terminal_environments[i + 1];
-            std::deque<index_t> untried;
-            untried = env1->getUntriedActions();
-
-            int action_count = untried.size();
-
-            std::uniform_int_distribution<int> uni(0, action_count - 1);
-            index_t action_index = untried[uni(rng)];
-
-            // Make move for both envs
-            env1->makeMove(action_index);
-            env2->makeMove(action_index);
-        }
-
-        updateNonTerminal();
-    }
-
-    runNetwork();
 
     // Run until terminal
     runGameloop();
@@ -449,7 +416,7 @@ void Batcher::selfplay()
         std::cout << "[Batcher][I]: Selfplay result: " << averageWinner() << " average winning color" << std::endl;
 }
 
-void Batcher::humanplay(int human_color)
+void Batcher::humanplay(bool human_color)
 {
     runNetwork();
     while (!isTerminal())
@@ -542,28 +509,79 @@ void Batcher::makeBestMoves()
     runNetwork();
 }
 
-void Batcher::makeRandomMoves(int amount)
+void Batcher::makeRandomMoves(int amount, bool mirrored)
 {
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Making " << amount << " random moves" << std::endl;
-
     std::random_device rd;
     std::mt19937 rng(rd());
 
-    for (int i = 0; i < amount; i++)
+    if (mirrored)
     {
-        for (Environment* env : non_terminal_environments)
-        {   
-            std::deque<index_t> untried = env->getUntriedActions();
-            int action_count = untried.size();
-
-            std::uniform_int_distribution<int> uni(0, action_count - 1);
-
-            index_t action = untried[uni(rng)];
-            env->makeMove(action);
+        if (environments.size() % 2 == 1)
+        {
+            std::cout << "[Batcher][E]: Tried to make mirrored random moves with uneven env count" << std::endl << std::flush;
+            return;
         }
 
-        updateNonTerminal();
+        if (Utils::checkEnv("LOGGING", "INFO"))
+            std::cout << "[Batcher][I]: Making " << amount << " mirrored random moves" << std::endl;
+
+        for (int ii = 0; ii < amount; ii++)
+        {
+            // Itterate in steps of  2
+            for (int i = 0; i < non_terminal_environments.size(); i += 2)
+            {
+                // Select random move for both envs
+                Environment* env1 = non_terminal_environments[i];
+                Environment* env2 = non_terminal_environments[i + 1];
+                std::deque<index_t> untried;
+                untried = env1->getUntriedActions();
+
+                int action_count = untried.size();
+
+                std::uniform_int_distribution<int> uni(0, action_count - 1);
+                index_t action_index = untried[uni(rng)];
+
+                // Make move for both envs
+                env1->makeMove(action_index);
+                env2->makeMove(action_index);
+            }
+
+            // If not last itteration force clear network queue because those nodes will never need net data
+            if (ii < amount - 1)
+            {
+                for (Environment* env : non_terminal_environments)
+                    env->forceClearNetworkQueue();
+            }
+
+            updateNonTerminal();
+        }
+    }
+    {
+        if (Utils::checkEnv("LOGGING", "INFO"))
+            std::cout << "[Batcher][I]: Making " << amount << " random moves" << std::endl;
+
+        for (int i = 0; i < amount; i++)
+        {
+            for (Environment* env : non_terminal_environments)
+            {
+                std::deque<index_t> untried = env->getUntriedActions();
+                int action_count = untried.size();
+
+                std::uniform_int_distribution<int> uni(0, action_count - 1);
+
+                index_t action = untried[uni(rng)];
+                env->makeMove(action);
+            }
+
+            // If not last itteration force clear network queue because those nodes will never need net data
+            if (i < amount - 1)
+            {
+                for (Environment* env : non_terminal_environments)
+                    env->forceClearNetworkQueue();
+            }
+
+            updateNonTerminal();
+        }
     }
 
     runNetwork();
