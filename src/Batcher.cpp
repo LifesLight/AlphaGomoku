@@ -58,6 +58,11 @@ Batcher::~Batcher()
     for (Environment* env : environments)
         delete env;
 
+    for (int i = 0; i < gcp.size(); i++)
+    {
+        gcp_data->running[i]->store(false);
+    }
+
     delete gcp_data;
 
     if (Utils::checkEnv("LOGGING", "INFO"))
@@ -66,7 +71,7 @@ Batcher::~Batcher()
 
 void Batcher::gcp_worker(GCPData* data, int id)
 {
-    while (true)
+    while (data->running[id]->load())
     {
         if (data->waits[id]->load())
         {
@@ -90,6 +95,7 @@ void Batcher::initThreadpool()
         gcp_data->starts.push_back(new std::atomic<int>(0));
         gcp_data->ends.push_back(new std::atomic<int>(0));
         gcp_data->waits.push_back(new std::atomic<bool>(0));
+        gcp_data->running.push_back(new std::atomic<bool>(1));
     }
 
     for (int i = 0; i < gamestate_workers; i++)
@@ -99,7 +105,7 @@ void Batcher::initThreadpool()
     }
 
     if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Started " << gamestate_workers << " GCP threads" << std::endl;
+        std::cout << "[Batcher][I]: Started " << gamestate_workers << " GCP thread(s)" << std::endl;
 }
 
 bool Batcher::getNextModelIndex(Environment* env)

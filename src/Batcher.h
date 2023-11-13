@@ -15,6 +15,7 @@ struct GCPData
     std::vector<std::atomic<int>*> starts;
     std::vector<std::atomic<int>*> ends;
     std::vector<std::atomic<bool>*> waits;
+    std::vector<std::atomic<bool>*> running;
     std::vector<Node*>* input;
     // Load input data here before calling workers
     torch::Tensor* target;
@@ -27,6 +28,7 @@ struct GCPData
             delete starts[i];
             delete ends[i];
             delete waits[i];
+            delete running[i];
         }
     }
 };
