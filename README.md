@@ -9,11 +9,11 @@ White is 1 and 1.0 is white winning evaluation<br>
 ## C++ Modes
 The AlphaGomoku executable can be called with 1 of 3 modes:<br>
 - **DUEL:** Evaluate 2 models against each other (used in retrain validation).<br>
-Usage: DUEL [Model 1 name] [Model 2 name] [Simulations] [Environments] [Random move amount]
+Usage: DUEL Model1 Model2 [Simulations] [Environments] [Random move amount]
 - **SELFPLAY:** Let model play against itself to generate datapoints for retraining.<br>
-Usage: SELFPLAY [Model name] [Simulations] [Environments] [Random move amount]
+Usage: SELFPLAY Model [Simulations] [Environments] [Random move amount]
 - **HUMAN:** Lets you play against a model with MCTS.<br>
-Usage: HUMAN [Model name] [Simulations] [Human players color]
+Usage: HUMAN Model [Simulations] [Human players color]
 
 Model names should match the names of the scripted modules in "Models" for autoloading.
 

@@ -67,8 +67,7 @@ public:
 
 private:
     // ------------- Multithreaded -------------
-    static void nodeToGamestateWorker(std::vector<torch::Tensor>& output, std::vector<Node*>& input, torch::ScalarType dtype, int start_index, int end_index);
-    std::vector<torch::Tensor> convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype);
+    torch::Tensor& convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype);
 
     // Run simulation loop on provided environments
     static void runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index);
@@ -80,11 +79,25 @@ private:
     // You should never need to call it manually
     void runNetwork();
 
+    // Create the worker threads
+    void initThreadpool();
+
     // Clears non_terminal_environments of terminals
     void updateNonTerminal();
 
     // Play until batcher is terminal
     void runGameloop();
+
+    // Threading
+    void gcp_worker(bool* wait, int* start, int* end);
+    // gcp = gamestate conversion pool
+    std::vector<std::thread*> gcp;
+    std::vector<int*> gcp_starts;
+    std::vector<int*> gcp_ends;
+    std::vector<bool*> gcp_waits;
+    std::vector<Node*>* gcp_input;
+    torch::Tensor* gcp_target;
+    torch::ScalarType gcp_dtype;
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;
