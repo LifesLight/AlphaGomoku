@@ -10,6 +10,17 @@ Host class for the entire selfplay.
 Automatically manages model calls and batches to improve performance wherever possible.
 */
 
+struct GCPData
+{
+    std::vector<int*> starts;
+    std::vector<int*> ends;
+    std::vector<bool*> waits;
+    std::vector<Node*>* input;
+    // Load input data here before calling workers
+    torch::Tensor* target;
+    torch::ScalarType dtype;
+};
+
 class Batcher
 {
 public:
@@ -67,7 +78,7 @@ public:
 
 private:
     // ------------- Multithreaded -------------
-    torch::Tensor& convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype);
+    void convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>* nodes, torch::ScalarType dtype);
 
     // Run simulation loop on provided environments
     static void runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index);
@@ -89,15 +100,10 @@ private:
     void runGameloop();
 
     // Threading
-    void gcp_worker(bool* wait, int* start, int* end);
+    static void gcp_worker(GCPData* data, int id);
     // gcp = gamestate conversion pool
     std::vector<std::thread*> gcp;
-    std::vector<int*> gcp_starts;
-    std::vector<int*> gcp_ends;
-    std::vector<bool*> gcp_waits;
-    std::vector<Node*>* gcp_input;
-    torch::Tensor* gcp_target;
-    torch::ScalarType gcp_dtype;
+    GCPData* gcp_data;
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;

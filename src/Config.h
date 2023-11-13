@@ -39,26 +39,26 @@
 
 // Algorithm Hyperparameters
 #define ExplorationBias 0.25
-#define PolicyBias 0.3
+#define PolicyBias 0.5
 #define ValueBias 1
 
 // ---- Performance Settings ----
-#define MaxThreads 4
+#define MaxThreads 16
 // These are target values, will not always be matched
 // How many simulations a thread should aim to handle
-#define PerThreadSimulations 256
+#define PerThreadSimulations 32
 // How many nodes a single thread should convert to gamestates
-#define PerThreadGamestateConvertions 128
+#define PerThreadGamestateConvertions 16
 
 // Torch Settings
 // This is where tensors are created and simmelar
 #define TorchDefaultDevice torch::kCPU
 // This is the device computations will be run on
-#define TorchInferenceDevice torch::kMPS
+#define TorchInferenceDevice torch::kCUDA
 // Floating point precision for Inference
 #define TorchDefaultScalar torch::kFloat16
 // Higher is better if VRAM/RAM can handle
-#define MaxBatchsize 512
+#define MaxBatchsize 1024
 // -------------------------------
 
 // Save memory if 2d -> 1d index mapping fits in 2^8

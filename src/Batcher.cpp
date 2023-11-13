@@ -62,17 +62,17 @@ Batcher::~Batcher()
         std::cout << "Finished" << std::endl << std::flush;
 }
 
-void Batcher::gcp_worker(bool* wait, int* start, int* end)
+void Batcher::gcp_worker(GCPData* data, int id)
 {
     while (true)
     {
-        if (*wait)
+        if (*data->waits[id])
         {
-            for (int i = *start; i < *end; i++)
+            for (int i = *data->starts[id]; i < *data->ends[id]; i++)
             {
-                (*gcp_target)[i] = Node::nodeToGamestate((*gcp_input)[i], gcp_dtype);
+                (*data->target)[i] = Node::nodeToGamestate((*data->input)[i], data->dtype);
             }
-            (*wait) = false;
+            (*data->waits[id]) = false;
         }
     }
 }
@@ -81,17 +81,20 @@ void Batcher::initThreadpool()
 {
     // GCP
     int gamestate_workers = std::max(1, std::min(MaxThreads, int(environments.size() / PerThreadGamestateConvertions)));
+    gcp_data = new GCPData();
     gcp.reserve(gamestate_workers);
-    gcp_starts.reserve(gamestate_workers);
-    gcp_ends.reserve(gamestate_workers);
-    gcp_waits.reserve(gamestate_workers);
+    gcp_data->starts.reserve(gamestate_workers);
+    gcp_data->ends.reserve(gamestate_workers);
+    gcp_data->waits.reserve(gamestate_workers);
 
     for (int i = 0; i < gamestate_workers; i++)
     {
-        gcp_starts[i] = new int;
-        gcp_ends[i] = new int;
-        gcp_waits[i] = new bool;
-        std::thread* worker = new std::thread(std::bind(&Batcher::gcp_worker, this, gcp_waits[i], gcp_starts[i], gcp_ends[i]));;
+        gcp_data->starts[i] = new int;
+        gcp_data->ends[i] = new int;
+        gcp_data->waits[i] = new bool;
+        *(gcp_data->waits[i]) = false;
+        std::thread* worker = new std::thread(gcp_worker, gcp_data, i);
+        gcp.push_back(worker);
     }
 
     if (Utils::checkEnv("LOGGING", "INFO"))
@@ -162,7 +165,8 @@ void Batcher::runNetwork()
 
         int element_count = nodes[model_index].size();
         // Compute gamestates with multithreading
-        torch::Tensor& gamestates = convertNodesToGamestates(nodes[model_index], dtype);
+        torch::Tensor gamestates;
+        convertNodesToGamestates(gamestates, &nodes[model_index], dtype);
 
         // Batchsize limiting to not explode memory
         model_outputs[model_index].reserve(element_count / MaxBatchsize);
@@ -175,8 +179,7 @@ void Batcher::runNetwork()
             // Convert to tensor
             // Init tensor on CPU
             torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
-            for (int i = 0; i < batch_size; i++)
-                model_input[i] = gamestates[i + processed_element_count];
+            model_input = gamestates.index({torch::indexing::Slice(processed_element_count, processed_element_count + batch_size)});
 
             // Move to device for inference
             model_input = model_input.to(device);
@@ -215,39 +218,41 @@ void Batcher::runNetwork()
     }
 }
 
-torch::Tensor& Batcher::convertNodesToGamestates(std::vector<Node*>& nodes, torch::ScalarType dtype)
+void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>* nodes, torch::ScalarType dtype)
 {
     // Disable gradients for this scope
     torch::NoGradGuard no_grad_guard;
 
-    int element_count = nodes.size();
+    int element_count = nodes->size();
 
     // Compute "optimal" thread count
     int thread_count = std::max(1, element_count / PerThreadGamestateConvertions);
     thread_count = std::min(thread_count, int(gcp.size()));
 
-    // Calculate index ranges
-    int batch_size = int(std::ceil(float(element_count) / thread_count));
-
-    *gcp_input = nodes;
+    // Set params for Threading
+    gcp_data->input = nodes;
 
     torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
-    (*gcp_target) = torch::empty({element_count, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
+    target = torch::empty({element_count, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
+    gcp_data->target = &target;
+
+    gcp_data->dtype = dtype;
+
+    // Calculate index ranges
+    int batch_size = int(std::ceil(float(element_count) / thread_count));
 
     // Start workers
     for (int i = 0; i < thread_count; i++)
     {
         // Calc index ranges
-        *(gcp_starts[i]) = i * batch_size;
-        *(gcp_ends[i]) = std::min(*(gcp_starts[i]) + batch_size, element_count);
-        *(gcp_waits[i]) = true;
+        *(gcp_data->starts[i]) = i * batch_size;
+        *(gcp_data->ends[i]) = std::min(*(gcp_data->starts[i]) + batch_size, element_count);
+        *(gcp_data->waits[i]) = true;
     }
 
     // Wait for workers to finish
     for (int i = 0; i < thread_count; i++)
-        while ((*gcp_waits[i]) == true) {}
-
-    return std::ref(*gcp_target);
+        while ((*gcp_data->waits[i]) == true) {}
 }
 
 void Batcher::runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index)
