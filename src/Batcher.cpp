@@ -58,6 +58,8 @@ Batcher::~Batcher()
     for (Environment* env : environments)
         delete env;
 
+    delete gcp_data;
+
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "Finished" << std::endl << std::flush;
 }
@@ -66,13 +68,13 @@ void Batcher::gcp_worker(GCPData* data, int id)
 {
     while (true)
     {
-        if (*data->waits[id])
+        if (data->waits[id]->load())
         {
-            for (int i = *data->starts[id]; i < *data->ends[id]; i++)
+            for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
             {
                 (*data->target)[i] = Node::nodeToGamestate((*data->input)[i], data->dtype);
             }
-            (*data->waits[id]) = false;
+            data->waits[id]->store(false);
         }
     }
 }
@@ -82,17 +84,16 @@ void Batcher::initThreadpool()
     // GCP
     int gamestate_workers = std::max(1, std::min(MaxThreads, int(environments.size() / PerThreadGamestateConvertions)));
     gcp_data = new GCPData();
-    gcp.reserve(gamestate_workers);
-    gcp_data->starts.reserve(gamestate_workers);
-    gcp_data->ends.reserve(gamestate_workers);
-    gcp_data->waits.reserve(gamestate_workers);
 
     for (int i = 0; i < gamestate_workers; i++)
     {
-        gcp_data->starts[i] = new int;
-        gcp_data->ends[i] = new int;
-        gcp_data->waits[i] = new bool;
-        *(gcp_data->waits[i]) = false;
+        gcp_data->starts.push_back(new std::atomic<int>(0));
+        gcp_data->ends.push_back(new std::atomic<int>(0));
+        gcp_data->waits.push_back(new std::atomic<bool>(0));
+    }
+
+    for (int i = 0; i < gamestate_workers; i++)
+    {
         std::thread* worker = new std::thread(gcp_worker, gcp_data, i);
         gcp.push_back(worker);
     }
@@ -245,14 +246,15 @@ void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>
     for (int i = 0; i < thread_count; i++)
     {
         // Calc index ranges
-        *(gcp_data->starts[i]) = i * batch_size;
-        *(gcp_data->ends[i]) = std::min(*(gcp_data->starts[i]) + batch_size, element_count);
-        *(gcp_data->waits[i]) = true;
+        int start_index = i * batch_size;
+        gcp_data->starts[i]->store(start_index);
+        gcp_data->ends[i]->store(std::min(start_index + batch_size, element_count));
+        gcp_data->waits[i]->store(true);
     }
 
     // Wait for workers to finish
     for (int i = 0; i < thread_count; i++)
-        while ((*gcp_data->waits[i]) == true) {}
+        while (gcp_data->waits[i]->load() == true) {   }
 }
 
 void Batcher::runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index)

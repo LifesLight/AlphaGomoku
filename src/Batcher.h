@@ -12,13 +12,23 @@ Automatically manages model calls and batches to improve performance wherever po
 
 struct GCPData
 {
-    std::vector<int*> starts;
-    std::vector<int*> ends;
-    std::vector<bool*> waits;
+    std::vector<std::atomic<int>*> starts;
+    std::vector<std::atomic<int>*> ends;
+    std::vector<std::atomic<bool>*> waits;
     std::vector<Node*>* input;
     // Load input data here before calling workers
     torch::Tensor* target;
     torch::ScalarType dtype;
+
+    ~GCPData()
+    {
+        for (int i = 0; i < starts.size(); i++)
+        {
+            delete starts[i];
+            delete ends[i];
+            delete waits[i];
+        }
+    }
 };
 
 class Batcher
