@@ -53,7 +53,7 @@ Batcher::Batcher(int environment_count, Model* only_model)
 Batcher::~Batcher()
 {
     if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Started deconstructing batcher ... " << std::flush;
+        ForcePrint("[Batcher][I]: Started deconstructing batcher ... ");
 
     for (Environment* env : environments)
         delete env;
@@ -66,13 +66,18 @@ Batcher::~Batcher()
     delete gcp_data;
 
     if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "Finished" << std::endl << std::flush;
+        ForcePrint("finished");
 }
 
 void Batcher::gcp_worker(GCPData* data, int id)
 {
+    std::unique_lock<std::mutex> lock(*data->mutex[id]);
+
     while (data->running[id]->load())
     {
+        // Wait for signal from thread manager
+        data->cv[id]->wait(lock, [&]() { return data->waits[id]->load(); });
+
         if (data->waits[id]->load())
         {
             for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
@@ -80,6 +85,12 @@ void Batcher::gcp_worker(GCPData* data, int id)
                 (*data->target)[i] = Node::nodeToGamestate((*data->input)[i], data->dtype);
             }
             data->waits[id]->store(false);
+
+            // Singal that worker is finished
+            {
+                std::lock_guard<std::mutex> finishLock(*data->finished_mutex);
+                data->finished_cv->notify_one();
+            }
         }
     }
 }
@@ -90,12 +101,17 @@ void Batcher::initThreadpool()
     int gamestate_workers = std::max(1, std::min(MaxThreads, int(environments.size() / PerThreadGamestateConvertions)));
     gcp_data = new GCPData();
 
+    gcp_data->finished_mutex = new std::mutex();
+    gcp_data->finished_cv = new std::condition_variable();
+
     for (int i = 0; i < gamestate_workers; i++)
     {
         gcp_data->starts.push_back(new std::atomic<int>(0));
         gcp_data->ends.push_back(new std::atomic<int>(0));
         gcp_data->waits.push_back(new std::atomic<bool>(0));
         gcp_data->running.push_back(new std::atomic<bool>(1));
+        gcp_data->mutex.push_back(new std::mutex());
+        gcp_data->cv.push_back(new std::condition_variable());
     }
 
     for (int i = 0; i < gamestate_workers; i++)
@@ -256,11 +272,21 @@ void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>
         gcp_data->starts[i]->store(start_index);
         gcp_data->ends[i]->store(std::min(start_index + batch_size, element_count));
         gcp_data->waits[i]->store(true);
+        gcp_data->cv[i]->notify_one();
     }
 
     // Wait for workers to finish
-    for (int i = 0; i < thread_count; i++)
-        while (gcp_data->waits[i]->load() == true) {   }
+    {
+        std::unique_lock<std::mutex> lock(*gcp_data->finished_mutex);
+        gcp_data->finished_cv->wait(lock, [&]() {
+            for (int i = 0; i < thread_count; i++) {
+                if (gcp_data->waits[i]->load()) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
 }
 
 void Batcher::runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index)
@@ -340,7 +366,7 @@ void Batcher::runSimulations()
         if (models[i] == nullptr)
         {
             if (envsByModel[i].size() != 0)
-                std::cout << "[Batcher][W]: Skipping simulation(s) for environment(s) in uncuppler" << std::endl << std::flush;
+                ForcePrint("[Batcher][W]: Skipping simulation(s) for environment(s) in uncuppler");
             continue;
         }
 
@@ -356,7 +382,7 @@ void Batcher::swapModels()
 {
     if (environments.size() % 2 != 0)
     {
-        std::cout << "[Batcher][E]: Tried to swap every second model with uneven environment count (" << environments.size() << ")" << std::endl << std::flush;
+        ForcePrint("[Batcher][E]: Tried to swap every second model with uneven environment count (" << environments.size() << ")");
         return;
     }
 
@@ -407,13 +433,13 @@ float Batcher::duelModels()
 {
     if (environments.size() % 2 != 0)
     {
-        std::cout << "[Batcher][E]: Tried to duel models with uneven environment count (" << environments.size() << ")" << std::endl << std::flush;
+        ForcePrint("[Batcher][E]: Tried to duel models with uneven environment count (" << environments.size() << ")");
         return 0;
     }
 
     if (isSingleTree())
     {
-        std::cout << "[Batcher][E]: Tried to duel models in single tree mode (Create batcher with 2 models to fix this)" << std::endl << std::flush;
+        ForcePrint("[Batcher][E]: Tried to duel models in single tree mode (Create batcher with 2 models to fix this)");
         return 0;
     }
 
@@ -580,7 +606,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
     {
         if (environments.size() % 2 == 1)
         {
-            std::cout << "[Batcher][E]: Tried to make mirrored random moves with uneven env count" << std::endl << std::flush;
+            ForcePrint("[Batcher][E]: Tried to make mirrored random moves with uneven env count");
             return;
         }
 

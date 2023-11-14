@@ -13,10 +13,10 @@ Storage::Storage(std::string path)
         std::ifstream reader(path);
         if (!reader)
         {
-            std::cout << "[Storage][E]: Failed to open file for reading" << std::endl << std::flush;
+            ForcePrint("[Storage][E]: Failed to open file for reading");
             return;
         }
-        
+
         // Read lines
         std::string line;
         while (std::getline(reader, line))
@@ -120,7 +120,7 @@ void Storage::deleteDatapoint(int id)
         lines.erase(lines.begin() + id);
     }
     else
-        std::cout << "[Storage][W]: Tried to delete non existent datapoint" << std::endl << std::flush;
+        ForcePrint("[Storage][W]: Tried to delete non existent datapoint");
 }
 
 void Storage::storeDatapoint(Datapoint data)
@@ -133,10 +133,10 @@ Datapoint Storage::getDatapoint(int id)
 {
     if (id >= getDatapointCount())
     {
-        std::cout << "[Storage][W]: Tried to get non existent datapoint" << std::endl << std::flush;
+        ForcePrint("[Storage][W]: Tried to get non existent datapoint");
         return Datapoint();
     }
-        
+
     return lineToDatapoint(lines[id]);
 }
 

@@ -35,7 +35,7 @@ float Node::getValueHeadEval()
         return temp_data->evaluation;
     else
     {
-        std::cout << "[Node][E]: Tried to get value head eval from shrunk node" << std::endl << std::flush;
+        ForcePrint("[Node][E]: Tried to get value head eval from shrunk node");
         return 0;
     }
 }
@@ -46,7 +46,7 @@ float Node::getSummedEvaluation()
         return temp_data->summed_evaluation;
     else
     {
-        std::cout << "[Node][E]: Tried to get summed value from shrunk node" << std::endl << std::flush;
+        ForcePrint("[Node][E]: Tried to get summed value from shrunk node");
         return 0;
     }
 }
@@ -57,7 +57,7 @@ uint32_t Node::getVisits()
         return temp_data->visits;
     else
     {
-        std::cout << "[Node][W]: Tried to get visits from shrunk node" << std::endl << std::flush;
+        ForcePrint("[Node][W]: Tried to get visits from shrunk node");
         return 0;
     }
 }
@@ -73,13 +73,13 @@ float Node::getPolicyValue(index_t move)
         }
         else
         {
-            std::cout << "[Node][E]: Tried to get policy value form shrunk node" << std::endl << std::flush;
+            ForcePrint("[Node][E]: Tried to get policy value form shrunk node");
             return 0;
         }
     }
     else
     {
-        std::cout << "[Node][E]: Tried to get policy value form node without net data" << std::endl << std::flush;
+        ForcePrint("[Node][E]: Tried to get policy value form node without net data");
         return 0;
     }
 }
@@ -99,7 +99,7 @@ std::deque<index_t>& Node::getUntriedActions()
         return temp_data->untried_actions;
     else
     {
-        std::cout << "[Node][E]: Tried to get untried actions from shrunk node" << std::endl << std::flush;
+        ForcePrint("[Node][E]: Tried to get untried actions from shrunk node");
         // Will crash but whatever
         return temp_data->untried_actions;
     }
@@ -134,7 +134,7 @@ float Node::getNodesPolicyEval()
         return parent->getPolicyValue(parent_action);
     else
     {
-        std::cout << "[Node][E]: Tried to get parent less nodes policy eval" << std::endl << std::flush;
+        ForcePrint("[Node][E]: Tried to get parent less nodes policy eval");
         return 0.0f;
     }
 }
@@ -143,7 +143,7 @@ void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
 {
     if (temp_data == nullptr)
     {
-        std::cout << "[Node][E]: Tried to assign net data to shrunk node" << std::endl << std::flush;
+        ForcePrint("[Node][E]: Tried to assign net data to shrunk node");
         return;
     }
     // Disable gradients for this scope
@@ -178,13 +178,13 @@ Node* Node::expand()
 {
     if (!network_status)
     {
-        std::cout << "Tried to auto expand node without policy data" << std::endl << std::flush;
+        ForcePrint("Tried to auto expand node without policy data");
         return nullptr;
     }
 
     if (!temp_data)
     {
-        std::cout << "Tried to auto expand shrunk node" << std::endl << std::flush;
+        ForcePrint("Tried to auto expand shrunk node");
         return nullptr;
     }
 
@@ -221,7 +221,7 @@ void Node::callBackpropagate()
 {
     if (!getNetworkStatus())
     {
-        std::cout << "[Node][W]: Tried to call Backpropagate on node without network data" << std::endl << std::flush;
+        ForcePrint("[Node][W]: Tried to call Backpropagate on node without network data");
         return;
     }
 
@@ -271,7 +271,7 @@ Node* Node::absBestChild()
     if (isShrunk())
     {
         if (children.size() > 1)
-            std::cout << "[Node][W]: Got abs best child from shrunk node, which had more then one child" << std::endl << std::flush;
+            ForcePrint("[Node][W]: Got abs best child from shrunk node, which had more then one child");
         return children.front();
     }
 
@@ -305,7 +305,7 @@ float Node::getMeanEvaluation()
 {
     if (getVisits() == 0)
     {
-        std::cout << "[Node][W]: Tried to get meanEvaluation from node with 0 visits?" << std::endl << std::flush;
+        ForcePrint("[Node][W]: Tried to get meanEvaluation from node with 0 visits?");
         return 0;
     }
 

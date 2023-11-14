@@ -21,14 +21,26 @@ struct GCPData
     torch::Tensor* target;
     torch::ScalarType dtype;
 
+    std::vector<std::mutex*> mutex;
+    std::vector<std::condition_variable*> cv;
+
+    std::mutex* finished_mutex;
+    std::condition_variable* finished_cv;
+
+
     ~GCPData()
     {
+        delete finished_mutex;
+        delete finished_cv;
+
         for (int i = 0; i < starts.size(); i++)
         {
             delete starts[i];
             delete ends[i];
             delete waits[i];
             delete running[i];
+            delete mutex[i];
+            delete cv[i];
         }
     }
 };

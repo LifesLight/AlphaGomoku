@@ -3,6 +3,8 @@
 #include "Config.h"
 #include "Model.h"
 
+#define ForcePrint(string) std::cout << string << std::endl << std::flush
+
 class Utils
 {
 public:
