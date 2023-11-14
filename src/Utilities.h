@@ -3,7 +3,8 @@
 #include "Config.h"
 #include "Model.h"
 
-#define ForcePrint(string) std::cout << string << std::endl << std::flush
+#define ForcePrintln(string) std::cout << string << std::endl << std::flush
+#define ForcePrint(string) std::cout << string << std::flush
 
 class Utils
 {

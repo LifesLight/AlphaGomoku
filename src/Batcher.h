@@ -10,6 +10,9 @@ Host class for the entire selfplay.
 Automatically manages model calls and batches to improve performance wherever possible.
 */
 
+// Data for cross thread opperations
+#pragma region
+
 struct GCPData
 {
     std::vector<std::atomic<int>*> starts;
@@ -17,16 +20,15 @@ struct GCPData
     std::vector<std::atomic<bool>*> waits;
     std::vector<std::atomic<bool>*> running;
     std::vector<Node*>* input;
-    // Load input data here before calling workers
+
     torch::Tensor* target;
     torch::ScalarType dtype;
 
+    // Syncing
     std::vector<std::mutex*> mutex;
     std::vector<std::condition_variable*> cv;
-
     std::mutex* finished_mutex;
     std::condition_variable* finished_cv;
-
 
     ~GCPData()
     {
@@ -44,6 +46,39 @@ struct GCPData
         }
     }
 };
+
+struct SIMData
+{
+    std::vector<std::atomic<int>*> starts;
+    std::vector<std::atomic<int>*> ends;
+    std::vector<std::atomic<bool>*> waits;
+    std::vector<std::atomic<bool>*> running;
+    std::vector<Environment*>* input;
+
+    // Syncing
+    std::vector<std::mutex*> mutex;
+    std::vector<std::condition_variable*> cv;
+    std::mutex* finished_mutex;
+    std::condition_variable* finished_cv;
+
+    ~SIMData()
+    {
+        delete finished_mutex;
+        delete finished_cv;
+
+        for (int i = 0; i < starts.size(); i++)
+        {
+            delete starts[i];
+            delete ends[i];
+            delete waits[i];
+            delete running[i];
+            delete mutex[i];
+            delete cv[i];
+        }
+    }
+};
+#pragma endregion
+
 
 class Batcher
 {
@@ -105,8 +140,7 @@ private:
     void convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>* nodes, torch::ScalarType dtype);
 
     // Run simulation loop on provided environments
-    static void runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index);
-    void runSimulationsOnEnvironments(std::vector<Environment*>& envs, int simulations);
+    void runSimulationsOnEnvironments(std::vector<Environment*>* envs, int simulations);
 
     // ------------------------------------------
 
@@ -125,9 +159,12 @@ private:
 
     // Threading
     static void gcp_worker(GCPData* data, int id);
+    static void sim_worker(SIMData* data, int id);
     // gcp = gamestate conversion pool
     std::vector<std::thread*> gcp;
+    std::vector<std::thread*> sim;
     GCPData* gcp_data;
+    SIMData* sim_data;
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;

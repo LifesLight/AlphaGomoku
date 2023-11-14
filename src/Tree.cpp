@@ -40,7 +40,7 @@ void Tree::updateCurrentNode(index_t action)
     if (!current_state->isCellEmpty(x, y) && chosen_child == nullptr)
     {
         std::cout << "[Tree][E]: Error in update current child, missmatch between empty cell and child: (" << int(x) << "," << int(y) << ") on:" << std::endl;
-        ForcePrint(current_state->toString());
+        ForcePrintln(current_state->toString());
         return;
     }
 
@@ -98,7 +98,7 @@ void Tree::makeMove(uint8_t x, uint8_t y)
         (0 <= y && y < BoardSize)
         ))
     {
-        ForcePrint("[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")");
+        ForcePrintln("[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")");
         return;
     }
 
@@ -163,7 +163,7 @@ Node* Tree::getCurrentNode()
 Node* Tree::getParentNode()
 {
     if (current_node->parent == nullptr)
-        ForcePrint("[Tree][W]: Got non existent parent");
+        ForcePrintln("[Tree][W]: Got non existent parent");
     return current_node->parent;
 }
 

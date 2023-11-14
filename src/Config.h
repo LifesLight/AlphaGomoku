@@ -43,7 +43,7 @@
 #define ValueBias 1
 
 // ---- Performance Settings ----
-#define MaxThreads 4
+#define MaxThreads 6
 // These are target values, will not always be matched
 // How many simulations a thread should aim to handle
 #define PerThreadSimulations 64

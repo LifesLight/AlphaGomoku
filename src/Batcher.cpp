@@ -63,10 +63,16 @@ Batcher::~Batcher()
         gcp_data->running[i]->store(false);
     }
 
+    for (int i = 0; i < sim.size(); i++)
+    {
+        sim_data->running[i]->store(false);
+    }
+
     delete gcp_data;
+    delete sim_data;
 
     if (Utils::checkEnv("LOGGING", "INFO"))
-        ForcePrint("finished");
+        ForcePrintln("finished");
 }
 
 void Batcher::gcp_worker(GCPData* data, int id)
@@ -78,19 +84,41 @@ void Batcher::gcp_worker(GCPData* data, int id)
         // Wait for signal from thread manager
         data->cv[id]->wait(lock, [&]() { return data->waits[id]->load(); });
 
-        if (data->waits[id]->load())
+        for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
         {
-            for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
-            {
-                (*data->target)[i] = Node::nodeToGamestate((*data->input)[i], data->dtype);
-            }
-            data->waits[id]->store(false);
+            (*data->target)[i] = Node::nodeToGamestate((*data->input)[i], data->dtype);
+        }
+        data->waits[id]->store(false);
 
-            // Singal that worker is finished
-            {
-                std::lock_guard<std::mutex> finishLock(*data->finished_mutex);
-                data->finished_cv->notify_one();
-            }
+        // Singal that worker is finished
+        {
+            std::lock_guard<std::mutex> finishLock(*data->finished_mutex);
+            data->finished_cv->notify_one();
+        }
+    }
+}
+
+void Batcher::sim_worker(SIMData* data, int id)
+{
+    std::unique_lock<std::mutex> lock(*data->mutex[id]);
+
+    while (data->running[id]->load())
+    {
+        // Wait for signal from thread manager
+        data->cv[id]->wait(lock, [&]() { return data->waits[id]->load(); });
+
+        for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
+        {
+            Node* selected = (*data->input)[i]->policy();
+            if (selected->getNetworkStatus())
+                selected->callBackpropagate();
+        }
+        data->waits[id]->store(false);
+
+        // Singal that worker is finished
+        {
+            std::lock_guard<std::mutex> finishLock(*data->finished_mutex);
+            data->finished_cv->notify_one();
         }
     }
 }
@@ -122,6 +150,33 @@ void Batcher::initThreadpool()
 
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Started " << gamestate_workers << " GCP thread(s)" << std::endl;
+
+    // SIM
+    int sim_workers = std::max(1, std::min(MaxThreads, int(environments.size()) / PerThreadSimulations));
+    sim_data = new SIMData();
+
+    sim_data->finished_mutex = new std::mutex();
+    sim_data->finished_cv = new std::condition_variable();
+
+    for (int i = 0; i < sim_workers; i++)
+    {
+        sim_data->starts.push_back(new std::atomic<int>(0));
+        sim_data->ends.push_back(new std::atomic<int>(0));
+        sim_data->waits.push_back(new std::atomic<bool>(0));
+        sim_data->running.push_back(new std::atomic<bool>(1));
+        sim_data->mutex.push_back(new std::mutex());
+        sim_data->cv.push_back(new std::condition_variable());
+    }
+
+    for (int i = 0; i < sim_workers; i++)
+    {
+        std::thread* worker = new std::thread(sim_worker, sim_data, i);
+        sim.push_back(worker);
+    }
+
+    if (Utils::checkEnv("LOGGING", "INFO"))
+        std::cout << "[Batcher][I]: Started " << sim_workers << " SIM thread(s)" << std::endl;
+
 }
 
 bool Batcher::getNextModelIndex(Environment* env)
@@ -289,58 +344,46 @@ void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>
     }
 }
 
-void Batcher::runSimulationsOnEnvironmentsWorker(std::vector<Environment*>& envs, int start_index, int end_index)
+void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>* envs, int simulations)
 {
-    for (int i = start_index; i < end_index; i++)
-    {
-        Node* selected = envs[i]->policy();
-        if (selected->getNetworkStatus())
-            selected->callBackpropagate();
-    }
-}
-
-void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>& envs, int simulations)
-{
-    int element_count = envs.size();
+    int element_count = envs->size();
 
     // Compute "optimal" thread count
     int thread_count = std::max(1, element_count / PerThreadSimulations);
-    thread_count = std::min(thread_count, MaxThreads);
+    thread_count = std::min(thread_count, int(gcp.size()));
 
-     // If only one thread would be used just stay on this one
-    if (thread_count == 1)
+    sim_data->input = envs;
+
+    // Calculate index ranges
+    int batch_size = int(std::ceil(float(element_count) / thread_count));
+
+    for (int sim = 0; sim < simulations; sim++)
     {
-        for (int simstep = 0; simstep < simulations; simstep++)
+        // Start workers
+        for (int i = 0; i < thread_count; i++)
         {
-            runSimulationsOnEnvironmentsWorker(std::ref(envs), 0, element_count);
-            runNetwork();
+            // Calc index ranges
+            int start_index = i * batch_size;
+            sim_data->starts[i]->store(start_index);
+            sim_data->ends[i]->store(std::min(start_index + batch_size, element_count));
+            sim_data->waits[i]->store(true);
+            sim_data->cv[i]->notify_one();
         }
-    }
-    else
-    {
-        // Calculate index ranges
-        int batch_size = int(std::ceil(float(element_count) / thread_count));
 
-        // Threading
-        std::vector<std::thread> threads;
-        threads.reserve(thread_count);
-
-        for (int simstep = 0; simstep < simulations; simstep++)
+        // Wait for workers to finish
         {
-            for (int i = 0; i < thread_count; i++)
-            {
-                int start_index  = i * batch_size;
-                int end_index = std::min(start_index + batch_size, element_count);
-                threads.emplace_back(runSimulationsOnEnvironmentsWorker, std::ref(envs), start_index, end_index);
-            }
-
-            for (int i = 0; i < thread_count; i++)
-                threads[i].join();
-
-            threads.clear();
-
-            runNetwork();
+            std::unique_lock<std::mutex> lock(*sim_data->finished_mutex);
+            sim_data->finished_cv->wait(lock, [&]() {
+                for (int i = 0; i < thread_count; i++) {
+                    if (sim_data->waits[i]->load()) {
+                        return false;
+                    }
+                }
+                return true;
+            });
         }
+
+        runNetwork();
     }
 }
 
@@ -366,7 +409,7 @@ void Batcher::runSimulations()
         if (models[i] == nullptr)
         {
             if (envsByModel[i].size() != 0)
-                ForcePrint("[Batcher][W]: Skipping simulation(s) for environment(s) in uncuppler");
+                ForcePrintln("[Batcher][W]: Skipping simulation(s) for environment(s) in uncuppler");
             continue;
         }
 
@@ -374,7 +417,7 @@ void Batcher::runSimulations()
             continue;
 
         int simulations = models[i]->getSimulations();
-        runSimulationsOnEnvironments(envsByModel[i], simulations);
+        runSimulationsOnEnvironments(&envsByModel[i], simulations);
     }
 }
 
@@ -382,7 +425,7 @@ void Batcher::swapModels()
 {
     if (environments.size() % 2 != 0)
     {
-        ForcePrint("[Batcher][E]: Tried to swap every second model with uneven environment count (" << environments.size() << ")");
+        ForcePrintln("[Batcher][E]: Tried to swap every second model with uneven environment count (" << environments.size() << ")");
         return;
     }
 
@@ -433,13 +476,13 @@ float Batcher::duelModels()
 {
     if (environments.size() % 2 != 0)
     {
-        ForcePrint("[Batcher][E]: Tried to duel models with uneven environment count (" << environments.size() << ")");
+        ForcePrintln("[Batcher][E]: Tried to duel models with uneven environment count (" << environments.size() << ")");
         return 0;
     }
 
     if (isSingleTree())
     {
-        ForcePrint("[Batcher][E]: Tried to duel models in single tree mode (Create batcher with 2 models to fix this)");
+        ForcePrintln("[Batcher][E]: Tried to duel models in single tree mode (Create batcher with 2 models to fix this)");
         return 0;
     }
 
@@ -606,7 +649,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
     {
         if (environments.size() % 2 == 1)
         {
-            ForcePrint("[Batcher][E]: Tried to make mirrored random moves with uneven env count");
+            ForcePrintln("[Batcher][E]: Tried to make mirrored random moves with uneven env count");
             return;
         }
 
