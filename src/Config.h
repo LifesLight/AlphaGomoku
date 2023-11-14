@@ -43,7 +43,9 @@
 #define ValueBias 1
 
 // ---- Performance Settings ----
-#define MaxThreads 8
+// This is max threads PER task, so could be MaxThreads * 2 effective threads
+// To disable threading just set to 1 --> will use main thread
+#define MaxThreads 10
 // These are target values, will not always be matched
 // How many simulations a thread should aim to handle
 #define PerThreadSimulations 64

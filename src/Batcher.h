@@ -8,6 +8,7 @@
 /*
 Host class for the entire selfplay.
 Automatically manages model calls and batches to improve performance wherever possible.
+Is also managing multi threading since each environment is independent from ever other one this is very easy
 */
 
 // Data for cross thread opperations
@@ -29,6 +30,22 @@ struct GCPData
     std::vector<std::condition_variable*> cv;
     std::mutex* finished_mutex;
     std::condition_variable* finished_cv;
+
+    GCPData(int threads)
+    {
+        finished_mutex = new std::mutex();
+        finished_cv = new std::condition_variable();
+
+        for (int i = 0; i < threads; i++)
+        {
+            starts.push_back(new std::atomic<int>(0));
+            ends.push_back(new std::atomic<int>(0));
+            waits.push_back(new std::atomic<bool>(0));
+            running.push_back(new std::atomic<bool>(1));
+            mutex.push_back(new std::mutex());
+            cv.push_back(new std::condition_variable());
+        }
+    }
 
     ~GCPData()
     {
@@ -60,6 +77,22 @@ struct SIMData
     std::vector<std::condition_variable*> cv;
     std::mutex* finished_mutex;
     std::condition_variable* finished_cv;
+
+    SIMData(int threads)
+    {
+        finished_mutex = new std::mutex();
+        finished_cv = new std::condition_variable();
+
+        for (int i = 0; i < threads; i++)
+        {
+            starts.push_back(new std::atomic<int>(0));
+            ends.push_back(new std::atomic<int>(0));
+            waits.push_back(new std::atomic<bool>(0));
+            running.push_back(new std::atomic<bool>(1));
+            mutex.push_back(new std::mutex());
+            cv.push_back(new std::condition_variable());
+        }
+    }
 
     ~SIMData()
     {

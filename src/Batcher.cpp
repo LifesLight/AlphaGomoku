@@ -85,12 +85,13 @@ Batcher::~Batcher()
 void Batcher::init_threads()
 {
     int gcp_threads = std::max(1, std::min(MaxThreads, int(environments.size() / PerThreadGamestateConvertions)));
+    int sim_threads = std::max(1, std::min(MaxThreads, int(environments.size()) / PerThreadSimulations));
+
     if (gcp_threads > 1)
     {
         start_gcp(gcp_threads);
     }
 
-    int sim_threads = std::max(1, std::min(MaxThreads, int(environments.size()) / PerThreadSimulations));
     if (sim_threads > 1)
     {
         start_sim(sim_threads);
@@ -147,20 +148,7 @@ void Batcher::sim_worker(SIMData* data, int id)
 
 void Batcher::start_gcp(int threads)
 {
-    gcp_data = new GCPData();
-
-    gcp_data->finished_mutex = new std::mutex();
-    gcp_data->finished_cv = new std::condition_variable();
-
-    for (int i = 0; i < threads; i++)
-    {
-        gcp_data->starts.push_back(new std::atomic<int>(0));
-        gcp_data->ends.push_back(new std::atomic<int>(0));
-        gcp_data->waits.push_back(new std::atomic<bool>(0));
-        gcp_data->running.push_back(new std::atomic<bool>(1));
-        gcp_data->mutex.push_back(new std::mutex());
-        gcp_data->cv.push_back(new std::condition_variable());
-    }
+    gcp_data = new GCPData(threads);
 
     for (int i = 0; i < threads; i++)
     {
@@ -174,20 +162,7 @@ void Batcher::start_gcp(int threads)
 
 void Batcher::start_sim(int threads)
 {
-    sim_data = new SIMData();
-
-    sim_data->finished_mutex = new std::mutex();
-    sim_data->finished_cv = new std::condition_variable();
-
-    for (int i = 0; i < threads; i++)
-    {
-        sim_data->starts.push_back(new std::atomic<int>(0));
-        sim_data->ends.push_back(new std::atomic<int>(0));
-        sim_data->waits.push_back(new std::atomic<bool>(0));
-        sim_data->running.push_back(new std::atomic<bool>(1));
-        sim_data->mutex.push_back(new std::mutex());
-        sim_data->cv.push_back(new std::condition_variable());
-    }
+    sim_data = new SIMData(threads);
 
     for (int i = 0; i < threads; i++)
     {
@@ -342,9 +317,6 @@ void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>
         return;
     }
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Threading gamestate conversion with " << thread_count << " threads" << std::endl;
-
     // Set params for Threading
     gcp_data->input = nodes;
     gcp_data->target = &target;
@@ -403,9 +375,6 @@ void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>* envs, int 
 
         return;
     }
-
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Threading simulations with " << thread_count << " threads" << std::endl;
 
     sim_data->input = envs;
 
