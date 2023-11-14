@@ -1,6 +1,7 @@
 #include "Batcher.h"
 
 Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
+    : gcp_data(nullptr), sim_data(nullptr)
 {
     // Store models
     models[0] = NNB;
@@ -19,13 +20,15 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
         non_terminal_environments.push_back(env);
     }
 
-    initThreadpool();
+    // Threading init
+    init_threads();
 
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Created batcher with " << environment_count << " dual tree env(s)" << std::endl;
 }
 
 Batcher::Batcher(int environment_count, Model* only_model)
+    : gcp_data(nullptr), sim_data(nullptr)
 {
     // Store model
     models[0] = only_model;
@@ -44,7 +47,8 @@ Batcher::Batcher(int environment_count, Model* only_model)
         non_terminal_environments.push_back(env);
     }
 
-    initThreadpool();
+    // Threading init
+    init_threads();
 
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Batcher][I]: Created batcher with " << environment_count << " single tree env(s)" << std::endl;
@@ -68,11 +72,29 @@ Batcher::~Batcher()
         sim_data->running[i]->store(false);
     }
 
-    delete gcp_data;
-    delete sim_data;
+    if (gcp_data)
+        delete gcp_data;
+
+    if (sim_data)
+        delete sim_data;
 
     if (Utils::checkEnv("LOGGING", "INFO"))
         ForcePrintln("finished");
+}
+
+void Batcher::init_threads()
+{
+    int gcp_threads = std::max(1, std::min(MaxThreads, int(environments.size() / PerThreadGamestateConvertions)));
+    if (gcp_threads > 1)
+    {
+        start_gcp(gcp_threads);
+    }
+
+    int sim_threads = std::max(1, std::min(MaxThreads, int(environments.size()) / PerThreadSimulations));
+    if (sim_threads > 1)
+    {
+        start_sim(sim_threads);
+    }
 }
 
 void Batcher::gcp_worker(GCPData* data, int id)
@@ -123,16 +145,14 @@ void Batcher::sim_worker(SIMData* data, int id)
     }
 }
 
-void Batcher::initThreadpool()
+void Batcher::start_gcp(int threads)
 {
-    // GCP
-    int gamestate_workers = std::max(1, std::min(MaxThreads, int(environments.size() / PerThreadGamestateConvertions)));
     gcp_data = new GCPData();
 
     gcp_data->finished_mutex = new std::mutex();
     gcp_data->finished_cv = new std::condition_variable();
 
-    for (int i = 0; i < gamestate_workers; i++)
+    for (int i = 0; i < threads; i++)
     {
         gcp_data->starts.push_back(new std::atomic<int>(0));
         gcp_data->ends.push_back(new std::atomic<int>(0));
@@ -142,23 +162,24 @@ void Batcher::initThreadpool()
         gcp_data->cv.push_back(new std::condition_variable());
     }
 
-    for (int i = 0; i < gamestate_workers; i++)
+    for (int i = 0; i < threads; i++)
     {
         std::thread* worker = new std::thread(gcp_worker, gcp_data, i);
         gcp.push_back(worker);
     }
 
     if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Started " << gamestate_workers << " GCP thread(s)" << std::endl;
+        std::cout << "[Batcher][I]: Started " << threads << " GCP thread(s)" << std::endl;
+}
 
-    // SIM
-    int sim_workers = std::max(1, std::min(MaxThreads, int(environments.size()) / PerThreadSimulations));
+void Batcher::start_sim(int threads)
+{
     sim_data = new SIMData();
 
     sim_data->finished_mutex = new std::mutex();
     sim_data->finished_cv = new std::condition_variable();
 
-    for (int i = 0; i < sim_workers; i++)
+    for (int i = 0; i < threads; i++)
     {
         sim_data->starts.push_back(new std::atomic<int>(0));
         sim_data->ends.push_back(new std::atomic<int>(0));
@@ -168,15 +189,14 @@ void Batcher::initThreadpool()
         sim_data->cv.push_back(new std::condition_variable());
     }
 
-    for (int i = 0; i < sim_workers; i++)
+    for (int i = 0; i < threads; i++)
     {
         std::thread* worker = new std::thread(sim_worker, sim_data, i);
         sim.push_back(worker);
     }
 
     if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Started " << sim_workers << " SIM thread(s)" << std::endl;
-
+        std::cout << "[Batcher][I]: Started " << threads << " SIM thread(s)" << std::endl;
 }
 
 bool Batcher::getNextModelIndex(Environment* env)
@@ -307,13 +327,27 @@ void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>
     int thread_count = std::max(1, element_count / PerThreadGamestateConvertions);
     thread_count = std::min(thread_count, int(gcp.size()));
 
-    // Set params for Threading
-    gcp_data->input = nodes;
-
+    // Init output tensor
     torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
     target = torch::empty({element_count, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
-    gcp_data->target = &target;
 
+    // Use single if possible
+    if (thread_count < 2)
+    {
+        for (int i = 0; i < element_count; i++)
+        {
+            target[i] = Node::nodeToGamestate((*nodes)[i], dtype);
+        }
+
+        return;
+    }
+
+    if (Utils::checkEnv("LOGGING", "INFO"))
+        std::cout << "[Batcher][I]: Threading gamestate conversion with " << thread_count << " threads" << std::endl;
+
+    // Set params for Threading
+    gcp_data->input = nodes;
+    gcp_data->target = &target;
     gcp_data->dtype = dtype;
 
     // Calculate index ranges
@@ -351,6 +385,27 @@ void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>* envs, int 
     // Compute "optimal" thread count
     int thread_count = std::max(1, element_count / PerThreadSimulations);
     thread_count = std::min(thread_count, int(gcp.size()));
+
+    // If thread count too low just run single threaded opperation
+    if (thread_count < 2)
+    {
+        for (int i = 0; i < simulations; i++)
+        {
+            for (Environment* env : *envs)
+            {
+                Node* selected = env->policy();
+                if (selected->getNetworkStatus())
+                    selected->callBackpropagate();
+            }
+
+            runNetwork();
+        }
+
+        return;
+    }
+
+    if (Utils::checkEnv("LOGGING", "INFO"))
+        std::cout << "[Batcher][I]: Threading simulations with " << thread_count << " threads" << std::endl;
 
     sim_data->input = envs;
 

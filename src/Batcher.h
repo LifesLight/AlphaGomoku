@@ -136,20 +136,9 @@ public:
     bool getNextModelIndex(Environment* env);
 
 private:
-    // ------------- Multithreaded -------------
-    void convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>* nodes, torch::ScalarType dtype);
-
-    // Run simulation loop on provided environments
-    void runSimulationsOnEnvironments(std::vector<Environment*>* envs, int simulations);
-
-    // ------------------------------------------
-
     // Clear up all network queues
     // You should never need to call it manually
     void runNetwork();
-
-    // Create the worker threads
-    void initThreadpool();
 
     // Clears non_terminal_environments of terminals
     void updateNonTerminal();
@@ -157,16 +146,25 @@ private:
     // Play until batcher is terminal
     void runGameloop();
 
-    // Threading
+    std::vector<Environment*> environments;
+    std::vector<Environment*> non_terminal_environments;
+    Model* models[2];
+
+    // --------- Threading ---------
+    // Determine thread counts and start
+    void init_threads();
+    // Create the worker threads
+    void start_gcp(int threads);
+    void start_sim(int threads);
+    // Threaded functions
+    void convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>* nodes, torch::ScalarType dtype);
+    void runSimulationsOnEnvironments(std::vector<Environment*>* envs, int simulations);
+    // Helper
     static void gcp_worker(GCPData* data, int id);
     static void sim_worker(SIMData* data, int id);
-    // gcp = gamestate conversion pool
+    // Helper Variables
     std::vector<std::thread*> gcp;
     std::vector<std::thread*> sim;
     GCPData* gcp_data;
     SIMData* sim_data;
-
-    std::vector<Environment*> environments;
-    std::vector<Environment*> non_terminal_environments;
-    Model* models[2];
 };
