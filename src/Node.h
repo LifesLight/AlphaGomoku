@@ -22,7 +22,7 @@ public:
     Node* parent;
     index_t parent_action;
     State* state;
-    std::list<Node*> children;
+    std::vector<Node*> children;
 
     // Interface to data struct
     // Original evaluation
@@ -32,7 +32,7 @@ public:
     // How often node was visited
     uint32_t getVisits();
     // Get untried actions
-    std::deque<index_t>& getUntriedActions();
+    std::vector<index_t>& getUntriedActions();
 
 private:
     // Temporary Node data
@@ -100,7 +100,7 @@ public:
     static std::string sliceNodeHistory(Node* node, uint8_t depth);
 
     // Get moves that lead to this node
-    std::deque<index_t> getMoveHistory();
+    std::vector<index_t> getMoveHistory();
 
     // Next player color
     bool getNextColor();

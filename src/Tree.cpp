@@ -126,7 +126,7 @@ Node* Tree::policy()
     return current;
 }
 
-std::list<Node*> Tree::getNetworkQueue()
+std::vector<Node*> Tree::getNetworkQueue()
 {
     return network_queue;
 }
@@ -172,7 +172,7 @@ void Tree::clean()
     for (Node* garbage : deletion_queue)
     {
         // Delete node from queue
-        network_queue.remove(garbage);
+        Utils::eraseFromVector(network_queue, garbage);
 
         // Delete child pointer from children list and switch to frozen status
         garbage->parent->removeNodeFromChildren(garbage);

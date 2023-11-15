@@ -46,13 +46,14 @@ int main(int argc, const char* argv[])
         if (argc > 6)
             rand_moves = std::stoi(argv[6]);
 
-        model_1->setSimulations(simulations);
+        model_1->setSimulations(1);
         model_2->setSimulations(simulations);
 
         Batcher* batcher = new Batcher(environment_count, model_1, model_2);
         batcher->swapModels();
         batcher->makeRandomMoves(rand_moves, true);
         batcher->duelModels();
+        ForcePrintln("This was " << ExplorationBias);
         delete batcher;
     }
 

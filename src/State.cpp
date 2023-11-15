@@ -87,9 +87,10 @@ uint8_t State::getResult()
     return result;
 }
 
-std::deque<index_t> State::getPossible()
+std::vector<index_t> State::getPossible()
 {
-    std::deque<index_t> actions;
+    std::vector<index_t> actions;
+    actions.reserve(empty);
     uint8_t x, y;
     for (index_t i = 0; i < BoardSize * BoardSize; i++)
     {
@@ -106,45 +107,35 @@ bool State::isTerminal()
 
 std::string State::toString()
 {
-    std::string result;
+    std::stringstream result;
 
-    result += "\n   ";
-    
-    for (int i = 0; i < BoardSize; i++)
-        result += " ---";
-    
-    result += "\n";
-    
-    for (int16_t y = BoardSize - 1; y >= 0; y--)
+    result << "\n   ";
+
+    std::vector<std::vector<std::string>> values;
+
+    for (int x = 0; x < BoardSize; x++)
     {
-        result += std::to_string(y) + std::string(3 - std::to_string(y).length(), ' ');
-        
-        for (int16_t x = 0; x < BoardSize; x++)
+        std::vector<std::string> collumn;
+        for (int y = 0; y < BoardSize; y++)
         {
-            result += "|";
-            
+            std::string value;
             int8_t index_value = getCellValue(x ,y);
             if (index_value == -1)
-                result += "   ";
+                value += "   ";
             else if (index_value == 0)
-                result += "\033[1;34m B \033[0m";
+                value += "\033[1;34m B \033[0m";
             else 
-                result += "\033[1;31m W \033[0m";
+                value += "\033[1;31m W \033[0m";
+            collumn.push_back(value);
         }
-        result += "|\n   ";
-        
-        for (int i = 0; i < BoardSize; i++)
-            result += " ---";
-        
-        result += "\n";
+        values.push_back(collumn);
     }
-    
-    result += "    ";
-    for (int i = 0; i < BoardSize; i++)
-        result += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
-    result += "\n";
 
-    return result;
+    result << Utils::renderGamegrid(values);
+
+    result << "\n";
+
+    return result.str();
 }
 
 bool State::checkForWin()

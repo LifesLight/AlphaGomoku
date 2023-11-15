@@ -93,7 +93,7 @@ bool Node::isFullyExpanded()
     return false;
 }
 
-std::deque<index_t>& Node::getUntriedActions()
+std::vector<index_t>& Node::getUntriedActions()
 {
     if (temp_data)
         return temp_data->untried_actions;
@@ -120,7 +120,7 @@ bool Node::isShrunk()
 
 void Node::removeNodeFromChildren(Node* node)
 {
-    children.remove(node);
+    Utils::eraseFromVector(children, node);
 }
 
 bool Node::getNextColor()
@@ -168,10 +168,8 @@ void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
 
 void Node::removeFromUntried(index_t action)
 {
-    std::deque<index_t>& untried = getUntriedActions();
-    untried.erase(
-            std::remove(untried.begin(), untried.end(), action), untried.end()
-        );
+    std::vector<index_t>& untried = getUntriedActions();
+    Utils::eraseFromVector(untried, action);
 }
 
 Node* Node::expand()
@@ -347,15 +345,16 @@ float Node::valueProcessor(float normalized_value)
 // -------------- Utlility Code --------------
 #pragma region
 
-std::deque<index_t> Node::getMoveHistory()
+std::vector<index_t> Node::getMoveHistory()
 {
-    std::deque<index_t> history;
+    std::vector<index_t> history;
     Node* node = this;
     while (node->parent)
     {
-        history.push_front(node->parent_action);
+        history.push_back(node->parent_action);
         node = node->parent;
     }
+    std::reverse(history.begin(), history.end());
     return history;
 }
 
@@ -388,21 +387,24 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
     tensor[0] = next_color;
 
     // Get last actions from source
-    std::deque<index_t> move_history;
+    std::vector<index_t> move_history;
+    move_history.reserve(HistoryDepth - 2);
+
     Node* running_node = node; 
     for (index_t i = 0; i < HistoryDepth - 2; i++)
     {
         if (running_node == nullptr)
         {
             // Is max number which will never be reached
-            move_history.push_front(index_t(-1));
+            move_history.push_back(index_t(-1));
         }
         else
         {
-            move_history.push_front(running_node->parent_action);
+            move_history.push_back(running_node->parent_action);
             running_node = running_node->parent;
         }
     }
+    std::reverse(move_history.begin(), move_history.end());
 
     // Oldest state
     State* history_state;
@@ -530,7 +532,7 @@ std::string distribution(Node* current_node, const std::string& type)
 
     for (int i = 0; i < BoardSize; i++)
         result << "-";
-    result << ">\n    ";
+    result << ">\n   ";
 
     float max_value = 0.0f;
     for (Node* child : parent->children)
@@ -549,18 +551,16 @@ std::string distribution(Node* current_node, const std::string& type)
             max_value = val;
     }
 
+    std::vector<std::vector<std::string>> values;
 
-    for (int i = 0; i < BoardSize; i++)
-        result << " ---";
-    result << "\n";
-    for (int y = BoardSize - 1; y >= 0; y--)
+    for (int x = 0; x < BoardSize; x++)
     {
-        result << std::setw(3) << std::setfill(' ') << y << " ";
-        for (int x = 0; x < BoardSize; x++)
+        std::vector<std::string> line;
+        for (int y = 0; y < BoardSize; y++)
         {
-            result << "|";
+            std::stringstream cell;
             if (parent->state->isCellEmpty(x, y))
-            {
+            { 
                 bool matched = false;
                 for (Node* child : parent->children)
                 {
@@ -571,32 +571,28 @@ std::string distribution(Node* current_node, const std::string& type)
                         matched = true;
                         // If this child was the performed action color
                         if (child == current_node)
-                            result << "\033[1;32m";
-                        result << distribution_helper(child, max_value, type, child != current_node); 
-                        result << "\033[0m";
+                            cell << "\033[1;32m";
+                        cell << distribution_helper(child, max_value, type, child != current_node); 
+                        cell << "\033[0m";
                         break;
                     }
                 }
                 if (!matched)
-                    result << "   ";
+                    cell << "   ";
             }
             else
             {
                 if (parent->state->getCellValue(x, y))
-                    result << "\033[1;31m W \033[0m";
+                    cell << "\033[1;31m W \033[0m";
                 else
-                    result << "\033[1;34m B \033[0m";
+                    cell << "\033[1;34m B \033[0m";
             }
+            line.push_back(cell.str());
         }
-        result << "|\n    ";
-        for (int i = 0; i < BoardSize; i++)
-            result << " ---";
-        result << "\n";
+        values.push_back(line);
     }
 
-    result << "   ";
-    for (int i = 0; i < BoardSize; i++)
-        result << " " << std::setw(3) << std::setfill(' ') << i;
+    result << Utils::renderGamegrid(values);
 
     result << "\n    <";
     for (int i = 0; i < BoardSize * 2 + 26; i++)

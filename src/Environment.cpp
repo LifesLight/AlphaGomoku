@@ -74,7 +74,7 @@ bool Environment::makeBestMove()
     return false;
 }
 
-std::deque<index_t> Environment::getUntriedActions()
+std::vector<index_t> Environment::getUntriedActions()
 {
 
     return getCurrentNode()->getUntriedActions();

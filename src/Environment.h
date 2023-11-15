@@ -38,7 +38,7 @@ public:
     uint8_t getResult();
 
     // Get all possible actions from node
-    std::deque<index_t> getUntriedActions();
+    std::vector<index_t> getUntriedActions();
 
     // Display state
     std::string toString();

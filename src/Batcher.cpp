@@ -65,11 +65,13 @@ Batcher::~Batcher()
     for (int i = 0; i < gcp.size(); i++)
     {
         gcp_data->running[i]->store(false);
+        gcp_data->cv[i]->notify_one();
     }
 
     for (int i = 0; i < sim.size(); i++)
     {
         sim_data->running[i]->store(false);
+        sim_data->cv[i]->notify_one();
     }
 
     if (gcp_data)
@@ -688,7 +690,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
                 // Select random move for both envs
                 Environment* env1 = non_terminal_environments[i];
                 Environment* env2 = non_terminal_environments[i + 1];
-                std::deque<index_t> untried;
+                std::vector<index_t> untried;
                 untried = env1->getUntriedActions();
 
                 int action_count = untried.size();
@@ -720,7 +722,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
         {
             for (Environment* env : non_terminal_environments)
             {
-                std::deque<index_t> untried = env->getUntriedActions();
+                std::vector<index_t> untried = env->getUntriedActions();
                 int action_count = untried.size();
 
                 std::uniform_int_distribution<int> uni(0, action_count - 1);
@@ -844,7 +846,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         for (int i = 0; i < BoardSize; i++)
             output << "#-#-";
 
-        output << std::endl << std::endl << " <---------- Environment: " << real_id << " ---------->" << std::endl << std::endl; 
+        output << std::endl << " <---------- Environment: " << real_id << " ---------->" << std::endl; 
 
         output << " <--- Active Tree --->" << std::endl;
         output << " Model: " << models[env->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
@@ -865,7 +867,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
     return output.str();
 }
 
-void nodeCrawler(std::list<Datapoint>& datapoints, Node* node, uint8_t winner)
+void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
 {
     // Ignore non fully explored nodes
     if (node->isFullyExpanded())
@@ -897,7 +899,7 @@ void nodeCrawler(std::list<Datapoint>& datapoints, Node* node, uint8_t winner)
 void Batcher::storeData(std::string Path)
 {
     // Datapoints to be stored
-    std::list<Datapoint> datapoints;
+    std::vector<Datapoint> datapoints;
 
     // Get all nodes which are fully expanded and convert them into datapoints
     for (Environment* env : environments)

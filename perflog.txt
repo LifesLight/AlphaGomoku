@@ -1,6 +1,6 @@
 Gameplay performance in relation to hyperparameters tuning logs
 
-DUEL "test2.pt" "test2.pt" 1600 1000 10:
+DUEL "test2.pt" "test2.pt" 1600 2500 10:
 
 ValueBias = 1
 ExplorationBias = 0.25
@@ -41,3 +41,45 @@ Policy 0.1
   Model1 wins: 1179 (test2.pt (1|Half|CUDA))
   Model2 wins: 1318 (test2.pt (1600|Half|CUDA))
   Delta:       0.0556668 (-1 is Model1 wins)
+
+
+
+ValueBias = 1
+Policy = 0.5
+Simulations = 1600
+Environments = 2500
+
+ExplorationBias 0.1
+:
+  Draws:       14
+  Model1 wins: 791 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1695 (test2.pt (1600|Half|CUDA))
+  Delta:       0.363636 (-1 is Model1 wins)
+
+ExplorationBias 0.2
+:
+  Draws:       6
+  Model1 wins: 847 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1647 (test2.pt (1600|Half|CUDA))
+  Delta:       0.32077 (-1 is Model1 wins)
+
+ExplorationBias 0.3
+:
+  Draws:       14
+  Model1 wins: 857 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1629 (test2.pt (1600|Half|CUDA))
+  Delta:       0.310539 (-1 is Model1 wins)
+
+ExplorationBias 0.4
+:
+  Draws:       9
+  Model1 wins: 935 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1556 (test2.pt (1600|Half|CUDA))
+  Delta:       0.249297 (-1 is Model1 wins)
+
+ExplorationBias 0.5
+:
+  Draws:       5
+  Model1 wins: 1053 (test2.pt (1|Half|CUDA))
+  Model2 wins: 1442 (test2.pt (1600|Half|CUDA))
+  Delta:       0.155912 (-1 is Model1 wins)

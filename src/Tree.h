@@ -26,7 +26,7 @@ public:
     Node* getRootNode();
 
     // Network queue managment
-    std::list<Node*> getNetworkQueue();
+    std::vector<Node*> getNetworkQueue();
     bool clearNetworkQueue();
     void forceClearNetworkQueue();
 
@@ -42,8 +42,8 @@ public:
 private:
     void updateCurrentNode(index_t action);
 
-    std::list<Node*> deletion_queue;
-    std::list<Node*> network_queue;
+    std::vector<Node*> deletion_queue;
+    std::vector<Node*> network_queue;
     Node* root_node;
     Node* current_node;
     int node_count;

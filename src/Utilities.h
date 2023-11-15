@@ -44,6 +44,46 @@ public:
         return env_value_lower == target_lower;
     }
 
+    template <typename T>
+    static void eraseFromVector(std::vector<T>& vector, T& element)
+    {
+        vector.erase(
+            std::remove(vector.begin(), vector.end(), element), vector.end()
+        );
+    }
+
+    static std::string renderGamegrid(std::vector<std::vector<std::string>>& field_values)
+    {
+        std::stringstream output;
+
+        for (int i = 0; i < BoardSize; i++)
+        {
+            output << "+---";
+        }
+        output << "+\n";
+        for (int16_t y = BoardSize - 1; y >= 0; y--)
+        {
+            output << std::to_string(y) + std::string(3 - std::to_string(y).length(), ' ');
+
+            for (int16_t x = 0; x < BoardSize; x++)
+            {
+                output << "|";
+                output << field_values[x][y];
+            }
+            output << "|\n   ";
+
+            for (int i = 0; i < BoardSize; i++)
+                output << "+---";
+            output << "+\n";
+        }
+    
+        output << "    ";
+        for (int i = 0; i < BoardSize; i++)
+            output << " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
+
+        return output.str();
+    }
+
     static std::string sliceGamestate(torch::Tensor gamestate, int depth)
     {
         int HD = HistoryDepth;
