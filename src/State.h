@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "Utilities.h"
+#include "Style.h"
 
 // Optimized Gomoku game state interface for MCTS
 

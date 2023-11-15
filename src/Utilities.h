@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "Model.h"
+#include "Style.h"
 
 #define ForcePrintln(string) std::cout << string << std::endl << std::flush
 #define ForcePrint(string) std::cout << string << std::flush
@@ -145,12 +146,25 @@ public:
             std::vector<std::string> line;
             for (int y = 0; y < BoardSize; y++) 
             {
+                std::string value;
                 if (blackStones[x][y].item<bool>() == 0 && whiteStones[x][y].item<bool>() == 0)
                     line.push_back("   ");
                 else if (blackStones[x][y].item<bool>() == 1)
-                    line.push_back("\033[1;34m B \033[0m");
+                {
+                    value += BlackStoneCol;
+                    value += " ";
+                    value += BlackStoneUni;
+                    value += " \033[0m";
+                    line.push_back(value);
+                }
                 else if (whiteStones[x][y].item<bool>() == 1)
-                    line.push_back("\033[1;31m W \033[0m");
+                {
+                    value += WhiteStoneCol;
+                    value += " ";
+                    value += WhiteStoneUni;
+                    value += " \033[0m";
+                    line.push_back(value);
+                }
             }
             field_values.push_back(line);
         }

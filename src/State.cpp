@@ -120,9 +120,19 @@ std::string State::toString()
             if (index_value == -1)
                 value += "   ";
             else if (index_value == 0)
-                value += "\033[1;34m B \033[0m";
-            else 
-                value += "\033[1;31m W \033[0m";
+            {
+                value += BlackStoneCol;
+                value += " ";
+                value += BlackStoneUni;
+                value += " \033[0m";
+            }
+            else
+            {
+                value += WhiteStoneCol;
+                value += " ";
+                value += WhiteStoneUni;
+                value += " \033[0m";
+            }
             collumn.push_back(value);
         }
         values.push_back(collumn);
