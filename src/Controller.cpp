@@ -53,7 +53,7 @@ int main(int argc, const char* argv[])
         batcher->swapModels();
         batcher->makeRandomMoves(rand_moves, true);
         batcher->duelModels();
-        ForcePrintln("This was " << ExplorationBias);
+
         delete batcher;
     }
 

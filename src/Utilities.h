@@ -54,29 +54,52 @@ public:
 
     static std::string renderGamegrid(std::vector<std::vector<std::string>>& field_values)
     {
+        // Top line
         std::stringstream output;
-
-        for (int i = 0; i < BoardSize; i++)
+        output << "   ┌";
+        for (int i = 0; i < BoardSize - 1; i++)
         {
-            output << "+---";
+            output << "───┬";
         }
-        output << "+\n";
+        output << "───┐";
+        output << std::endl;
+
+        // Inner lines
         for (int16_t y = BoardSize - 1; y >= 0; y--)
         {
+            // Data line
             output << std::to_string(y) + std::string(3 - std::to_string(y).length(), ' ');
 
             for (int16_t x = 0; x < BoardSize; x++)
             {
-                output << "|";
+                output << "│";
                 output << field_values[x][y];
             }
-            output << "|\n   ";
+            output << "│";
+            output << std::endl;
 
-            for (int i = 0; i < BoardSize; i++)
-                output << "+---";
-            output << "+\n";
+            // Row line
+            if (y == 0)
+                continue;
+
+            output << "   ├";
+            for (int i = 0; i < BoardSize - 1; i++)
+            {
+                output << "───┼";
+            }
+            output << "───┤";
+            output << std::endl;
         }
-    
+
+        // Bottom line
+        output << "   └";
+        for (int i = 0; i < BoardSize - 1; i++)
+        {
+            output << "───┴";
+        }
+        output << "───┘";
+        output << std::endl;
+
         output << "    ";
         for (int i = 0; i < BoardSize; i++)
             output << " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
@@ -90,7 +113,7 @@ public:
         if (depth > HD - 2)
             std::cout << "[Utilities][W]: Gamestate sliced too deep" << std::endl;
 
-        std::string output = "";
+        std::stringstream output;
         int halfDepth = HD / 2;
         torch::Tensor blackStones, whiteStones;
 
@@ -114,35 +137,25 @@ public:
             whiteStones = gamestate[whiteIndex];
         }
 
-        output += "\n   ";
-        for (int i = 0; i < BoardSize; i++)
-            output += " ---";
-        output += "\n";
+        output << std::endl;
 
-        for (int y = 14; y >= 0; y--) 
+        std::vector<std::vector<std::string>> field_values;
+        for (int x = 0; x < BoardSize; x++) 
         {
-            output += std::to_string(y) + std::string(3 - std::to_string(y).length(), ' ');
-            for (int x = 0; x < 15; x++) 
+            std::vector<std::string> line;
+            for (int y = 0; y < BoardSize; y++) 
             {
-                output += "|";
                 if (blackStones[x][y].item<bool>() == 0 && whiteStones[x][y].item<bool>() == 0)
-                    output += "   ";
+                    line.push_back("   ");
                 else if (blackStones[x][y].item<bool>() == 1)
-                    output += "\033[1;34m B \033[0m";
+                    line.push_back("\033[1;34m B \033[0m");
                 else if (whiteStones[x][y].item<bool>() == 1)
-                    output += "\033[1;31m W \033[0m";
+                    line.push_back("\033[1;31m W \033[0m");
             }
-            output += "|\n   ";
-            for (int i = 0; i < BoardSize; i++)
-                output += " ---";
-            output += "\n";
+            field_values.push_back(line);
         }
 
-        output += "    ";
-        for (int i = 0; i < BoardSize; i++)
-            output += " " + std::to_string(i) + std::string(3 - std::to_string(i).length(), ' ');
-        output += "\n";
-
-        return output;
+        output << Utils::renderGamegrid(field_values);
+        return output.str();
     }
 };

@@ -108,9 +108,6 @@ bool State::isTerminal()
 std::string State::toString()
 {
     std::stringstream result;
-
-    result << "\n   ";
-
     std::vector<std::vector<std::string>> values;
 
     for (int x = 0; x < BoardSize; x++)
@@ -131,9 +128,9 @@ std::string State::toString()
         values.push_back(collumn);
     }
 
+    result << std::endl;
     result << Utils::renderGamegrid(values);
-
-    result << "\n";
+    result << std::endl;
 
     return result.str();
 }

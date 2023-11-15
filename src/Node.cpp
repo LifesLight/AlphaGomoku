@@ -1,4 +1,4 @@
-#include "Node.h"
+ #include "Node.h"
 
 Node::Node(State* state, Node* parent, index_t parent_action)
     : parent(parent), parent_action(parent_action), state(state), network_status(0)
@@ -532,7 +532,7 @@ std::string distribution(Node* current_node, const std::string& type)
 
     for (int i = 0; i < BoardSize; i++)
         result << "-";
-    result << ">\n   ";
+    result << ">\n";
 
     float max_value = 0.0f;
     for (Node* child : parent->children)
