@@ -88,8 +88,14 @@ bool Node::isFullyExpanded()
 {
     if (isShrunk())
         return true;
+    // Adds possibility to clamp exploration to n best initial guesses
+    #if BranchingLimit > 0
+    if (children.size() > BranchingLimit || getUntriedActions().size() == 0)
+        return true;
+    #else
     if (getUntriedActions().size() == 0)
         return true;
+    #endif
     return false;
 }
 
