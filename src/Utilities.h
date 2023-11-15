@@ -158,4 +158,38 @@ public:
         output << Utils::renderGamegrid(field_values);
         return output.str();
     }
+
+    static void keyboardCordsInput(index_t& x, index_t& y)
+    {
+        while (true)
+        {
+            std::string input;
+
+            std::cout << "[Move]: ";
+            std::getline(std::cin, input);
+
+            size_t pos = input.find_first_of(",; ");
+
+            if (pos == std::string::npos)
+            {
+                ForcePrintln("[Utils][E]: Invalid input format for cord input! Usage: x,y");
+                continue;
+            }
+
+            std::string x_s = input.substr(0, pos);
+            std::string y_s = input.substr(pos + 1);
+
+            try
+            {
+                x = std::stoi(x_s);
+                y = std::stoi(y_s);
+
+                break;
+            }
+            catch(const std::exception& e)
+            {
+                ForcePrintln("[Utils][E]: Invalid input format for cord input! Usage: x,y");
+            }
+        }
+    }
 };

@@ -580,25 +580,8 @@ void Batcher::humanplay(bool human_color)
     {
         if (environments[0]->getNextColor() == human_color)
         {
-            std::string string_x, string_y;
-            std::cout << "X: ";
-            std::cin >> string_x;
-            std::cout << "Y: ";
-            std::cin >> string_y;
-
-            int x, y;
-
-            try
-            {
-                x = std::stoi(string_x);
-                y = std::stoi(string_y);
-            }
-            catch (const std::exception& e)
-            {
-                std::cout << "Invalid format" << std::endl;
-                continue;
-            }
-
+            index_t x, y;
+            Utils::keyboardCordsInput(x, y);
             environments[0]->makeMove(x, y);
             runNetwork();
         }

@@ -45,7 +45,7 @@
 // ---- Performance Settings ----
 // This is max threads PER task, so could be MaxThreads * 2 effective threads
 // To disable threading just set to 1 --> will use main thread
-#define MaxThreads 6
+#define MaxThreads 16
 // These are target values, will not always be matched
 // How many simulations a thread should aim to handle
 #define PerThreadSimulations 64
@@ -56,11 +56,11 @@
 // This is where tensors are created and simmelar
 #define TorchDefaultDevice torch::kCPU
 // This is the device computations will be run on
-#define TorchInferenceDevice torch::kMPS
+#define TorchInferenceDevice torch::kCUDA
 // Floating point precision for Inference
 #define TorchDefaultScalar torch::kFloat16
 // Higher is better if VRAM/RAM can handle
-#define MaxBatchsize 2048
+#define MaxBatchsize 8096
 // -------------------------------
 
 // Save memory if 2d -> 1d index mapping fits in 2^8
