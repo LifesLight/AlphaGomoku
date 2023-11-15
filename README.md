@@ -24,6 +24,20 @@ If the new model wins at least 55% of games against the old one keep it.<br>
 
 *This loop is not yet implemented*
 
+## Multithreading
+Multithreading is implemented via a worker pool.<br>
+When creating a batcher it calculates the amount of **GCP** (Gamestate conversion processes), and **SIM** (Simulation) workers based on provided [hyperparameters](#threadingParam).
+These workers are all the workers ever created by that Batcher, we dynamically reduce the amount of workers to start when needed but we never create new ones.<br>
+Multithreading is implemented on a Batcher level since every environment is independent of all other, which makes multithreading fairly efficient due to not needing any mutexes or atomics. (Every environment will only ever be worked on by one thread).<br>
+
+### <a name="threadingParam"></a> Hyperparameters for threading are:
+- PerThreadSimulations: How many threads for simulating (MCTS Tree).
+- PerThreadGamestateConvertions: How many threads for converting nodes to [gamestate](#gs) tensors.
+
+*For n environments*
+
+- MaxThreads: How many max threads per type (can result in twice the amount of workers then expected but different types will never be active simultaniously).
+
 ## Data
 ### <a name="gs"></a>Gamestate
 Gomoku gamestates for neural network input are encoded as follows:<br>
