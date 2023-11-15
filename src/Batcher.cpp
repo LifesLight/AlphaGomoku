@@ -582,8 +582,10 @@ void Batcher::humanplay(bool human_color)
         {
             index_t x, y;
             Utils::keyboardCordsInput(x, y);
-            environments[0]->makeMove(x, y);
-            runNetwork();
+            if (environments[0]->makeMove(x, y))
+                runNetwork();
+            else
+                ForcePrintln("[Batcher][E]: Failed to perfom move!");
         }
         else
         {

@@ -36,13 +36,17 @@ bool Environment::makeMove(index_t index)
 
 bool Environment::makeMove(uint8_t x, uint8_t y)
 {
+    bool success = true;
     // Update all existing trees
     for (int i = 0; i < 2; i ++)
         if (trees[i] != nullptr)
-            trees[i]->makeMove(x, y);
+            if (!trees[i]->makeMove(x, y))
+                success = false;
 
-    next_color = !next_color;
-    return true;
+    if (success)
+        next_color = !next_color;
+
+    return success;
 }
 
 std::vector<Node*> Environment::getRootNodes()

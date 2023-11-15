@@ -78,14 +78,14 @@ int Tree::getNodeCount()
     return node_count;
 }
 
-void Tree::makeMove(index_t index)
+bool Tree::makeMove(index_t index)
 {
     uint8_t x, y;
     Utils::indexToCords(index, x, y);
-    makeMove(x, y);
+    return makeMove(x, y);
 }
 
-void Tree::makeMove(uint8_t x, uint8_t y)
+bool Tree::makeMove(uint8_t x, uint8_t y)
 {
     index_t action;
     Utils::cordsToIndex(action, x, y);
@@ -98,11 +98,19 @@ void Tree::makeMove(uint8_t x, uint8_t y)
         (0 <= y && y < BoardSize)
         ))
     {
-        ForcePrintln("[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")");
-        return;
+        ForcePrintln("[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")!");
+        return false;
+    }
+
+    // Check if field is empty
+    if (!current_node->state->isCellEmpty(x, y))
+    {
+        ForcePrintln("[Tree][W]: Tried to perform illegal move (Cell " << int(x) << "," << int(y) << " already allocated)!");
+        return false;
     }
 
     updateCurrentNode(action);
+    return true;
 }
 
 Node* Tree::policy()

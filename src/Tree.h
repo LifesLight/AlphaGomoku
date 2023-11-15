@@ -18,8 +18,8 @@ public:
     ~Tree();
 
     // These functions can/will require a NN computation, those will be stored in network queue
-    void makeMove(uint8_t x, uint8_t y);
-    void makeMove(index_t index);
+    bool makeMove(uint8_t x, uint8_t y);
+    bool makeMove(index_t index);
     Node* policy();
     // <-------------------->
 
