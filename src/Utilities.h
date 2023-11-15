@@ -57,12 +57,16 @@ public:
     {
         // Top line
         std::stringstream output;
-        output << "   ┌";
+        std::string three_lines = "";
+        for (int i = 0; i < 3; i++)
+            three_lines += Line0;
+
+        output << "   " << Cornor0;
         for (int i = 0; i < BoardSize - 1; i++)
         {
-            output << "───┬";
+            output << three_lines << Cross0;
         }
-        output << "───┐";
+        output << three_lines << Cornor1;
         output << std::endl;
 
         // Inner lines
@@ -73,32 +77,32 @@ public:
 
             for (int16_t x = 0; x < BoardSize; x++)
             {
-                output << "│";
+                output << Line1;
                 output << field_values[x][y];
             }
-            output << "│";
+            output << Line1;
             output << std::endl;
 
             // Row line
             if (y == 0)
                 continue;
 
-            output << "   ├";
+            output << "   " << Cross1;
             for (int i = 0; i < BoardSize - 1; i++)
             {
-                output << "───┼";
+                output << three_lines << Center;
             }
-            output << "───┤";
+            output << three_lines << Cross2;
             output << std::endl;
         }
 
         // Bottom line
-        output << "   └";
+        output << "   " << Cornor2;
         for (int i = 0; i < BoardSize - 1; i++)
         {
-            output << "───┴";
+            output << three_lines << Cross3;
         }
-        output << "───┘";
+        output << three_lines << Cornor3;
         output << std::endl;
 
         output << "    ";
