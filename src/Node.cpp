@@ -530,15 +530,15 @@ std::string distribution(Node* current_node, const std::string& type)
 
     Node* parent = current_node->parent;
 
-    result << "\n        <";
+    result << "\n      ᐊ";
     for (int i = 0; i < BoardSize; i++)
-        result << "-";
-    result << " " << type;
-    result << " DISTRIBUTION ";
+        result << "═";
+    result << "╡ " << type;
+    result << " DISTRIBUTION ╞";
 
     for (int i = 0; i < BoardSize; i++)
-        result << "-";
-    result << ">\n";
+        result << "═";
+    result << "ᐅ\n";
 
     float max_value = 0.0f;
     for (Node* child : parent->children)
@@ -600,10 +600,10 @@ std::string distribution(Node* current_node, const std::string& type)
 
     result << Utils::renderGamegrid(values);
 
-    result << "\n    <";
+    result << "\n    ᐊ";
     for (int i = 0; i < BoardSize * 2 + 26; i++)
-        result << "-";
-    result << ">\n";
+        result << "═";
+    result << "ᐅ\n";
 
     return result.str();
 }
@@ -636,7 +636,7 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
         output << "# Policy:" << std::setw(window_width - 11) << std::setfill(' ') << node->getNodesPolicyEval() << " #" << std::endl;
     output << "# Value:" << std::setw(window_width - 10) << std::setfill(' ') << node->getValueHeadEval() << " #" << std::endl;
     output << "# Mean Value:" << std::setw(window_width - 15) << std::setfill(' ') << node->getMeanEvaluation() << " #" << std::endl;
-    
+
     for (int i = 0; i < window_width; i++)
         output << "#";
     output << std::endl;

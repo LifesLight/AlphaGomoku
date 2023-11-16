@@ -2,7 +2,7 @@
 
 // Stone skin packs
 #define STONES_DEFAULT
-#define LINES_DEFAULT
+#define LINES_DOUBLE
 
 #ifdef STONES_DEFAULT
 #define BlackStoneUni "●"

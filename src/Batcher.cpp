@@ -62,6 +62,7 @@ Batcher::~Batcher()
     for (Environment* env : environments)
         delete env;
 
+    // Call to threads to finish
     for (int i = 0; i < gcp.size(); i++)
     {
         gcp_data->running[i]->store(false);
@@ -74,6 +75,11 @@ Batcher::~Batcher()
         sim_data->cv[i]->notify_one();
     }
 
+    // Join all threads
+    // TODO Better solution
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // Delete threading data
     if (gcp_data)
         delete gcp_data;
 
@@ -736,7 +742,7 @@ float Batcher::averageWinner()
     {
         std::cout << "[Batcher][W]: Got average winner before all environments finished playing" << std::endl;
     }
-    
+
     int total = environments.size() - non_terminal_environments.size();
     float delta = 0;
 
@@ -786,7 +792,14 @@ std::string Batcher::toString(int max_envs)
             }
         }
 
-        output << std::endl << std::endl << " <---------- Environment: " << real_id << "---------->" << std::endl << std::endl; 
+        output << std::endl << std::endl << "        ᐊ";
+        for (int i = 0; i < BoardSize; i++)
+            output << "═";
+        output << "╡ Environment: " << real_id << " ╞"; 
+
+        for (int i = 0; i < BoardSize; i++)
+            output << "═";
+        output << "ᐅ" << std::endl << std::endl;
         output << non_terminal_environments[i]->toString();
     }
 
@@ -831,9 +844,23 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         for (int i = 0; i < BoardSize; i++)
             output << "#-#-";
 
-        output << std::endl << " <---------- Environment: " << real_id << " ---------->" << std::endl; 
+        output << std::endl << "     ᐊ";
+        for (int i = 0; i < BoardSize; i++)
+            output << "═";
+        output << "╡ Environment: " << real_id << " ╞";
+        for (int i = 0; i < BoardSize; i++)
+            output << "═";
+        output << "ᐅ" << std::endl << std::endl << "   ";
 
-        output << " <--- Active Tree --->" << std::endl;
+        for (int i = 0; i < BoardSize; i++)
+            output << " ";
+        output << "ᐊ";
+        for (int i = 0; i < 3; i++)
+            output << "═";
+        output << "╡ Active Tree ╞";
+        for (int i = 0; i < 3; i++)
+            output << "═";
+        output << "ᐅ" << std::endl << std::endl;
         output << " Model: " << models[env->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
         output << Node::analytics(env->getCurrentNode(), distributions);
         output << std::endl;
@@ -842,7 +869,16 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         Node* opposing_node = env->getOpposingNode();
         if (opposing_node)
         {
-            output << " <---- Cold Tree ---->" << std::endl;
+            std::cout << "   ";
+            for (int i = 0; i < BoardSize; i++)
+                output << " ";
+            output << "ᐊ";
+            for (int i = 0; i < 4; i++)
+                output << "═";
+            output << "╡ Cold Tree ╞";
+            for (int i = 0; i < 4; i++)
+                output << "═";
+            output << "ᐅ" << std::endl << std::endl;
             output << " Model: " << models[!env->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
             output << Node::analytics(opposing_node, distributions);
             output << std::endl;
