@@ -2,7 +2,6 @@
 #include "Config.h"
 #include "State.h"
 #include "Model.h"
-#include "NodeData.h"
 
 /*
 Node is a singular element in a Tree, it represents a unique board position.
@@ -12,8 +11,16 @@ It requires a model output for most actions.
 This model output is not calculated on creation since we want to batch model calls.
 */
 
-// Data which is not needed after 
 
+// Stores data about a node, which won't be needed in cold tree
+struct NodeData
+{
+    uint32_t visits;
+    std::vector<index_t> untried_actions;
+    float evaluation;
+    float summed_evaluation;
+    torch::Tensor policy_evaluations;
+};
 
 class Node
 {
@@ -93,7 +100,7 @@ public:
     // Create string representation of node parameters
     // Green cell is cell of next move
     static std::string analytics(Node* node, const std::initializer_list<std::string> distributions);
-    
+
     // Convert node to tensor Gamestate representation
     static torch::Tensor nodeToGamestate(Node* node);
     static torch::Tensor nodeToGamestate(Node* node, torch::ScalarType dtype);

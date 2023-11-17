@@ -114,7 +114,7 @@ public:
 
     static std::string sliceGamestate(torch::Tensor gamestate, int depth)
     {
-        int HD = HistoryDepth;
+        int HD = Config::historyDepth();
         if (depth > HD - 2)
             std::cout << "[Utilities][W]: Gamestate sliced too deep" << std::endl;
 

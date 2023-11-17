@@ -92,8 +92,8 @@ Batcher::~Batcher()
 
 void Batcher::init_threads()
 {
-    int gcp_threads = std::max(1, std::min(MaxThreads, int(environments.size() / PerThreadGamestateConvertions)));
-    int sim_threads = std::max(1, std::min(MaxThreads, int(environments.size()) / PerThreadSimulations));
+    int gcp_threads = std::max(1, std::min(Config::maxThreads(), int(environments.size() / Config::gamestatesPerThread())));
+    int sim_threads = std::max(1, std::min(Config::maxThreads(), int(environments.size()) / Config::simsPerThread()));
 
     if (gcp_threads > 1)
     {
@@ -248,7 +248,7 @@ void Batcher::runNetwork()
         // Maybe models with different precs
         torch::ScalarType dtype = models[checked_model_index]->getPrec();
         torch::Device device = models[checked_model_index]->getDevice();
-        torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
+        torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype);
 
         int element_count = nodes[model_index].size();
         // Compute gamestates with multithreading
@@ -256,16 +256,16 @@ void Batcher::runNetwork()
         convertNodesToGamestates(gamestates, &nodes[model_index], dtype);
 
         // Batchsize limiting to not explode memory
-        model_outputs[model_index].reserve(element_count / MaxBatchsize);
+        model_outputs[model_index].reserve(element_count / Config::maxBatchsize());
         int processed_element_count = 0;
         while (processed_element_count != element_count)
         {
             int unprocessed_count = element_count - processed_element_count;
-            int batch_size = std::min(unprocessed_count, MaxBatchsize);
+            int batch_size = std::min(unprocessed_count, Config::maxBatchsize());
 
             // Convert to tensor
             // Init tensor on CPU
-            torch::Tensor model_input = torch::empty({batch_size, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
+            torch::Tensor model_input = torch::empty({batch_size, Config::historyDepth() + 1, BoardSize, BoardSize}, default_tensor_options);
             model_input = gamestates.index({torch::indexing::Slice(processed_element_count, processed_element_count + batch_size)});
 
             // Move to device for inference
@@ -313,12 +313,12 @@ void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>
     int element_count = nodes->size();
 
     // Compute "optimal" thread count
-    int thread_count = std::max(1, element_count / PerThreadGamestateConvertions);
+    int thread_count = std::max(1, element_count / Config::gamestatesPerThread());
     thread_count = std::min(thread_count, int(gcp.size()));
 
     // Init output tensor
-    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
-    target = torch::empty({element_count, HistoryDepth + 1, BoardSize, BoardSize}, default_tensor_options);
+    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype);
+    target = torch::empty({element_count, Config::historyDepth() + 1, BoardSize, BoardSize}, default_tensor_options);
 
     // Use single if possible
     if (thread_count < 2)
@@ -369,7 +369,7 @@ void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>* envs, int 
     int element_count = envs->size();
 
     // Compute "optimal" thread count
-    int thread_count = std::max(1, element_count / PerThreadSimulations);
+    int thread_count = std::max(1, element_count / Config::simsPerThread());
     thread_count = std::min(thread_count, int(gcp.size()));
 
     // If thread count too low just run single threaded opperation

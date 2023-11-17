@@ -32,8 +32,8 @@ int main(int argc, const char* argv[])
         Model* model_2 = Model::autoloadModel(argv[3]);
 
         // Get hyperparameters
-        int simulations = DefaultSimulations;
-        int environment_count = DefaultEnvironments;
+        int simulations = Config::defaultSimulations();
+        int environment_count = Config::defaultEnvironments();
         int rand_moves = 0;
 
         if (argc > 4)
@@ -69,8 +69,8 @@ int main(int argc, const char* argv[])
         Model* model_1 = Model::autoloadModel(argv[2]);
 
         // Get hyperparameters
-        int simulations = DefaultSimulations;
-        int environment_count = DefaultEnvironments;
+        int simulations = Config::defaultSimulations();
+        int environment_count = Config::defaultEnvironments();
         int rand_moves = 0;
 
         if (argc > 3)
@@ -87,7 +87,7 @@ int main(int argc, const char* argv[])
         Batcher* batcher = new Batcher(environment_count, model_1);
         batcher->makeRandomMoves(rand_moves, false);
         batcher->selfplay();
-        batcher->storeData(DatapointPath);
+        batcher->storeData(Config::datapointPath());
         delete batcher;
     }
 
@@ -103,7 +103,7 @@ int main(int argc, const char* argv[])
 
         Model* model_1 = Model::autoloadModel(argv[2]);
 
-        int simulations = DefaultSimulations;
+        int simulations = Config::defaultSimulations();
         int human_color = 0;
 
         if (argc > 3)

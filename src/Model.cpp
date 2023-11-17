@@ -3,15 +3,15 @@
 torch::jit::script::Module Model::load_module(std::string path)
 {
     // Always load on CPU
-    torch::jit::script::Module model = torch::jit::load(path, TorchDefaultDevice);
-    model.to(TorchInferenceDevice);
-    model.to(TorchDefaultScalar);
+    torch::jit::script::Module model = torch::jit::load(path, Config::torchHostDevice());
+    model.to(Config::torchInferenceDevice());
+    model.to(Config::torchScalar());
     model.eval();
     return model;
 }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path)
-    : Model(resnet_path, polhead_path, valhead_path, DefaultSimulations)
+    : Model(resnet_path, polhead_path, valhead_path, Config::defaultSimulations())
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations)
@@ -19,11 +19,11 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, std::string name)
-    : Model(resnet_path, polhead_path, valhead_path, DefaultSimulations, name)
+    : Model(resnet_path, polhead_path, valhead_path, Config::defaultSimulations(), name)
 {   }
 
 Model::Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations, std::string name)
-    : model_name(name), simulations(simulations), device(TorchInferenceDevice), dtype(TorchDefaultScalar)
+    : model_name(name), simulations(simulations), device(Config::torchInferenceDevice()), dtype(Config::torchScalar())
 {
     // Load resnet
     try
@@ -71,8 +71,8 @@ std::tuple<torch::Tensor, torch::Tensor> Model::forward(torch::Tensor input)
     torch::Tensor policy_output = policy_result.toTensor();
     torch::Tensor value_output = value_result.toTensor();
     policy_output = torch::softmax(policy_output, -1);
-    policy_output = policy_output.to(TorchDefaultDevice);
-    value_output = value_output.to(TorchDefaultDevice);
+    policy_output = policy_output.to(Config::torchHostDevice());
+    value_output = value_output.to(Config::torchHostDevice());
 
     // Detach for grad safety
     policy_output = policy_output.detach();
@@ -137,7 +137,7 @@ int Model::getSimulations()
 
 Model* Model::autoloadModel(std::string name)
 {
-    return autoloadModel(name, DefaultSimulations);
+    return autoloadModel(name, Config::defaultSimulations());
 }
 
 Model* Model::autoloadModel(std::string name, int simulations)
@@ -145,7 +145,7 @@ Model* Model::autoloadModel(std::string name, int simulations)
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Model][I]: Autoloading: " << name << std::endl;
 
-    std::string general_path = ModelPath;
+    std::string general_path = Config::modelPath();
     std::string resnet_path = general_path + "ResNet/" + name;
     std::string policy_path = general_path + "PolHead/" + name;
     std::string value_path = general_path + "ValHead/" + name;

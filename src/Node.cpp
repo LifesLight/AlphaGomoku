@@ -244,9 +244,9 @@ Node* Node::bestChild()
     for (Node* child : children)
     {
         // Calculate value
-        value = ValueBias * child->getMeanEvaluation();
-        exploration = ExplorationBias * std::sqrt(log_visits / float(child->getVisits()));
-        policy = PolicyBias * child->getNodesPolicyEval();
+        value = Config::valueBias() * child->getMeanEvaluation();
+        exploration = Config::explorationBias() * std::sqrt(log_visits / float(child->getVisits()));
+        policy = Config::policyBias() * child->getNodesPolicyEval();
         result = value + exploration + policy;
 
         if (result > best_result)
@@ -366,7 +366,7 @@ std::vector<index_t> Node::getMoveHistory()
 
 torch::Tensor Node::nodeToGamestate(Node* node)
 {
-    return nodeToGamestate(node, TorchDefaultScalar);
+    return nodeToGamestate(node, Config::torchScalar());
 }
 
 torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
@@ -375,10 +375,10 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
     torch::NoGradGuard no_grad_guard;
 
     // Generate Tensor on CPU
-    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(TorchDefaultDevice).dtype(dtype);
+    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype);
 
     // Init main tensor
-    torch::Tensor tensor = torch::zeros({HistoryDepth + 1, 15, 15}, default_tensor_options);
+    torch::Tensor tensor = torch::zeros({Config::historyDepth() + 1, 15, 15}, default_tensor_options);
 
     // State at node
     State* current_state = node->state;
@@ -394,10 +394,10 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
 
     // Get last actions from source
     std::vector<index_t> move_history;
-    move_history.reserve(HistoryDepth - 2);
+    move_history.reserve(Config::historyDepth() - 2);
 
     Node* running_node = node; 
-    for (index_t i = 0; i < HistoryDepth - 2; i++)
+    for (index_t i = 0; i < Config::historyDepth() - 2; i++)
     {
         if (running_node == nullptr)
         {
@@ -434,7 +434,7 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
 
     // Indecies into tensor for color
     uint8_t index_black = 1;
-    uint8_t index_white = HistoryDepth / 2 + 1;
+    uint8_t index_white = Config::historyDepth() / 2 + 1;
 
     tensor[index_black] = histroy_black.clone();
     tensor[index_white] = history_white.clone();

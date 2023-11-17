@@ -7,10 +7,11 @@ enum class Board {DEFAULT, BOLD, DOUBLE};
 
 class Style
 {
-public:
+private:
     static enum Stone selected_stones;
     static enum Board selected_board;
 
+public:
     static void setStone(std::string stone);
     static void setBoard(std::string board);
 
