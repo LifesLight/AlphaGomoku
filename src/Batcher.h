@@ -169,6 +169,9 @@ public:
     bool getNextModelIndex(Environment* env);
 
 private:
+    // Run policy logic on one env
+    static void runPolicy(Environment* env);
+
     // Clear up all network queues
     // You should never need to call it manually
     void runNetwork();
@@ -178,6 +181,7 @@ private:
 
     // Play until batcher is terminal
     void runGameloop();
+    void renderEnvsHelper();
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;

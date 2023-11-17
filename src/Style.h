@@ -1,61 +1,39 @@
 #pragma once
 
-// Stone skin packs
-#define STONES_DEFAULT
-#define LINES_DOUBLE
+#include "Config.h"
 
-#ifdef STONES_DEFAULT
-#define BlackStoneUni "●"
-#define WhiteStoneUni "●"
-#define BlackStoneCol "\033[1;34m"
-#define WhiteStoneCol "\033[1;31m"
-#endif
+enum class Stone {DEFAULT, NUCLEAR, ANIMALS};
+enum class Board {DEFAULT, BOLD, DOUBLE};
 
-#ifdef STONES_NUCLEAR
-#define BlackStoneUni "☢"
-#define WhiteStoneUni "☢"
-#define BlackStoneCol "\033[1;92m"
-#define WhiteStoneCol "\033[1;93m"
-#endif
+class Style
+{
+public:
+    static enum Stone selected_stones;
+    static enum Board selected_board;
 
-#ifdef LINES_DEFAULT
-#define Cornor0 "┌"
-#define Cornor1 "┐"
-#define Cornor2 "└"
-#define Cornor3 "┘"
-#define Line0 "─"
-#define Line1 "│"
-#define Center "┼"
-#define Cross0 "┬"
-#define Cross1 "├"
-#define Cross2 "┤"
-#define Cross3 "┴"
-#endif
+    static void setStone(std::string stone);
+    static void setBoard(std::string board);
 
-#ifdef LINES_BOLD
-#define Cornor0 "┏"
-#define Cornor1 "┓"
-#define Cornor2 "┗"
-#define Cornor3 "┛"
-#define Line0 "━"
-#define Line1 "┃"
-#define Center "╋"
-#define Cross0 "┳"
-#define Cross1 "┣"
-#define Cross2 "┫"
-#define Cross3 "┻"
-#endif
+    // Get black/white stone unicode/color
+    static std::string bsu();
+    static std::string wsu();
+    static std::string bsc();
+    static std::string wsc();
 
-#ifdef LINES_DOUBLE
-#define Cornor0 "╔"
-#define Cornor1 "╗"
-#define Cornor2 "╚"
-#define Cornor3 "╝"
-#define Line0 "═"
-#define Line1 "║"
-#define Center "╬"
-#define Cross0 "╦"
-#define Cross1 "╠"
-#define Cross2 "╣"
-#define Cross3 "╩"
-#endif
+    // Get all grid line types
+    static std::string cornor0();
+    static std::string cornor1();
+    static std::string cornor2();
+    static std::string cornor3();
+    static std::string line0();
+    static std::string line1();
+    static std::string center();
+    static std::string cross0();
+    static std::string cross1();
+    static std::string cross2();
+    static std::string cross3();
+
+private:
+    static std::map<std::string, Stone> stone_to_enum;
+    static std::map<std::string, Board> board_to_enum;
+};

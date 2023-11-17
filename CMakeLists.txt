@@ -7,7 +7,7 @@ list(APPEND CMAKE_PREFIX_PATH ${AlphaGomoku_SOURCE_DIR}/libtorch/)
 find_package(Torch REQUIRED)
 
 set(CMAKE_CXX_STANDARD 23)
-add_executable(AlphaGomoku src/Controller.cpp src/State.cpp src/Node.cpp src/Model.cpp src/Tree.cpp src/Environment.cpp src/Storage.cpp src/Batcher.cpp)
+add_executable(AlphaGomoku src/Style.cpp src/Controller.cpp src/State.cpp src/Node.cpp src/Model.cpp src/Tree.cpp src/Environment.cpp src/Storage.cpp src/Batcher.cpp)
 target_link_libraries(AlphaGomoku "${TORCH_LIBRARIES}")
 
 set(CMAKE_CXX_FLAGS "-O3")

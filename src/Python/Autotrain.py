@@ -3,9 +3,9 @@ import subprocess
 import numpy as np
 from Utilities import Utilities as Utils
 from Config import Config as Conf
+import sys
+
+# Get commandline params
+argv = sys.argv
 
 
-initialModel = "test2.pt"
-MODEL_PATH = "../../Models/Human"
-
-loadedModel = Utils.modelLoader(MODEL_PATH, initialModel)

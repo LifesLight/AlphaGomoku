@@ -144,12 +144,12 @@ void Storage::constrain(int count)
 {
     if (getDatapointCount() < count)
         return;
-    
+
     int lowest_index = getDatapointCount() - count;
     lines.erase(lines.begin(), lines.begin() + lowest_index);
 
     if (Utils::checkEnv("LOGGING", "INFO"))
         std::cout << "[Storage][I]: Deleted " << lowest_index << " datapoints" << std::endl;
-    
+
     change_made = true;
 }

@@ -121,17 +121,15 @@ std::string State::toString()
                 value += "   ";
             else if (index_value == 0)
             {
-                value += BlackStoneCol;
-                value += " ";
-                value += BlackStoneUni;
-                value += " \033[0m";
+                value += Style::bsc();
+                value += Style::bsu();
+                value += "\033[0m";
             }
             else
             {
-                value += WhiteStoneCol;
-                value += " ";
-                value += WhiteStoneUni;
-                value += " \033[0m";
+                value += Style::wsc();
+                value += Style::wsu();
+                value += "\033[0m";
             }
             collumn.push_back(value);
         }

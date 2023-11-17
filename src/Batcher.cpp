@@ -140,9 +140,7 @@ void Batcher::sim_worker(SIMData* data, int id)
 
         for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
         {
-            Node* selected = (*data->input)[i]->policy();
-            if (selected->getNetworkStatus())
-                selected->callBackpropagate();
+            runPolicy((*data->input)[i]);
         }
         data->waits[id]->store(false);
 
@@ -200,6 +198,14 @@ bool Batcher::isTerminal()
     if (non_terminal_environments.size() == 0)
         return true;
     return false;
+}
+
+void Batcher::runPolicy(Environment* env)
+{
+    Node* selected = env->policy();
+    // If node already with netdata implies it didnt get backpropagated so we manually call it again
+    if (selected->getNetworkStatus())
+        selected->callBackpropagate();
 }
 
 void Batcher::updateNonTerminal()
@@ -373,9 +379,7 @@ void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>* envs, int 
         {
             for (Environment* env : *envs)
             {
-                Node* selected = env->policy();
-                if (selected->getNetworkStatus())
-                    selected->callBackpropagate();
+                runPolicy(env);
             }
 
             runNetwork();
@@ -469,6 +473,26 @@ void Batcher::swapModels()
         environments[i]->swapModels();
 }
 
+void Batcher::renderEnvsHelper()
+{
+    if (Utils::checkEnv("RENDER_ENVS", "TRUE"))
+    {
+        int count;
+        try
+        {
+            count = std::stoi(Utils::getEnv("RENDER_ENVS_COUNT"));
+        }
+        catch(const std::exception& e)
+        {
+            count = 1;
+        }
+        if (Utils::checkEnv("RENDER_ANALYTICS", "TRUE"))
+            std::cout << toStringDist({"VISITS", "POLICY", "VALUE", "MEAN"}, count) << std::endl;
+        else
+            std::cout << toString(count) << std::endl;
+    }
+}
+
 void Batcher::runGameloop()
 {
     // Gameplay Loop
@@ -476,25 +500,7 @@ void Batcher::runGameloop()
     {
         runSimulations();
         makeBestMoves();
-
-        if (Utils::checkEnv("RENDER_ENVS", "TRUE"))
-        {
-            int count;
-            try
-            {
-                count = std::stoi(Utils::getEnv("RENDER_ENVS_COUNT"));
-            }
-            catch(const std::exception& e)
-            {
-                count = 1;
-            }
-
-            if (Utils::checkEnv("RENDER_ANALYTICS", "TRUE"))
-                std::cout << toStringDist({"VISITS", "POLICY", "VALUE", "MEAN"}, count) << std::endl;
-            else
-                std::cout << toString(count) << std::endl;
-        }
-
+        renderEnvsHelper();
         freeMemory();
     }
 }
@@ -599,24 +605,7 @@ void Batcher::humanplay(bool human_color)
             makeBestMoves();
         }
 
-        if (Utils::checkEnv("RENDER_ENVS", "TRUE"))
-        {
-            int count;
-            try
-            {
-                count = std::stoi(Utils::getEnv("RENDER_ENVS_COUNT"));
-            }
-            catch(const std::exception& e)
-            {
-                count = 1;
-            }
-
-            if (Utils::checkEnv("RENDER_ANALYTICS", "TRUE"))
-                std::cout << toStringDist({"VISITS", "POLICY", "VALUE", "MEAN"}, count) << std::endl;
-            else
-                std::cout << toString(count) << std::endl;
-        }
-
+        renderEnvsHelper();
         freeMemory();
     }
 }

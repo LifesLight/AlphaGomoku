@@ -589,9 +589,9 @@ std::string distribution(Node* current_node, const std::string& type)
             else
             {
                 if (!parent->state->getCellValue(x, y))
-                    cell << BlackStoneCol << " " << BlackStoneUni << " \033[0m";
+                    cell << Style::bsc() << Style::bsu() << "\033[0m";
                 else
-                    cell << WhiteStoneCol << " " << WhiteStoneUni << " \033[0m";
+                    cell << Style::wsc() << Style::wsu() << "\033[0m";
             }
             line.push_back(cell.str());
         }

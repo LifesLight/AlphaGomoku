@@ -59,14 +59,14 @@ public:
         std::stringstream output;
         std::string three_lines = "";
         for (int i = 0; i < 3; i++)
-            three_lines += Line0;
+            three_lines += Style::line0();
 
-        output << "   " << Cornor0;
+        output << "   " << Style::cornor0();
         for (int i = 0; i < BoardSize - 1; i++)
         {
-            output << three_lines << Cross0;
+            output << three_lines << Style::cross0();
         }
-        output << three_lines << Cornor1;
+        output << three_lines << Style::cornor1();
         output << std::endl;
 
         // Inner lines
@@ -77,32 +77,32 @@ public:
 
             for (int16_t x = 0; x < BoardSize; x++)
             {
-                output << Line1;
+                output << Style::line1();
                 output << field_values[x][y];
             }
-            output << Line1;
+            output << Style::line1();
             output << std::endl;
 
             // Row line
             if (y == 0)
                 continue;
 
-            output << "   " << Cross1;
+            output << "   " << Style::cross1();
             for (int i = 0; i < BoardSize - 1; i++)
             {
-                output << three_lines << Center;
+                output << three_lines << Style::center();
             }
-            output << three_lines << Cross2;
+            output << three_lines << Style::cross2();
             output << std::endl;
         }
 
         // Bottom line
-        output << "   " << Cornor2;
+        output << "   " << Style::cornor2();
         for (int i = 0; i < BoardSize - 1; i++)
         {
-            output << three_lines << Cross3;
+            output << three_lines << Style::cross3();
         }
-        output << three_lines << Cornor3;
+        output << three_lines << Style::cornor3();
         output << std::endl;
 
         output << "    ";
@@ -155,18 +155,16 @@ public:
                     line.push_back("   ");
                 else if (blackStones[x][y].item<bool>() == 1)
                 {
-                    value += BlackStoneCol;
-                    value += " ";
-                    value += BlackStoneUni;
-                    value += " \033[0m";
+                    value += Style::bsc();
+                    value += Style::bsu();
+                    value += "\033[0m";
                     line.push_back(value);
                 }
                 else if (whiteStones[x][y].item<bool>() == 1)
                 {
-                    value += WhiteStoneCol;
-                    value += " ";
-                    value += WhiteStoneUni;
-                    value += " \033[0m";
+                    value += Style::wsc();
+                    value += Style::wsu();
+                    value += "\033[0m";
                     line.push_back(value);
                 }
             }
