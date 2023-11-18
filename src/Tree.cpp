@@ -31,7 +31,7 @@ void Tree::updateCurrentNode(index_t action)
 
     // Put all other children in deletion queue and try to find matching child
     for (Node* child : current_node->children)
-        if (child->parent_action != action)
+        if (child->getParentAction() != action)
             deletion_queue.push_back(child);
         else
             chosen_child = child;
@@ -180,7 +180,7 @@ void Tree::clean()
         // Delete node from queue
         Utils::eraseFromVector(network_queue, garbage);
 
-        // Delete child pointer from children list and switch to frozen status
+        // Delete child pointer from children list
         garbage->parent->removeNodeFromChildren(garbage);
         delete garbage;
     }

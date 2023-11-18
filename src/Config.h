@@ -21,7 +21,6 @@
 #include <chrono>
 #include <condition_variable>
 
-
 /* These are the default values, can easily be overwritten by calling for changes in Config */
 
 // External data paths

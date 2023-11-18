@@ -53,6 +53,8 @@ int main(int argc, const char* argv[])
         batcher->makeRandomMoves(rand_moves, true);
         batcher->duelModels();
 
+        delete model_1;
+        delete model_2;
         delete batcher;
     }
 
@@ -88,6 +90,8 @@ int main(int argc, const char* argv[])
         batcher->makeRandomMoves(rand_moves, false);
         batcher->selfplay();
         batcher->storeData(Config::datapointPath());
+
+        delete model_1;
         delete batcher;
     }
 
@@ -116,6 +120,8 @@ int main(int argc, const char* argv[])
 
         Batcher* batcher = new Batcher(1, model_1);
         batcher->humanplay(human_color);
+
+        delete model_1;
         delete batcher;
     }
 

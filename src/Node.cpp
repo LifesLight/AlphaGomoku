@@ -1,7 +1,7 @@
  #include "Node.h"
 
-Node::Node(State* state, Node* parent, index_t parent_action)
-    : parent(parent), parent_action(parent_action), state(state), network_status(0)
+Node::Node(State* state, Node* parent)
+    : parent(parent), state(state), network_status(0)
 {
     temp_data = new NodeData();
     temp_data->untried_actions = state->getPossible();
@@ -10,7 +10,7 @@ Node::Node(State* state, Node* parent, index_t parent_action)
 }
 
 Node::Node(State* state)
-    : Node(state, nullptr, index_t(-1))
+    : Node(state, nullptr)
 {   }
 
 Node::Node()
@@ -111,6 +111,14 @@ std::vector<index_t>& Node::getUntriedActions()
     }
 }
 
+index_t Node::getParentAction()
+{
+    if (parent)
+        return state->last;
+    else
+        return index_t(-1);
+}
+
 #pragma endregion
 
 void Node::shrinkNode()
@@ -127,6 +135,7 @@ bool Node::isShrunk()
 void Node::removeNodeFromChildren(Node* node)
 {
     Utils::eraseFromVector(children, node);
+    children.shrink_to_fit();
 }
 
 bool Node::getNextColor()
@@ -137,7 +146,7 @@ bool Node::getNextColor()
 float Node::getNodesPolicyEval()
 {
     if (parent)
-        return parent->getPolicyValue(parent_action);
+        return parent->getPolicyValue(getParentAction());
     else
     {
         ForcePrintln("[Node][E]: Tried to get parent less nodes policy eval");
@@ -215,7 +224,7 @@ Node* Node::expand(index_t action)
 
     State* resulting_state = new State(state);
     resulting_state->makeMove(action);
-    Node* child = new Node(resulting_state, this, action);
+    Node* child = new Node(resulting_state, this);
 
     children.push_back(child);
     return child;
@@ -357,7 +366,7 @@ std::vector<index_t> Node::getMoveHistory()
     Node* node = this;
     while (node->parent)
     {
-        history.push_back(node->parent_action);
+        history.push_back(node->getParentAction());
         node = node->parent;
     }
     std::reverse(history.begin(), history.end());
@@ -406,7 +415,7 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
         }
         else
         {
-            move_history.push_back(running_node->parent_action);
+            move_history.push_back(running_node->getParentAction());
             running_node = running_node->parent;
         }
     }
@@ -572,7 +581,7 @@ std::string distribution(Node* current_node, const std::string& type)
                 {
                     index_t index;
                     Utils::cordsToIndex(index, x, y);
-                    if (child->parent_action == index)
+                    if (child->getParentAction() == index)
                     {
                         matched = true;
                         // If this child was the performed action color
@@ -648,7 +657,7 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
     while (running_node->parent)
     {
         uint8_t x, y;
-        Utils::indexToCords(running_node->parent_action, x, y);
+        Utils::indexToCords(running_node->getParentAction(), x, y);
         output << "[" << int(x) << "," << int(y) << "];";
         running_node = running_node->parent;
     }

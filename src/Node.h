@@ -27,7 +27,6 @@ class Node
 public:
     // Permanent Node data
     Node* parent;
-    index_t parent_action;
     State* state;
     std::vector<Node*> children;
 
@@ -53,7 +52,7 @@ public:
     void setModelOutput(torch::Tensor policy, torch::Tensor value);
 
     // Constructors
-    Node(State* state, Node* parent, index_t parent_action);
+    Node(State* state, Node* parent);
     Node(State* state);
     Node();
     ~Node();
@@ -81,6 +80,9 @@ public:
 
     // Still in active MCTS tree
     bool isShrunk();
+
+    // Get parent action by taking prev action from state
+    index_t getParentAction();
 
     // Has no untried actions left, if node is shrunk assume fully expanded
     bool isFullyExpanded();

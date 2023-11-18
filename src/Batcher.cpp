@@ -884,7 +884,7 @@ void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
     {
         Datapoint data;
         data.moves = node->getMoveHistory();
-        data.best_move = node->absBestChild()->parent_action;
+        data.best_move = node->absBestChild()->getParentAction();
         // Change to reflect if current play won
         if (winner == 2)
         {
