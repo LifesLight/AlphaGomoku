@@ -125,6 +125,7 @@ void Node::shrinkNode()
 {
     delete temp_data;
     temp_data = nullptr;
+    children.shrink_to_fit();
 }
 
 bool Node::isShrunk()

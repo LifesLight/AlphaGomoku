@@ -30,6 +30,9 @@ public:
     bool clearNetworkQueue();
     void forceClearNetworkQueue();
 
+    // Shrinks tree to minumum size, wont be able to expand anymore
+    void collapseTree();
+
     Node* getCurrentNode();
     Node* getParentNode();
 
@@ -46,5 +49,4 @@ private:
     std::vector<Node*> network_queue;
     Node* root_node;
     Node* current_node;
-    int node_count;
 };

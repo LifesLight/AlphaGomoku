@@ -18,15 +18,6 @@ Environment::~Environment()
             delete trees[i];
 }
 
-int Environment::getNodeCount()
-{
-    int sum = 0;
-    for (int i = 0; i < 2; i++)
-        if (trees[i] != nullptr)
-            sum += trees[i]->getNodeCount();
-    return sum;
-}
-
 bool Environment::makeMove(index_t index)
 {
     uint8_t x, y;
@@ -130,6 +121,13 @@ void Environment::forceClearNetworkQueue()
 Node* Environment::getCurrentNode()
 {
     return trees[next_color * (trees[1] != nullptr)]->getCurrentNode();
+}
+
+void Environment::collapseEnvironment()
+{
+    for (int i = 0; i < 2; i++)
+        if (trees[i] != nullptr)
+            trees[i]->collapseTree();
 }
 
 Node* Environment::getOpposingNode()

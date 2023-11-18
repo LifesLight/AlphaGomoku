@@ -27,7 +27,6 @@ public:
     // <-------------------->
 
     std::vector<Node*> getRootNodes();
-    int getNodeCount();
 
     // These are wrappers around tree, it just translates it to the env
     // This network queue has a tuple to with network it needs to be run on
@@ -46,6 +45,9 @@ public:
 
     bool isTerminal();
     bool getNextColor();
+
+    // Collapses all trees
+    void collapseEnvironment();
 
     // Default current
     Node* getCurrentNode();

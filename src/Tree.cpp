@@ -1,7 +1,6 @@
 #include "Tree.h"
 
 Tree::Tree()
-    : node_count(0)
 {
     root_node = new Node();
     network_queue.push_back(root_node);
@@ -49,7 +48,6 @@ void Tree::updateCurrentNode(index_t action)
     {
         // Expand to move index
         chosen_child = current_node->expand(action);
-        node_count++;
 
         // Push the new node into the network queue
         network_queue.push_back(chosen_child);
@@ -58,6 +56,25 @@ void Tree::updateCurrentNode(index_t action)
     if (current_node->parent)
         current_node->parent->shrinkNode();
     current_node = chosen_child;
+}
+
+void Tree::collapseTree()
+{
+    if (!current_node->isTerminal())
+        ForcePrintln("[Tree][W]: Collapsing non terminal tree!");
+
+    for (Node* child : current_node->children)
+    {
+        delete child;
+    }
+
+    current_node->children.clear();
+
+    // Shrink last remaining nodes
+    if (!current_node->isShrunk())
+        current_node->shrinkNode();
+    if (!current_node->parent->isShrunk())
+        current_node->parent->shrinkNode();
 }
 
 std::vector<Node*> Tree::getAllNodes()
@@ -71,11 +88,6 @@ std::vector<Node*> Tree::getAllNodes()
 Node* Tree::getRootNode()
 {
     return root_node;
-}
-
-int Tree::getNodeCount()
-{
-    return node_count;
 }
 
 bool Tree::makeMove(index_t index)
@@ -120,7 +132,6 @@ Node* Tree::policy()
         if (!current->isFullyExpanded())
         {
             Node* new_node = current->expand();
-            node_count++;
             network_queue.push_back(new_node);
             return new_node;
         }
