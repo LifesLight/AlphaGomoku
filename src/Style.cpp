@@ -53,6 +53,8 @@ std::string Style::bsu()
         case Stone::ANIMALS:
             return " 😾";
     }
+
+    return "BSU";
 }
 
 // White Stone
@@ -67,6 +69,8 @@ std::string Style::wsu()
         case Stone::ANIMALS:
             return " 🙈";
     }
+
+    return "WSU";
 }
 
 // Black Stone Color
@@ -81,6 +85,8 @@ std::string Style::bsc()
         case Stone::ANIMALS:
             return "\033[1;34m";
     }
+
+    return "";
 }
 
 // White Stone Color
@@ -95,6 +101,8 @@ std::string Style::wsc()
         case Stone::ANIMALS:
             return "\033[1;31m";
     }
+
+    return "";
 }
 
 // Grid drawing lines
@@ -109,6 +117,8 @@ std::string Style::cornor0()
         case Board::DOUBLE:
             return "╔";
     }
+
+    return "+";
 }
 std::string Style::cornor1()
 {
@@ -121,6 +131,8 @@ std::string Style::cornor1()
         case Board::DOUBLE:
             return "╗";
     }
+
+    return "+";
 }
 std::string Style::cornor2()
 {
@@ -133,6 +145,8 @@ std::string Style::cornor2()
         case Board::DOUBLE:
             return "╚";
     }
+
+    return "+";
 }
 std::string Style::cornor3()
 {
@@ -145,6 +159,8 @@ std::string Style::cornor3()
         case Board::DOUBLE:
             return "╝";
     }
+
+    return "+";
 }
 std::string Style::line0()
 {
@@ -157,6 +173,8 @@ std::string Style::line0()
         case Board::DOUBLE:
             return "═";
     }
+
+    return "-";
 }
 std::string Style::line1()
 {
@@ -169,6 +187,8 @@ std::string Style::line1()
         case Board::DOUBLE:
             return "║";
     }
+
+    return "|";
 }
 std::string Style::center()
 {
@@ -181,6 +201,8 @@ std::string Style::center()
         case Board::DOUBLE:
             return "╬";
     }
+
+    return "+";
 }
 std::string Style::cross0()
 {
@@ -193,6 +215,8 @@ std::string Style::cross0()
         case Board::DOUBLE:
             return "╦";
     }
+
+    return "+";
 }
 std::string Style::cross1()
 {
@@ -205,6 +229,8 @@ std::string Style::cross1()
         case Board::DOUBLE:
             return "╠";
     }
+
+    return "+";
 }
 std::string Style::cross2()
 {
@@ -217,6 +243,8 @@ std::string Style::cross2()
         case Board::DOUBLE:
             return "╣";
     }
+
+    return "+";
 }
 std::string Style::cross3()
 {
@@ -229,4 +257,6 @@ std::string Style::cross3()
         case Board::DOUBLE:
             return "╩";
     }
+
+    return "+";
 }

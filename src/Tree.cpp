@@ -90,8 +90,6 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
     index_t action;
     Utils::cordsToIndex(action, x, y);
 
-    State* current_state = current_node->state;
-
     // Check if move is legal
     if (!(
         (0 <= x && x < BoardSize) && 
