@@ -27,6 +27,12 @@ Node::~Node()
         delete child;
 }
 
+void Node::deleteState()
+{
+    delete state;
+    state = nullptr;
+}
+
 #pragma region DataInterface
 
 float Node::getValueHeadEval()
@@ -228,6 +234,11 @@ Node* Node::expand(index_t action)
     Node* child = new Node(resulting_state, this);
 
     children.push_back(child);
+
+    // One of the child nodes will survive purging so we still have a valid state
+    if (isFullyExpanded())
+        deleteState();
+
     return child;
 }
 
@@ -385,7 +396,7 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
     torch::NoGradGuard no_grad_guard;
 
     // Generate Tensor on CPU
-    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype);
+    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype).requires_grad(false);
 
     // Init main tensor
     torch::Tensor tensor = torch::zeros({Config::historyDepth() + 1, 15, 15}, default_tensor_options);

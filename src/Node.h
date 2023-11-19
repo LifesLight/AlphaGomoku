@@ -30,7 +30,13 @@ public:
     State* state;
     std::vector<Node*> children;
 
+private:
+    // Temporary Node data
+    NodeData* temp_data;
+
+public:
     // Interface to data struct
+
     // Original evaluation
     float getValueHeadEval();
     // Sum of backprob evals
@@ -39,14 +45,9 @@ public:
     uint32_t getVisits();
     // Get untried actions
     std::vector<index_t>& getUntriedActions();
-
-private:
-    // Temporary Node data
-    NodeData* temp_data;
-
-public:
     // Deletes temp data
     void shrinkNode();
+
 
     // Provide model output
     void setModelOutput(torch::Tensor policy, torch::Tensor value);
@@ -123,4 +124,7 @@ private:
     void backpropagate(float eval);
     // Figures out what to do with the valHeads output
     float valueProcessor(float normalized_value);
+    // Delete state when fully expanded, wont be needed since the "running state",
+    // gets propagated down in expand and its for sure save in one of the lower nodes
+    void deleteState();
 };

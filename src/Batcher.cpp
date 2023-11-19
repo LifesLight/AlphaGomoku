@@ -63,13 +63,13 @@ Batcher::~Batcher()
         delete env;
 
     // Call to threads to finish
-    for (int i = 0; i < gcp.size(); i++)
+    for (int i = 0; i < int(gcp.size()); i++)
     {
         gcp_data->running[i]->store(false);
         gcp_data->cv[i]->notify_one();
     }
 
-    for (int i = 0; i < sim.size(); i++)
+    for (int i = 0; i < int(sim.size()); i++)
     {
         sim_data->running[i]->store(false);
         sim_data->cv[i]->notify_one();
@@ -252,7 +252,7 @@ void Batcher::runNetwork()
         // Maybe models with different precs
         torch::ScalarType dtype = models[checked_model_index]->getPrec();
         torch::Device device = models[checked_model_index]->getDevice();
-        torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype);
+        torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype).requires_grad(false);
 
         int element_count = nodes[model_index].size();
         // Compute gamestates with multithreading
@@ -321,7 +321,7 @@ void Batcher::convertNodesToGamestates(torch::Tensor& target, std::vector<Node*>
     thread_count = std::min(thread_count, int(gcp.size()));
 
     // Init output tensor
-    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype);
+    torch::TensorOptions default_tensor_options = torch::TensorOptions().device(Config::torchHostDevice()).dtype(dtype).requires_grad(false);
     target = torch::empty({element_count, Config::historyDepth() + 1, BoardSize, BoardSize}, default_tensor_options);
 
     // Use single if possible
@@ -473,7 +473,7 @@ void Batcher::swapModels()
         std::cout << "[Batcher][I]: Swapping every second envs model" << std::endl;
 
     // Invert models on every second env
-    for (int i = 0; i < environments.size(); i += 2)
+    for (int i = 0; i < int(environments.size()); i += 2)
         environments[i]->swapModels();
 }
 
@@ -615,18 +615,18 @@ void Batcher::humanplay(bool human_color)
     }
 }
 
-Environment* Batcher::getEnvironment(uint32_t index)
+Environment* Batcher::getEnvironment(int index)
 {
-    if (index < environments.size())
+    if (index < int(environments.size()))
         return environments[index];
 
     std::cout << "Tried to get environment with out of bounds index" << std::endl;
     return nullptr;
 }
 
-Node* Batcher::getNode(uint32_t index)
+Node* Batcher::getNode(int index)
 {
-    if (index < environments.size())
+    if (index < int(environments.size()))
         return environments[index]->getCurrentNode();
 
     std::cout << "Tried to get node with out of bounds index" << std::endl;
@@ -670,7 +670,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
         for (int ii = 0; ii < amount; ii++)
         {
             // Itterate in steps of  2
-            for (int i = 0; i < non_terminal_environments.size(); i += 2)
+            for (int i = 0; i < int(non_terminal_environments.size()); i += 2)
             {
                 // Select random move for both envs
                 Environment* env1 = non_terminal_environments[i];
@@ -770,14 +770,14 @@ std::string Batcher::toString()
 std::string Batcher::toString(int max_envs)
 {
     // In case to many max_envs
-    if (max_envs > non_terminal_environments.size())
+    if (max_envs > int(non_terminal_environments.size()))
         max_envs = non_terminal_environments.size();
 
     std::stringstream output;
     for (int i = 0; i < max_envs; i++)
     {
         int real_id = 0;
-        for (int ii = 0; ii < environments.size(); ii++)
+        for (int ii = 0; ii < int(environments.size()); ii++)
         {
             if (environments[ii] == non_terminal_environments[i])
             {
@@ -798,7 +798,7 @@ std::string Batcher::toString(int max_envs)
     }
 
     // Show that not all envs are displayed
-    if (max_envs < environments.size())
+    if (max_envs < int(environments.size()))
     {
         if (non_terminal_environments.size() > 0)
             output << std::endl << "(" << std::max(int(non_terminal_environments.size()) - max_envs, 0) << "/" << environments.size() - max_envs << ") ...." << std::endl;
@@ -817,8 +817,8 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 std::string Batcher::toStringDist(const std::initializer_list<std::string> distributions, int amount)
 {
     // Clipping to non terminal environments so we dont render "dead" envs
-    if (amount > non_terminal_environments.size())
-        amount = non_terminal_environments.size();
+    if (amount > int(non_terminal_environments.size()))
+        amount = int(non_terminal_environments.size());
 
     std::stringstream output;
     for (int i = 0; i < amount; i++)
@@ -826,7 +826,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         Environment* env = non_terminal_environments[i];
 
         int real_id = 0;
-        for (int ii = 0; ii < environments.size(); ii++)
+        for (int ii = 0; ii < int(environments.size()); ii++)
         {
             if (environments[ii] == env)
             {

@@ -52,7 +52,7 @@ struct GCPData
         delete finished_mutex;
         delete finished_cv;
 
-        for (int i = 0; i < starts.size(); i++)
+        for (int i = 0; i < int(starts.size()); i++)
         {
             delete starts[i];
             delete ends[i];
@@ -99,7 +99,7 @@ struct SIMData
         delete finished_mutex;
         delete finished_cv;
 
-        for (int i = 0; i < starts.size(); i++)
+        for (int i = 0; i < int(starts.size()); i++)
         {
             delete starts[i];
             delete ends[i];
@@ -120,8 +120,8 @@ public:
     Batcher(int environments, Model* only_model);
     ~Batcher();
 
-    Environment* getEnvironment(uint32_t index);
-    Node* getNode(uint32_t index);
+    Environment* getEnvironment(int index);
+    Node* getNode(int index);
 
     // Are all environments terminal
     bool isTerminal();

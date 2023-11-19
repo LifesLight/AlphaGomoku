@@ -10,4 +10,4 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(AlphaGomoku src/Config.cpp src/Style.cpp src/Controller.cpp src/State.cpp src/Node.cpp src/Model.cpp src/Tree.cpp src/Environment.cpp src/Storage.cpp src/Batcher.cpp)
 target_link_libraries(AlphaGomoku "${TORCH_LIBRARIES}")
 
-set(CMAKE_CXX_FLAGS "-O3")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -pedantic")

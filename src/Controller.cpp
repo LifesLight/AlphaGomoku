@@ -3,6 +3,8 @@
 #include "Batcher.h"
 #include "Style.h"
 
+// TODO: Move state to TempData and change node to gamestate to create only from parent pointers
+
 int main(int argc, const char* argv[])
 {
     if (argc < 2)
