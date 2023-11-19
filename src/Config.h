@@ -61,7 +61,7 @@
 // Floating point precision for Inference
 #define TorchDefaultScalar torch::kFloat32
 // Higher is better if VRAM/RAM can handle
-#define MaxBatchsize 512
+#define MaxBatchsize 1024
 // -------------------------------
 
 

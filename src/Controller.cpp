@@ -5,14 +5,6 @@
 
 int main(int argc, const char* argv[])
 {
-    Style::setStone("default");
-    Style::setBoard("double");
-
-    Config::setTorchInferenceDevice(torch::kMPS);
-    Config::setTorchScalar(torch::kFloat16);
-    Config::setMaxBatchsize(2048);
-
-
     if (argc < 2)
     {
         std::cout << "[FATAL]: Missing arguments" << std::endl;

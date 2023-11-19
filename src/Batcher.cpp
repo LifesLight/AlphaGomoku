@@ -212,10 +212,12 @@ void Batcher::updateNonTerminal()
 {
     std::vector<Environment*> new_non_terminal;
     for (Environment* env : non_terminal_environments)
+    {
         if (!env->isTerminal())
             new_non_terminal.push_back(env);
         else
             env->collapseEnvironment();
+    }
 
     if (Utils::checkEnv("LOGGING", "INFO"))
         if (new_non_terminal.size() != non_terminal_environments.size())
