@@ -12,7 +12,6 @@ Is also managing multi threading since each environment is independent from ever
 */
 
 // Data for cross thread opperations
-#pragma region
 
 struct GCPData
 {
@@ -110,8 +109,6 @@ struct SIMData
         }
     }
 };
-#pragma endregion
-
 
 class Batcher
 {

@@ -33,8 +33,6 @@ void Node::deleteState()
     state = nullptr;
 }
 
-#pragma region DataInterface
-
 float Node::getValueHeadEval()
 {
     if (temp_data)
@@ -124,8 +122,6 @@ index_t Node::getParentAction()
     else
         return index_t(-1);
 }
-
-#pragma endregion
 
 void Node::shrinkNode()
 {
@@ -320,7 +316,6 @@ uint8_t Node::getResult()
 }
 
 // ------------ Value aggregation ------------
-#pragma region
 
 float Node::getMeanEvaluation()
 {
@@ -363,10 +358,7 @@ float Node::valueProcessor(float normalized_value)
     return normalized_value;
 }
 
-#pragma endregion
-
 // -------------- Utlility Code --------------
-#pragma region
 
 std::vector<index_t> Node::getMoveHistory()
 {
@@ -493,11 +485,8 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
     return tensor;
 }
 
-#pragma endregion
-
 // -------------- Analysis Code --------------
-#pragma region 
-
+ 
 std::string distribution_helper(Node* child, float max_value, const std::string& type, bool color_me)
 {
     std::ostringstream result;
@@ -693,5 +682,3 @@ std::string Node::sliceNodeHistory(Node* node, uint8_t depth)
     torch::Tensor tensor = nodeToGamestate(node);
     return Utils::sliceGamestate(tensor, depth);
 }
-
-#pragma endregion

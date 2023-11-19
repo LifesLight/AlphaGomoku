@@ -150,7 +150,7 @@ Model* Model::autoloadModel(std::string name, int simulations)
     std::string policy_path = general_path + "PolHead/" + name;
     std::string value_path = general_path + "ValHead/" + name;
 
-    Model* loaded_model;
+    Model* loaded_model = nullptr;
     try
     {
         loaded_model = new Model(resnet_path, policy_path, value_path, simulations, name);

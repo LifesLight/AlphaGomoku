@@ -134,7 +134,7 @@ Node* Environment::getOpposingNode()
 {
     if (trees[1] == nullptr) 
         return nullptr;
-    return trees[!(next_color * (trees[1] != nullptr))]->getCurrentNode();
+    return trees[!next_color]->getCurrentNode();
 }
 
 void Environment::freeMemory()

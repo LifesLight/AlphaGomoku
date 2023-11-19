@@ -43,10 +43,11 @@ public:
 private:
     torch::jit::script::Module load_module(std::string path);
 
+    std::string model_name;
+    int simulations;
+
     torch::Device device;
     torch::ScalarType dtype;
 
-    int simulations;
     torch::jit::script::Module resnet, polhead, valhead;
-    std::string model_name;
 };

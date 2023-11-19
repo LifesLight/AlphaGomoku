@@ -104,8 +104,8 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
 
     // Check if move is legal
     if (!(
-        (0 <= x && x < BoardSize) && 
-        (0 <= y && y < BoardSize)
+        (x < BoardSize) && 
+        (y < BoardSize)
         ))
     {
         ForcePrintln("[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")!");
