@@ -3,15 +3,15 @@
 State::State()
     : last(0), empty(BoardSize * BoardSize), result(2)
 {
-    memset(m_array, 0, sizeof(BLOCK) * BoardSize * 6);
-    memset(c_array, 0, sizeof(BLOCK) * BoardSize * 6);
+    memset(m_array, 0, sizeof(BLOCK) * BoardSize);
+    memset(c_array, 0, sizeof(BLOCK) * BoardSize);
 }
 
 State::State(State* source)
     : last(source->last), empty(source->empty), result(source->result)
 {
-    memcpy(m_array, source->m_array, sizeof(BLOCK) * BoardSize * 6);
-    memcpy(c_array, source->c_array, sizeof(BLOCK) * BoardSize * 6);
+    memcpy(m_array, source->m_array, sizeof(BLOCK) * BoardSize);
+    memcpy(c_array, source->c_array, sizeof(BLOCK) * BoardSize);
 }
 
 void State::makeMove(index_t index)
@@ -23,14 +23,9 @@ void State::makeMove(index_t index)
 
     // Horizontal
     m_array[y] |= (BLOCK(1) << x);
-    // Vertical
-    m_array[x + BoardSize] |= (BLOCK(1) << y);
-    // LDiagonal
-    m_array[x + BoardSize - 1 - y + BoardSize * 2] |= (BLOCK(1) << x);
-    // RDiagonal
-    m_array[BoardSize - 1 - x + BoardSize - 1 - y + BoardSize * 4] |= (BLOCK(1) << x);
+
     // Flip Colors
-    for (index_t i = 0; i < BoardSize * 6; i++) c_array[i] ^= m_array[i];
+    for (index_t i = 0; i < BoardSize; i++) c_array[i] ^= m_array[i];
 
     // Check for 5-Stone alignment
     result = checkForWin() ? empty % 2 : 2;
@@ -65,6 +60,11 @@ int8_t State::getCellValue(uint8_t x, uint8_t y)
     }
 
     return -1;
+}
+
+bool State::cellIsActiveColor(int x, int y)
+{
+    return (c_array[y] & (BLOCK(1) << x));
 }
 
 bool State::getNextColor()
@@ -138,36 +138,66 @@ bool State::checkForWin()
     uint8_t x, y;
     Utils::indexToCords(last, x, y);
 
-#if BoardSize < 16
-    uint64_t m = ((uint64_t)c_array[y] << 48)
-        + ((uint64_t)c_array[x + BoardSize] << 32)
-        + ((uint64_t)c_array[x + BoardSize - 1 - y + BoardSize * 2] << 16)
-        + ((uint64_t)c_array[BoardSize - 1 - x + BoardSize - 1 - y + BoardSize * 4]);
-
-    m &= (m >> uint64_t(1));
-    m &= (m >> uint64_t(2));
-    return (m & (m >> uint64_t(1)));
-#else
     //Horizontal
+    // This is still performant since it uses the original code for the check
     BLOCK m = c_array[y];
     m = m & (m >> BLOCK(1));
     m = (m & (m >> BLOCK(2)));
     if (m & (m >> BLOCK(1))) return true;
+
+    // We are no longer storing representations of all directions, so this will be slow
+
     //Vertical
-    m = c_array[x + BoardSize];
-    m = m & (m >> BLOCK(1));
-    m = (m & (m >> BLOCK(2)));
-    if (m & (m >> BLOCK(1))) return true;
-    //LDiagonal
-    m = c_array[x + BoardSize - 1 - y + BoardSize * 2];
-    m = m & (m >> BLOCK(1));
-    m = (m & (m >> BLOCK(2)));
-    if (m & (m >> BLOCK(1))) return true;
-    //RDiagonal
-    m = c_array[BoardSize - 1 - x + BoardSize - 1 - y + BoardSize * 4];
-    m = m & (m >> BLOCK(1));
-    m = (m & (m >> BLOCK(2)));
-    if (m & (m >> BLOCK(1))) return true;
+    int consecutive = 0;
+    for (int i = 0; i < BoardSize; i++)
+    {
+        if (cellIsActiveColor(x, i))
+        {
+            consecutive++;
+            if (consecutive == 5) return true;
+        }
+        else consecutive = 0;
+    }
+
+    //Diagonal
+    consecutive = 0;
+    int x1 = x, y1 = y;
+    while (x1 > 0 && y1 > 0)
+    {
+        x1--;
+        y1--;
+    }
+    while (x1 < BoardSize && y1 < BoardSize)
+    {
+        if (cellIsActiveColor(x1, y1))
+        {
+            consecutive++;
+            if (consecutive == 5) return true;
+        }
+        else consecutive = 0;
+        x1++;
+        y1++;
+    }
+
+    //Anti-Diagonal
+    consecutive = 0;
+    x1 = x, y1 = y;
+    while (x1 > 0 && y1 < BoardSize - 1)
+    {
+        x1--;
+        y1++;
+    }
+    while (x1 < BoardSize && y1 >= 0)
+    {
+        if (cellIsActiveColor(x1, y1))
+        {
+            consecutive++;
+            if (consecutive == 5) return true;
+        }
+        else consecutive = 0;
+        x1++;
+        y1--;
+    }
+
     return false;
-#endif
 }

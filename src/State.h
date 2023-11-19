@@ -5,18 +5,7 @@
 #include "Style.h"
 
 // Optimized Gomoku game state interface for MCTS
-
-/* Partitions :
------------------------------------------------------------
-1: Horizontal   2: Vertical     3: LDiagonal    4: RDiagonal
-xxxx            xxxo            oooo            oooo
-xoxx            xoxo            xooo            oooo
-xxoo            xxoo            xxoo            xooo
-oooo            xxoo            xooo            xxxo
-                                xxoo            xoxo
-                                xxoo            xxoo
-                                xooo            xooo
------------------------------------------------------------ */
+// This class is derived from my GomokuMCTS State class, but has been optimized for memory usage instead of speed
 
 #if BoardSize > 32
 typedef int64_t BLOCK;
@@ -39,9 +28,9 @@ class State
 {
 public:
     // Mask
-    BLOCK m_array[BoardSize * 6];
+    BLOCK m_array[BoardSize];
     // Color
-    BLOCK c_array[BoardSize * 6];
+    BLOCK c_array[BoardSize];
     // Last is last played move, empty is remaining empty fields
     index_t last, empty;
 
@@ -72,4 +61,5 @@ private:
     uint8_t result;
 
     bool checkForWin();
+    bool cellIsActiveColor(int x, int y);
 };

@@ -592,6 +592,7 @@ void Batcher::selfplay()
 void Batcher::humanplay(bool human_color)
 {
     runNetwork();
+    // TODO: Random bug with 1 sim and human winning
     while (!isTerminal())
     {
         if (environments[0]->getNextColor() == human_color)
