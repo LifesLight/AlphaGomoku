@@ -235,10 +235,6 @@ Node* Node::expand(index_t action)
 
     children.push_back(child);
 
-    // One of the child nodes will survive purging so we still have a valid state
-    if (isFullyExpanded())
-        deleteState();
-
     return child;
 }
 
