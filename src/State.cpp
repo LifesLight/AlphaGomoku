@@ -57,21 +57,11 @@ int8_t State::getCellValue(index_t index)
 
 int8_t State::getCellValue(uint8_t x, uint8_t y)
 {
-    if (empty % 2)
-    {
-        if (m_array[y] & (BLOCK(1) << x))
-        {
-            if (c_array[y] & (BLOCK(1) << x))
-                return 1;
-            return 0;
-        }
-    }
-
     if (m_array[y] & (BLOCK(1) << x))
     {
         if (c_array[y] & (BLOCK(1) << x))
-            return 0;
-        return 1;
+            return empty % 2;
+        return !(empty % 2);
     }
 
     return -1;
