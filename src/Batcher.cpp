@@ -427,7 +427,6 @@ void Batcher::runSimulationsOnEnvironments(std::vector<Environment*>* envs, int 
     }
 }
 
-// TODO make cuppled option
 void Batcher::runSimulations()
 {
     std::vector<Environment*> envsByModel[2];

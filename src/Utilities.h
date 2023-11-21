@@ -208,4 +208,27 @@ public:
             }
         }
     }
+
+    static std::map<std::string, std::string> parseArgv(int argc, const char* argv[])
+    {
+        std::map<std::string, std::string> args;
+
+        for (int i = 0; i < argc; i++)
+        {
+            std::string arg = argv[i];
+            if (arg.find("--") == std::string::npos)
+                continue;
+
+            std::string key = arg.substr(2);
+            std::string value = argv[i + 1];
+
+            // Make keys and values lowercase
+            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+
+            args[key] = value;
+        }
+
+        return args;
+    }
 };

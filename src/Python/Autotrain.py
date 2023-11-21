@@ -8,4 +8,4 @@ import sys
 # Get commandline params
 argv = sys.argv
 
-
+print(argv)
