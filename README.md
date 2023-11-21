@@ -130,6 +130,6 @@ For now just "freestyle" 5 in a row wins.<br>
 **RENDER_ENVS_COUNT:** How many environments should be rendered (for ↑↑)<br>
 
 ## Compatibility
-**Tested with Pytorch 2.1.0 on:**<br>
+**Tested with Pytorch 2.1.1 on:**<br>
 Ubuntu 22.04 - (CUDA.12.1)<br>
 MacOS 17.1 - (MPS)

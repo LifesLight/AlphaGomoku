@@ -38,9 +38,9 @@
 #define DefaultEnvironments 10
 
 // Algorithm Hyperparameters
-#define ExplorationBias 0.5
-#define PolicyBias 0.4
-#define ValueBias 1
+#define ExplorationBias 1
+#define PolicyBias 1
+#define ValueBias 2
 
 
 // ---- Performance Settings ----
@@ -61,7 +61,7 @@
 // Floating point precision for Inference
 #define TorchDefaultScalar torch::kFloat32
 // Higher is better if VRAM/RAM can handle
-#define MaxBatchsize 1024
+#define MaxBatchsize 2048
 // -------------------------------
 
 

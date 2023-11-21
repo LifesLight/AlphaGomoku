@@ -4,9 +4,17 @@
 #include "Style.h"
 
 // TODO: Move state to TempData and change node to gamestate to create only from parent pointers
+// BATCHER stuck on deconstruction?!
 
 int main(int argc, const char* argv[])
 {
+    Style::setBoard("double");
+
+    Config::setTorchInferenceDevice(torch::kCUDA);
+    Config::setTorchScalar(torch::kFloat16);
+    Config::setMaxBatchsize(16384);
+    Config::setMaxThreads(32);
+
     if (argc < 2)
     {
         std::cout << "[FATAL]: Missing arguments" << std::endl;

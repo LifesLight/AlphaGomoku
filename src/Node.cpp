@@ -138,6 +138,7 @@ bool Node::isShrunk()
 void Node::removeNodeFromChildren(Node* node)
 {
     Utils::eraseFromVector(children, node);
+    // Maybe obsolete ?
     children.shrink_to_fit();
 }
 
