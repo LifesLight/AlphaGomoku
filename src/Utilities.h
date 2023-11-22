@@ -188,7 +188,7 @@ public:
 
             if (pos == std::string::npos)
             {
-                ForcePrintln("[Utils][E]: Invalid input format for cord input! Usage: x,y");
+                Log::log(LogLevel::ERROR, "Invalid input format for cord input! Usage: x,y", "UTILITIES");
                 continue;
             }
 
@@ -204,7 +204,7 @@ public:
             }
             catch(const std::exception& e)
             {
-                ForcePrintln("[Utils][E]: Invalid input format for cord input! Usage: x,y");
+                Log::log(LogLevel::ERROR, "Invalid input format for cord input! Usage: x,y", "UTILITIES");
             }
         }
     }
