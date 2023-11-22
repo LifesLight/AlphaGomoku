@@ -476,20 +476,13 @@ void Batcher::swapModels()
         environments[i]->swapModels();
 }
 
-void Batcher::renderEnvsHelper()
+void Batcher::renderEnvsHelper(bool force_render)
 {
-    if (Utils::checkEnv("RENDER_ENVS", "TRUE"))
+    if (Config::renderEnvs() || force_render || Config::renderAnalytics())
     {
-        int count;
-        try
-        {
-            count = std::stoi(Utils::getEnv("RENDER_ENVS_COUNT"));
-        }
-        catch(const std::exception& e)
-        {
-            count = 1;
-        }
-        if (Utils::checkEnv("RENDER_ANALYTICS", "TRUE"))
+        int count = Config::renderEnvsCount();
+
+        if (Config::renderAnalytics())
             std::cout << toStringDist({"VISITS", "POLICY", "VALUE", "MEAN"}, count) << std::endl;
         else
             std::cout << toString(count) << std::endl;
@@ -503,7 +496,7 @@ void Batcher::runGameloop()
     {
         runSimulations();
         makeBestMoves();
-        renderEnvsHelper();
+        renderEnvsHelper(false);
         freeMemory();
     }
 }
@@ -609,7 +602,7 @@ void Batcher::humanplay(bool human_color)
             makeBestMoves();
         }
 
-        renderEnvsHelper();
+        renderEnvsHelper(true);
         freeMemory();
     }
 }

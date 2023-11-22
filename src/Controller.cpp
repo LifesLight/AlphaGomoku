@@ -10,10 +10,47 @@ int main(int argc, const char* argv[])
 {
     std::map<std::string, std::string> args = Utils::parseArgv(argc, argv);
 
+    // Check for help, will print out all possible arguments and refer to readme
+    if (args.find("help") != args.end() || args.find("?") != args.end())
+    {
+        ForcePrintln("Usage: ./AlphaGomoku [arguments]");
+        ForcePrintln("Arguments:");
+        ForcePrintln("  --help, -?                 Print this help message");
+        ForcePrintln("  --mode                     Mode to run the program in (duel, selfplay, human)");
+        ForcePrintln("  --model1                   Name of the model to use");
+        ForcePrintln("  --model2                   Name of the second model to use");
+        ForcePrintln("  --simulations              Number of simulations to run per move");
+        ForcePrintln("  --environments             Number of environments to run in parallel");
+        ForcePrintln("  --randmoves                Number of random moves to make before starting");
+        ForcePrintln("  --humancolor               Color of the human player (0 = black, 1 = white)");
+        ForcePrintln("  --stone                    Stone skin to use for rendering");
+        ForcePrintln("  --board                    Board skin to use for rendering");
+        ForcePrintln("  --renderenvs               Render the environments");
+        ForcePrintln("  --renderanalytics          Render the analytics");
+        ForcePrintln("  --renderenvscount          Number of environments to render");
+        ForcePrintln("  --datapath                 Path to store the data");
+        ForcePrintln("  --modelpath                Path to store the models");
+        ForcePrintln("  --device                   Device to use for inference (cpu, cuda, mps)");
+        ForcePrintln("  --scalar                   Scalar to use for inference (float16, float32)");
+        ForcePrintln("  --threads                  Number of threads to use for inference");
+        ForcePrintln("  --batchsize                Batchsize cap for inference");
+        ForcePrintln("  --policybias               Policy bias to use for MCTS");
+        ForcePrintln("  --valuebias                Value bias to use for MCTS");
+        ForcePrintln("  --explorationbias          Exploration bias to use for MCTS");
+        return 0;
+    }
+
     // Required
     std::string mode, model1_name;
     if (args.find("mode") != args.end())
+    {
         mode = args["mode"];
+        if (mode != "duel" && mode != "selfplay" && mode != "human")
+        {
+            ForcePrintln("[FATAL]: Invalid argument: mode needs to be duel, selfplay or human");
+            return 1;
+        }
+    }
     else
     {
         ForcePrintln("[FATAL]: Missing arguments: mode");
@@ -94,24 +131,82 @@ int main(int argc, const char* argv[])
         std::cerr << e.what() << '\n';
     }
 
+    try
+    {
+        if (args.find("batchsize") != args.end())
+            Config::setMaxBatchsize(std::stoi(args["batchsize"]));
+    }
+    catch(const std::exception& e)
+    {
+        ForcePrintln("[FATAL]: Invalid argument: batchsize needs to be a number");
+    }
+
+    try
+    {
+        if (args.find("policybias") != args.end())
+            Config::setPolicyBias(std::stof(args["policybias"]));
+    }
+    catch(const std::exception& e)
+    {
+        ForcePrintln("[FATAL]: Invalid argument: policybias needs to be a number");
+    }
+
+    try
+    {
+        if (args.find("valuebias") != args.end())
+            Config::setValueBias(std::stof(args["valuebias"]));
+    }
+    catch(const std::exception& e)
+    {
+        ForcePrintln("[FATAL]: Invalid argument: valuebias needs to be a number");
+    }
+
+    try
+    {
+        if (args.find("explorationbias") != args.end())
+            Config::setExplorationBias(std::stof(args["explorationbias"]));
+    }
+    catch(const std::exception& e)
+    {
+        ForcePrintln("[FATAL]: Invalid argument: explorationbias needs to be a number");
+    }
+
+    if (args.find("renderenvs") != args.end())
+    {
+        if (args["renderenvs"] == "true")
+            Config::setRenderEnvs(true);
+        else if (args["renderenvs"] == "false")
+            Config::setRenderEnvs(false);
+        else
+            ForcePrintln("[FATAL]: Invalid argument: renderenvs needs to be a boolean");
+    }
+
+    if (args.find("renderanalytics") != args.end())
+    {
+        if (args["renderanalytics"] == "true")
+            Config::setRenderAnalytics(true);
+        else if (args["renderanalytics"] == "false")
+            Config::setRenderAnalytics(false);
+        else
+            ForcePrintln("[FATAL]: Invalid argument: renderanalytics needs to be a boolean");
+    }
+
+    try
+    {
+        if (args.find("renderenvscount") != args.end())
+            Config::setRenderEnvsCount(std::stoi(args["renderenvscount"]));
+    }
+    catch(const std::exception& e)
+    {
+        ForcePrintln("[FATAL]: Invalid argument: renderenvscount needs to be a number");
+    }
+
+
     if (args.find("datapath") != args.end())
         Config::setDatapointPath(args["datapath"]);
 
     if (args.find("modelpath") != args.end())
         Config::setModelPath(args["modelpath"]);
-
-    if (args.find("scalar") != args.end())
-    {
-        std::string scalar = args["scalar"];
-        if (scalar == "float16")
-            Config::setTorchScalar(torch::kFloat16);
-        else if (scalar == "float32")
-            Config::setTorchScalar(torch::kFloat32);
-        else
-        {
-            ForcePrintln("[Warning]: Invalid argument: scalar needs to be float16 or float32 --> Falling back to default");
-        }
-    }
 
     if (args.find("device") != args.end())
     {
@@ -125,6 +220,25 @@ int main(int argc, const char* argv[])
         else
         {
             ForcePrintln("[Warning]: Invalid argument: device needs to be cpu, cuda or mps --> Falling back to default");
+        }
+    }
+
+    if (args.find("scalar") != args.end())
+    {
+        std::string scalar = args["scalar"];
+        if (scalar == "float16" || scalar == "half")
+            Config::setTorchScalar(torch::kFloat16);
+        else if (scalar == "float32" || scalar == "float" || scalar == "full")
+            Config::setTorchScalar(torch::kFloat32);
+        else
+        {
+            ForcePrintln("[Warning]: Invalid argument: scalar needs to be float16 or float32 --> Falling back to default");
+        }
+
+        if (Config::torchInferenceDevice() == torch::kCPU && Config::torchScalar() == torch::kFloat16)
+        {
+            ForcePrintln("[Warning]: Invalid argument: scalar needs to be float32 when using cpu --> Falling back to default");
+            Config::setTorchScalar(torch::kFloat32);
         }
     }
 

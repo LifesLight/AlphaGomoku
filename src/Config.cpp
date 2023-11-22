@@ -16,6 +16,9 @@ torch::Device Config::torch_host_device = TorchDefaultDevice;
 torch::Device Config::torch_inference_device = TorchInferenceDevice;
 torch::ScalarType Config::torch_scalar = TorchDefaultScalar;
 int Config::max_batchsize = MaxBatchsize;
+bool Config::render_envs = RenderEnvs;
+bool Config::render_analytics = RenderAnalytics;
+int Config::render_envs_count = RenderEnvsCount;
 
 std::string Config::modelPath()
 {
@@ -97,6 +100,21 @@ int Config::maxBatchsize()
     return max_batchsize;
 }
 
+bool Config::renderEnvs()
+{
+    return render_envs;
+}
+
+bool Config::renderAnalytics()
+{
+    return render_analytics;
+}
+
+int Config::renderEnvsCount()
+{
+    return render_envs_count;
+}
+
 void Config::setModelPath(std::string path)
 {
     model_path = path;
@@ -175,4 +193,19 @@ void Config::setTorchScalar(torch::ScalarType scalar)
 void Config::setMaxBatchsize(int batchsize)
 {
     max_batchsize = batchsize;
+}
+
+void Config::setRenderEnvs(bool render)
+{
+    render_envs = render;
+}
+
+void Config::setRenderAnalytics(bool render)
+{
+    render_analytics = render;
+}
+
+void Config::setRenderEnvsCount(int count)
+{
+    render_envs_count = count;
 }

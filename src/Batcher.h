@@ -178,7 +178,7 @@ private:
 
     // Play until batcher is terminal
     void runGameloop();
-    void renderEnvsHelper();
+    void renderEnvsHelper(bool force_render);
 
     std::vector<Environment*> environments;
     std::vector<Environment*> non_terminal_environments;

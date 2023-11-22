@@ -220,7 +220,7 @@ public:
                 continue;
 
             std::string key = arg.substr(2);
-            std::string value = argv[i + 1];
+            std::string value = (i + 1 < argc) ? argv[i + 1] : "default_value";
 
             // Make keys and values lowercase
             std::transform(key.begin(), key.end(), key.begin(), ::tolower);

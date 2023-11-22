@@ -125,9 +125,30 @@ For now just "freestyle" 5 in a row wins.<br>
 
 ## Environment Variables
 **LOGGING:**<br> INFO: Logs non verbose information<br>
-**RENDER_ENVS:** If TRUE render environments in autoplay loops (Like duel models)<br>
-**RENDER_ANALYTICS:** If TRUE render analytic information for each environment (requires ↑)<br>
-**RENDER_ENVS_COUNT:** How many environments should be rendered (for ↑↑)<br>
+
+## Parameters
+- help                    : Print help message
+- mode                    : Mode to run the program in (duel, selfplay, human)
+- model1                  : Name of the model to use"
+- model2                  : Name of the second model to use
+- simulations             : Number of simulations to run per move
+- environments            : Number of environments to run in parallel
+- randmoves               : Number of random moves to make before starting
+- humancolor              : Color of the human player (0 = black, 1 = white)
+- stone                   : Stone skin to use for rendering
+- board                   : Board skin to use for rendering
+- renderenvs              : Render the environments
+- renderanalytics         : Render the analytics
+- renderenvscount         : Number of environments to render
+- datapath                : Path to store the data
+- modelpath               : Path to store the models
+- device                  : Device to use for inference (cpu, cuda, mps)
+- scalar                  : Scalar to use for inference (float16, float32)
+- threads                 : Number of threads to use for inference
+- batchsize               : Batchsize cap for inference
+- policybias              : Policy bias to use for MCTS
+- valuebias               : Value bias to use for MCTS
+- explorationbias         : Exploration bias to use for MCTS
 
 ## Compatibility
 **Tested with Pytorch 2.1.1 on:**<br>

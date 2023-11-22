@@ -64,6 +64,9 @@
 #define MaxBatchsize 2048
 // -------------------------------
 
+#define RenderEnvs true
+#define RenderAnalytics false
+#define RenderEnvsCount 1
 
 /* These need to be pre compiler definitions, will need to recompile to change */
 
@@ -100,6 +103,9 @@ private:
     static torch::Device torch_inference_device;
     static torch::ScalarType torch_scalar;
     static int max_batchsize;
+    static bool render_envs;
+    static bool render_analytics;
+    static int render_envs_count;
 
 public:
     static std::string modelPath();
@@ -118,6 +124,9 @@ public:
     static torch::Device torchInferenceDevice();
     static torch::ScalarType torchScalar();
     static int maxBatchsize();
+    static bool renderEnvs();
+    static bool renderAnalytics();
+    static int renderEnvsCount();
 
     static void setModelPath(std::string path);
     static void setDatapointPath(std::string path);
@@ -135,4 +144,7 @@ public:
     static void setTorchInferenceDevice(torch::Device device);
     static void setTorchScalar(torch::ScalarType scalar);
     static void setMaxBatchsize(int batchsize);
+    static void setRenderEnvs(bool render);
+    static void setRenderAnalytics(bool render);
+    static void setRenderEnvsCount(int count);
 };
