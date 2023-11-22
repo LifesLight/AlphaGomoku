@@ -33,35 +33,37 @@ int main(int argc, const char* argv[])
     // Check for help, will print out all possible arguments and refer to readme
     if (args.find("help") != args.end() || args.find("?") != args.end())
     {
-        ForcePrintln("Usage: ./AlphaGomoku [arguments]");
-        ForcePrintln("Arguments:");
-        ForcePrintln("  --help, -?                 Print this help message");
-        ForcePrintln("  --mode                     Mode to run the program in (duel, selfplay, human)");
-        ForcePrintln("  --model1                   Name of the model to use");
-        ForcePrintln("  --model2                   Name of the second model to use");
-        ForcePrintln("  --simulations              Number of simulations to run per move");
-        ForcePrintln("  --environments             Number of environments to run in parallel");
-        ForcePrintln("  --randmoves                Number of random moves to make before starting");
-        ForcePrintln("  --humancolor               Color of the human player (0 = black, 1 = white)");
-        ForcePrintln("  --stone                    Stone skin to use for rendering");
-        ForcePrintln("  --board                    Board skin to use for rendering");
-        ForcePrintln("  --renderenvs               Render the environments");
-        ForcePrintln("  --renderanalytics          Render the analytics");
-        ForcePrintln("  --renderenvscount          Number of environments to render");
-        ForcePrintln("  --datapath                 Path to store the data");
-        ForcePrintln("  --modelpath                Path to store the models");
-        ForcePrintln("  --device                   Device to use for inference (cpu, cuda, mps)");
-        ForcePrintln("  --scalar                   Scalar to use for inference (float16, float32)");
-        ForcePrintln("  --threads                  Number of threads to use for inference");
-        ForcePrintln("  --batchsize                Batchsize cap for inference");
-        ForcePrintln("  --policybias               Policy bias to use for MCTS");
-        ForcePrintln("  --valuebias                Value bias to use for MCTS");
-        ForcePrintln("  --explorationbias          Exploration bias to use for MCTS");
+        std::cout 
+            << "Usage: ./AlphaGomoku [arguments]" << std::endl
+            << "Arguments:" << std::endl
+            << "  --help, -?                 Print this help message" << std::endl
+            << "  --mode                     Mode to run the program in (duel, selfplay, human)" << std::endl
+            << "  --model                    Name of the model to use (can be overwritten)" << std::endl
+            << "  --simulations              Number of simulations to run per move" << std::endl
+            << "  --environments             Number of environments to run in parallel" << std::endl
+            << "  --randmoves                Number of random moves to make before starting" << std::endl
+            << "  --humancolor               Color of the human player (0 = black, 1 = white)" << std::endl
+            << "  --stone                    Stone skin to use for rendering" << std::endl
+            << "  --board                    Board skin to use for rendering" << std::endl
+            << "  --renderenvs               Render the environments" << std::endl
+            << "  --renderanalytics          Render the analytics" << std::endl
+            << "  --renderenvscount          Number of environments to render" << std::endl
+            << "  --datapath                 Path to store the data" << std::endl
+            << "  --modelpath                Path to store the models" << std::endl
+            << "  --device                   Device to use for inference (cpu, cuda, mps)" << std::endl
+            << "  --scalar                   Scalar to use for inference (float16, float32)" << std::endl
+            << "  --threads                  Number of threads to use for inference" << std::endl
+            << "  --batchsize                Batchsize cap for inference" << std::endl
+            << "  --policybias               Policy bias to use for MCTS" << std::endl
+            << "  --valuebias                Value bias to use for MCTS" << std::endl
+            << "  --explorationbias          Exploration bias to use for MCTS" << std::endl
+            << "  --model1                   Name of the first model to use" << std::endl
+            << "  --model2                   Name of the second model to use" << std::endl;
         return 0;
     }
 
     // Required
-    std::string mode, model1_name;
+    std::string mode, model1_name = "!!UNDEFINED!!", model2_name = "!!UNDEFINED!!";
     if (args.find("mode") != args.end())
     {
         mode = args["mode"];
@@ -77,19 +79,29 @@ int main(int argc, const char* argv[])
         return 1;
     }
 
-    if (args.find("model1") != args.end())
+    if (args.find("model") != args.end())
+    {
+        model1_name = args["model"];
+        model2_name = args["model"];
+    }
+    else if (args.find("model1") != args.end())
+    {
         model1_name = args["model1"];
+    }
     else
     {
-        ForcePrintln("[FATAL]: Missing arguments: model1");
+        ForcePrintln("[FATAL]: Missing arguments: no model1");
         return 1;
     }
 
     // Optional
-    int simulations = DefaultSimulations, environments = DefaultEnvironments, randmoves = 0, humancolor = 0;
-    std::string model2_name = "!!UNDEFINED!!";
+    // Check if overwrite for models is requested
+    if (args.find("model1") != args.end())
+        model1_name = args["model1"];
     if (args.find("model2") != args.end())
         model2_name = args["model2"];
+
+    int simulations = DefaultSimulations, environments = DefaultEnvironments, randmoves = 0, humancolor = 0;
 
     if (args.find("stone") != args.end())
         Style::setStone(args["stone"]);

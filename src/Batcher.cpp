@@ -759,14 +759,17 @@ std::string Batcher::toString(int max_envs)
             }
         }
 
-        output << std::endl << std::endl << "        ᐊ";
-        for (int i = 0; i < BoardSize; i++)
-            output << "═";
-        output << "╡ Environment: " << real_id << " ╞"; 
+        if (max_envs > 1)
+        {
+            output << std::endl << std::endl << "        ᐊ";
+            for (int i = 0; i < BoardSize; i++)
+                output << "═";
+            output << "╡ Environment: " << real_id << " ╞";
+            for (int i = 0; i < BoardSize; i++)
+                output << "═";
+            output << "ᐅ" << std::endl << std::endl;
+        }
 
-        for (int i = 0; i < BoardSize; i++)
-            output << "═";
-        output << "ᐅ" << std::endl << std::endl;
         output << non_terminal_environments[i]->toString();
     }
 
@@ -811,13 +814,16 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         for (int i = 0; i < BoardSize; i++)
             output << "#-#-";
 
-        output << std::endl << "     ᐊ";
-        for (int i = 0; i < BoardSize; i++)
-            output << "═";
-        output << "╡ Environment: " << real_id << " ╞";
-        for (int i = 0; i < BoardSize; i++)
-            output << "═";
-        output << "ᐅ" << std::endl << std::endl << "   ";
+        if (amount > 1)
+        {
+            output << std::endl << std::endl << "        ᐊ";
+            for (int i = 0; i < BoardSize; i++)
+                output << "═";
+            output << "╡ Environment: " << real_id << " ╞";
+            for (int i = 0; i < BoardSize; i++)
+                output << "═";
+            output << "ᐅ" << std::endl << std::endl;
+        }
 
         for (int i = 0; i < BoardSize; i++)
             output << " ";

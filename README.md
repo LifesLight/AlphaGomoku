@@ -133,7 +133,8 @@ For now just "freestyle" 5 in a row wins.<br>
 ## Parameters
 - help                    : Print help message
 - mode                    : Mode to run the program in (duel, selfplay, human)
-- model1                  : Name of the model to use"
+- model                   : Name of the fallback model (if no specific ones are provided)
+- model1                  : Name of the first model to use
 - model2                  : Name of the second model to use
 - simulations             : Number of simulations to run per move
 - environments            : Number of environments to run in parallel
