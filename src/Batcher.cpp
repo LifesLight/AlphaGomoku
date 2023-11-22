@@ -23,8 +23,7 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     // Threading init
     init_threads();
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Created batcher with " << environment_count << " dual tree env(s)" << std::endl;
+    Log::log(LogLevel::INFO, "Created batcher with " + std::to_string(environment_count) + " dual tree env(s)", "BATCHER");
 }
 
 Batcher::Batcher(int environment_count, Model* only_model)
@@ -50,14 +49,12 @@ Batcher::Batcher(int environment_count, Model* only_model)
     // Threading init
     init_threads();
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Created batcher with " << environment_count << " single tree env(s)" << std::endl;
+    Log::log(LogLevel::INFO, "Created batcher with " + std::to_string(environment_count) + " single tree env(s)", "BATCHER");
 }
 
 Batcher::~Batcher()
 {
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        ForcePrint("[Batcher][I]: Started deconstructing batcher ... ");
+    Log::log(LogLevel::INFO, "Started deconstructing batcher", "BATCHER");
 
     for (Environment* env : environments)
         delete env;
@@ -86,8 +83,7 @@ Batcher::~Batcher()
     if (sim_data)
         delete sim_data;
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        ForcePrintln("finished");
+    Log::log(LogLevel::INFO, "Finished deconstructing batcher", "BATCHER");
 }
 
 void Batcher::init_threads()
@@ -162,8 +158,7 @@ void Batcher::start_gcp(int threads)
         gcp.push_back(worker);
     }
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Started " << threads << " GCP thread(s)" << std::endl;
+    Log::log(LogLevel::INFO, "Started " + std::to_string(threads) + " GCP thread(s)", "BATCHER");
 }
 
 void Batcher::start_sim(int threads)
@@ -176,8 +171,7 @@ void Batcher::start_sim(int threads)
         sim.push_back(worker);
     }
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Started " << threads << " SIM thread(s)" << std::endl;
+    Log::log(LogLevel::INFO, "Started " + std::to_string(threads) + " SIM thread(s)", "BATCHER");
 }
 
 bool Batcher::getNextModelIndex(Environment* env)
@@ -219,10 +213,8 @@ void Batcher::updateNonTerminal()
             env->collapseEnvironment();
     }
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        if (new_non_terminal.size() != non_terminal_environments.size())
-            std::cout << "[Batcher][I]: " << non_terminal_environments.size() - new_non_terminal.size() << 
-                            " env(s) turned terminal (" << new_non_terminal.size() << "/" << environments.size() << ")" <<  std::endl;
+    if (new_non_terminal.size() != non_terminal_environments.size())
+        Log::log(LogLevel::INFO, "Updated non terminal envs from " + std::to_string(non_terminal_environments.size()) + " to " + std::to_string(new_non_terminal.size()), "BATCHER");
 
     non_terminal_environments = new_non_terminal;
 }
@@ -305,7 +297,7 @@ void Batcher::runNetwork()
     {
         bool success = env->clearNetworkQueue();
         if (!success)
-            std::cout << "[Batcher][W]: Network queue could not be cleared (Nodes without Netdata remaining)" << std::endl;
+            Log::log(LogLevel::WARNING, "Network queue could not be cleared (Nodes without Netdata remaining)", "BATCHER");
     }
 }
 
@@ -434,21 +426,20 @@ void Batcher::runSimulations()
     for (Environment* env : non_terminal_environments)
         envsByModel[getNextModelIndex(env)].push_back(env);
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-    {
-        std::cout << "[Batcher][I]: Running simulation(s):" << std::endl;
-        if (models[0] != nullptr && envsByModel[0].size() != 0)
-            std::cout << "  " << models[0]->getName() << " on " << envsByModel[0].size() << " env(s)" << std::endl;
-        if (models[1] != nullptr && envsByModel[1].size() != 0)
-            std::cout << "  " << models[1]->getName() << " on " << envsByModel[1].size() << " env(s)" << std::endl;
-    }
+    Log::log(LogLevel::INFO, "Running simulation(s):", "BATCHER");
+    if (models[0] != nullptr && envsByModel[0].size() != 0)
+        Log::log(LogLevel::INFO, "  " + models[0]->getName() + " on " + std::to_string(envsByModel[0].size()) + " env(s)", "BATCHER");
+    if (models[1] != nullptr && envsByModel[1].size() != 0)
+        Log::log(LogLevel::INFO, "  " + models[1]->getName() + " on " + std::to_string(envsByModel[1].size()) + " env(s)", "BATCHER");
+
 
     for (int i = 0; i < 2; i++)
     {
         if (models[i] == nullptr)
         {
             if (envsByModel[i].size() != 0)
-                ForcePrintln("[Batcher][W]: Skipping simulation(s) for environment(s) in uncuppler");
+                Log::log(LogLevel::WARNING, "Skipping simulation(s) fo environment(s) in uncuppler", "BATCHER");
+
             continue;
         }
 
@@ -464,12 +455,11 @@ void Batcher::swapModels()
 {
     if (environments.size() % 2 != 0)
     {
-        ForcePrintln("[Batcher][E]: Tried to swap every second model with uneven environment count (" << environments.size() << ")");
+        Log::log(LogLevel::ERROR, "Tried to swap models with uneven environment count (" + std::to_string(environments.size()) + ")", "BATCHER");
         return;
     }
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Swapping every second envs model" << std::endl;
+    Log::log(LogLevel::INFO, "Swapping every second envs model", "BATCHER");
 
     // Invert models on every second env
     for (int i = 0; i < int(environments.size()); i += 2)
@@ -510,18 +500,17 @@ float Batcher::duelModels()
 {
     if (environments.size() % 2 != 0)
     {
-        ForcePrintln("[Batcher][E]: Tried to duel models with uneven environment count (" << environments.size() << ")");
+        Log::log(LogLevel::ERROR, "Tried to duel models with uneven environment count (" + std::to_string(environments.size()) + ")", "BATCHER");
         return 0;
     }
 
     if (isSingleTree())
     {
-        ForcePrintln("[Batcher][E]: Tried to duel models in single tree mode (Create batcher with 2 models to fix this)");
+        Log::log(LogLevel::ERROR, "Tried to duel models in single tree mode (Create batcher with 2 models to fix this)", "BATCHER");
         return 0;
     }
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Dueling models" << std::endl;
+    Log::log(LogLevel::INFO, "Dueling models", "BATCHER");
 
     // Run until terminal
     runGameloop();
@@ -556,29 +545,25 @@ float Batcher::duelModels()
 
     win_delta = float(model2_wins - model1_wins) / non_draws;
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-    {
-        std::cout << "[Batcher][I]: Duel models result:" << std::endl;
-        std::cout <<        "  Draws:       " << draws << std::endl;
-        std::cout <<        "  Model1 wins: " << model1_wins << " (" << models[0]->getName() << ")" << std::endl;
-        if (models[1] != nullptr)
-            std::cout <<    "  Model2 wins: " << model2_wins << " (" << models[1]->getName() << ")" << std::endl;
-        std::cout <<        "  Delta:       " << win_delta << " (-1 is Model1 wins)" << std::endl;
-    }
+    Log::log(LogLevel::INFO, "Duel models result:", "BATCHER");
+    Log::log(LogLevel::INFO, "  Draws:       " + std::to_string(draws), "BATCHER");
+    Log::log(LogLevel::INFO, "  Model1 wins: " + std::to_string(model1_wins) + " (" + models[0]->getName() + ")", "BATCHER");
+    if (models[1] != nullptr)
+        Log::log(LogLevel::INFO, "  Model2 wins: " + std::to_string(model2_wins) + " (" + models[1]->getName() + ")", "BATCHER");
+    Log::log(LogLevel::INFO, "  Delta:       " + std::to_string(win_delta) + " (-1 is Model1 wins)", "BATCHER");
+
 
     return win_delta;
 }
 
 void Batcher::selfplay()
 {
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Started selfplay" << std::endl;
+    Log::log(LogLevel::INFO, "Started selfplay", "BATCHER");
     // Run until terminal
     runGameloop();
 
     // Log outcome
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Selfplay result: " << averageWinner() << " average winning color" << std::endl;
+    Log::log(LogLevel::INFO, "Selfplay result: " + std::to_string(averageWinner()) + " average winning color", "BATCHER");
 }
 
 void Batcher::humanplay(bool human_color)
@@ -594,7 +579,7 @@ void Batcher::humanplay(bool human_color)
             if (environments[0]->makeMove(x, y))
                 runNetwork();
             else
-                ForcePrintln("[Batcher][E]: Failed to perfom move!");
+                Log::log(LogLevel::ERROR, "Failed to perfom move!", "BATCHER");
         }
         else
         {
@@ -612,7 +597,7 @@ Environment* Batcher::getEnvironment(int index)
     if (index < int(environments.size()))
         return environments[index];
 
-    std::cout << "Tried to get environment with out of bounds index" << std::endl;
+    Log::log(LogLevel::FATAL, "Tried to get environment with out of bounds index", "BATCHER");
     return nullptr;
 }
 
@@ -621,14 +606,13 @@ Node* Batcher::getNode(int index)
     if (index < int(environments.size()))
         return environments[index]->getCurrentNode();
 
-    std::cout << "Tried to get node with out of bounds index" << std::endl;
+    Log::log(LogLevel::FATAL, "Tried to get node with out of bounds index", "BATCHER");
     return nullptr;
 }
 
 void Batcher::freeMemory()
 {
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Freeing memory" << std::endl;
+    Log::log(LogLevel::INFO, "Freeing memory", "BATCHER");
 
     for (Environment* env : environments)
         env->freeMemory();
@@ -652,12 +636,11 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
     {
         if (environments.size() % 2 == 1)
         {
-            ForcePrintln("[Batcher][E]: Tried to make mirrored random moves with uneven env count");
+            Log::log(LogLevel::ERROR, "Tried to make mirrored random moves with uneven env count (" + std::to_string(environments.size()) + ")", "BATCHER");
             return;
         }
 
-        if (Utils::checkEnv("LOGGING", "INFO"))
-            std::cout << "[Batcher][I]: Making " << amount << " mirrored random moves" << std::endl;
+        Log::log(LogLevel::INFO, "Making " + std::to_string(amount) + " mirrored random moves", "BATCHER");
 
         for (int ii = 0; ii < amount; ii++)
         {
@@ -692,8 +675,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
     }
     else
     {
-        if (Utils::checkEnv("LOGGING", "INFO"))
-            std::cout << "[Batcher][I]: Making " << amount << " random moves" << std::endl;
+        Log::log(LogLevel::INFO, "Making " + std::to_string(amount) + " random moves", "BATCHER");
 
         for (int i = 0; i < amount; i++)
         {
@@ -726,7 +708,7 @@ float Batcher::averageWinner()
 {
     if (non_terminal_environments.size() != 0)
     {
-        std::cout << "[Batcher][W]: Got average winner before all environments finished playing" << std::endl;
+        Log::log(LogLevel::WARNING, "Got average winner before all environments finished playing", "BATCHER");
     }
 
     int total = environments.size() - non_terminal_environments.size();
@@ -748,8 +730,7 @@ float Batcher::averageWinner()
 
     delta = delta / total;
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Got average winner: " << delta << " (Black is negative)" << std::endl;
+    Log::log(LogLevel::INFO, "Got average winner: " + std::to_string(delta) + " (Black is negative)", "BATCHER");
 
     return delta;
 }
@@ -855,7 +836,6 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         Node* opposing_node = env->getOpposingNode();
         if (opposing_node)
         {
-            std::cout << "   ";
             for (int i = 0; i < BoardSize; i++)
                 output << " ";
             output << "ᐊ";
@@ -919,8 +899,7 @@ void Batcher::storeData(std::string Path)
     }
 
     Storage interface = Storage(Path);
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Batcher][I]: Storing " << datapoints.size() << " datapoints to: " << Path << std::endl;
+    Log::log(LogLevel::INFO, "Storing " + std::to_string(datapoints.size()) + " datapoints to: " + Path, "BATCHER");
 
     for (Datapoint data : datapoints)
         interface.storeDatapoint(data);

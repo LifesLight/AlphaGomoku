@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "Log.h"
 
 enum class Stone {DEFAULT, NUCLEAR, ANIMALS};
 enum class Board {DEFAULT, BOLD, DOUBLE};

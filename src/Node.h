@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "State.h"
 #include "Model.h"
+#include "Log.h"
 
 /*
 Node is a singular element in a Tree, it represents a unique board position.

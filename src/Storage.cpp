@@ -5,15 +5,14 @@ Storage::Storage(std::string path)
 {
     if (std::filesystem::exists(path))
     {
-        if (Utils::checkEnv("LOGGING", "INFO"))
-            std::cout << "[Storage][I]: Created interface to existing database: " << path << std::endl;
+        Log::log(LogLevel::INFO, "Created interface to existing database: " + path, "STORAGE");
         // We assume the file is already populated with the max amount of datapoints
         lines.reserve(MaxDatapoints);
 
         std::ifstream reader(path);
         if (!reader)
         {
-            ForcePrintln("[Storage][E]: Failed to open file for reading");
+            Log::log(LogLevel::ERROR, "Failed to open file for reading", "STORAGE");
             return;
         }
 
@@ -25,8 +24,7 @@ Storage::Storage(std::string path)
     }
     else
     {
-        if (Utils::checkEnv("LOGGING", "INFO"))
-            std::cout << "[Storage][I]: Created interface to new database: " << path << std::endl;
+        Log::log(LogLevel::INFO, "Created interface to new database: " + path, "STORAGE");
     }
 }
 
@@ -34,15 +32,14 @@ void Storage::applyChanges()
 {
     if (!change_made)
     {
-        if (Utils::checkEnv("LOGGING", "INFO"))
-            std::cout << "[Storage][I]: Skipped applying changes to file (no changes)" << std::endl;
+        Log::log(LogLevel::INFO, "Skipped applying changes to file (no changes)", "STORAGE");
         return;
     }
 
     std::ofstream output(file_path, std::ios::trunc);
 
     if (!output) {
-        std::cout << "[Storage][E]: Failed to open file for writing" << std::endl;
+        Log::log(LogLevel::ERROR, "Failed to open file for writing", "STORAGE");
         return;
     }
 
@@ -50,8 +47,7 @@ void Storage::applyChanges()
         output << line << '\n';
     }
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Storage][I]: Applied changes to file" << std::endl;
+    Log::log(LogLevel::INFO, "Applied changes to file", "STORAGE");
 
     output.close();
 }
@@ -120,7 +116,7 @@ void Storage::deleteDatapoint(int id)
         lines.erase(lines.begin() + id);
     }
     else
-        ForcePrintln("[Storage][W]: Tried to delete non existent datapoint");
+        Log::log(LogLevel::WARNING, "Tried to delete non existent datapoint", "STORAGE");
 }
 
 void Storage::storeDatapoint(Datapoint data)
@@ -133,7 +129,7 @@ Datapoint Storage::getDatapoint(int id)
 {
     if (id >= getDatapointCount())
     {
-        ForcePrintln("[Storage][W]: Tried to get non existent datapoint");
+        Log::log(LogLevel::ERROR, "Tried to get non existent datapoint", "STORAGE");
         return Datapoint();
     }
 
@@ -148,8 +144,7 @@ void Storage::constrain(int count)
     int lowest_index = getDatapointCount() - count;
     lines.erase(lines.begin(), lines.begin() + lowest_index);
 
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Storage][I]: Deleted " << lowest_index << " datapoints" << std::endl;
+    Log::log(LogLevel::INFO, "Deleted " + std::to_string(lowest_index) + " datapoints", "STORAGE");
 
     change_made = true;
 }

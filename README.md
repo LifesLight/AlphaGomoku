@@ -124,7 +124,11 @@ Tanh
 For now just "freestyle" 5 in a row wins.<br>
 
 ## Environment Variables
-**LOGGING:**<br> INFO: Logs non verbose information<br>
+**LOGGING:**
+- INFO: Logs non verbose information
+- WARNING: Logs warnings, usually not terminal
+- ERROR: Logs errors, can be terminal
+- FATAL: Logs terminal errors
 
 ## Parameters
 - help                    : Print help message

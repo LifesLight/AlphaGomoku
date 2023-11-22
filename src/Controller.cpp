@@ -2,12 +2,32 @@
 #include "Model.h"
 #include "Batcher.h"
 #include "Style.h"
+#include "Log.h"
 
 // TODO: Move state to TempData and change node to gamestate to create only from parent pointers
 // BATCHER stuck on deconstruction?!
 
 int main(int argc, const char* argv[])
 {
+    // Try to configure logging
+    if (Utils::getEnv("LOGGING") != "")
+    {
+        std::string log_level = Utils::getEnv("LOGGING");
+        if (log_level == "info")
+            Log::setLogLevel(LogLevel::INFO);
+        else if (log_level == "warning")
+            Log::setLogLevel(LogLevel::WARNING);
+        else if (log_level == "error")
+            Log::setLogLevel(LogLevel::ERROR);
+        else if (log_level == "fatal")
+            Log::setLogLevel(LogLevel::FATAL);
+        else
+        {
+            Log::log(LogLevel::WARNING, "Invalid LOGGING environment variable, falling back to default");
+            Log::setLogLevel(LogLevel::ERROR);
+        }
+    }
+
     std::map<std::string, std::string> args = Utils::parseArgv(argc, argv);
 
     // Check for help, will print out all possible arguments and refer to readme

@@ -39,7 +39,7 @@ float Node::getValueHeadEval()
         return temp_data->evaluation;
     else
     {
-        ForcePrintln("[Node][E]: Tried to get value head eval from shrunk node");
+        Log::log(LogLevel::ERROR, "Tried to get value head eval from shrunk node", "NODE");
         return 0;
     }
 }
@@ -50,7 +50,7 @@ float Node::getSummedEvaluation()
         return temp_data->summed_evaluation;
     else
     {
-        ForcePrintln("[Node][E]: Tried to get summed value from shrunk node");
+        Log::log(LogLevel::ERROR, "Tried to get summed value from shrunk node", "NODE");
         return 0;
     }
 }
@@ -61,7 +61,7 @@ uint32_t Node::getVisits()
         return temp_data->visits;
     else
     {
-        ForcePrintln("[Node][W]: Tried to get visits from shrunk node");
+        Log::log(LogLevel::ERROR, "Tried to get visits from shrunk node", "NODE");
         return 0;
     }
 }
@@ -77,13 +77,13 @@ float Node::getPolicyValue(index_t move)
         }
         else
         {
-            ForcePrintln("[Node][E]: Tried to get policy value form shrunk node");
+            Log::log(LogLevel::ERROR, "Tried to get policy value form shrunk node", "NODE");
             return 0;
         }
     }
     else
     {
-        ForcePrintln("[Node][E]: Tried to get policy value form node without net data");
+        Log::log(LogLevel::ERROR, "Tried to get policy value form node without net data", "NODE");
         return 0;
     }
 }
@@ -109,7 +109,7 @@ std::vector<index_t>& Node::getUntriedActions()
         return temp_data->untried_actions;
     else
     {
-        ForcePrintln("[Node][E]: Tried to get untried actions from shrunk node");
+        Log::log(LogLevel::ERROR, "Tried to get untried actions from shrunk node", "NODE");
         // Will crash but whatever
         return temp_data->untried_actions;
     }
@@ -153,7 +153,7 @@ float Node::getNodesPolicyEval()
         return parent->getPolicyValue(getParentAction());
     else
     {
-        ForcePrintln("[Node][E]: Tried to get parent less nodes policy eval");
+        Log::log(LogLevel::ERROR, "Tried to get parent-less nodes policy eval", "NODE");
         return 0.0f;
     }
 }
@@ -162,7 +162,7 @@ void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
 {
     if (temp_data == nullptr)
     {
-        ForcePrintln("[Node][E]: Tried to assign net data to shrunk node");
+        Log::log(LogLevel::ERROR, "Tried to assign net data to shrunk node", "NODE");
         return;
     }
     // Disable gradients for this scope
@@ -195,13 +195,13 @@ Node* Node::expand()
 {
     if (!network_status)
     {
-        ForcePrintln("Tried to auto expand node without policy data");
+        Log::log(LogLevel::ERROR, "Tried to auto expand node without policy data", "NODE");
         return nullptr;
     }
 
     if (!temp_data)
     {
-        ForcePrintln("Tried to auto expand shrunk node");
+        Log::log(LogLevel::ERROR, "Tried to auto expand shrunk node", "NODE");
         return nullptr;
     }
 
@@ -239,7 +239,7 @@ void Node::callBackpropagate()
 {
     if (!getNetworkStatus())
     {
-        ForcePrintln("[Node][W]: Tried to call Backpropagate on node without network data");
+        Log::log(LogLevel::ERROR, "Tried to call backpropagate on node without network data", "NODE");
         return;
     }
 
@@ -289,7 +289,7 @@ Node* Node::absBestChild()
     if (isShrunk())
     {
         if (children.size() > 1)
-            ForcePrintln("[Node][W]: Got abs best child from shrunk node, which had more then one child");
+            Log::log(LogLevel::WARNING, "Got abs best child from shrunk node, which had more then one child", "NODE");
         return children.front();
     }
 
@@ -322,7 +322,7 @@ float Node::getMeanEvaluation()
 {
     if (getVisits() == 0)
     {
-        ForcePrintln("[Node][W]: Tried to get meanEvaluation from node with 0 visits?");
+        Log::log(LogLevel::WARNING, "Tried to get meanEvaluation from node with 0 visits", "NODE");
         return 0;
     }
 

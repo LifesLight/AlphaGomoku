@@ -65,7 +65,7 @@ bool Environment::makeBestMove()
     if (node)
         return makeMove(node->getParentAction());
 
-    std::cout << "[Env][E]: Get absBestChild failed in makeBestMove" << std::endl;
+    Log::log(LogLevel::WARNING, "Get absBestChild failed in makeBestMove", "ENVIRONMENT");
     return false;
 }
 

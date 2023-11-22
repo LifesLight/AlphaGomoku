@@ -32,7 +32,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     }
     catch (const c10::Error& e)
     {
-        std::cout << "[Model][E]: Could not load resnet from:" << std::endl << resnet_path << std::endl;
+        Log::log(LogLevel::FATAL, "Could not load resnet from: " + resnet_path, "MODEL");
     }
 
     // Load polhead
@@ -42,7 +42,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     }
     catch (const c10::Error& e)
     {
-        std::cout << "[Model][E]: Could not load policyhead from:" << std::endl << polhead_path << std::endl;
+        Log::log(LogLevel::FATAL, "Could not load policyhead from: " + polhead_path, "MODEL");
     }
 
     // Load valhead
@@ -52,7 +52,7 @@ Model::Model(std::string resnet_path, std::string polhead_path, std::string valh
     }
     catch (const c10::Error& e)
     {
-        std::cout << "[Model][E]: Could not load valuehead from:" << std::endl << valhead_path << std::endl;
+        Log::log(LogLevel::FATAL, "Could not load valuehead from: " + valhead_path, "MODEL");
     }
 }
 
@@ -142,8 +142,7 @@ Model* Model::autoloadModel(std::string name)
 
 Model* Model::autoloadModel(std::string name, int simulations)
 {
-    if (Utils::checkEnv("LOGGING", "INFO"))
-        std::cout << "[Model][I]: Autoloading: " << name << std::endl;
+    Log::log(LogLevel::INFO, "Autoloading: " + name, "MODEL");
 
     std::string general_path = Config::modelPath();
     std::string resnet_path = general_path + "ResNet/" + name;
@@ -157,7 +156,7 @@ Model* Model::autoloadModel(std::string name, int simulations)
     }
     catch(const std::exception& e)
     {
-        std::cerr << "[Model][E]: Failed to autoload Model" << '\n' << e.what() << '\n';
+        Log::log(LogLevel::ERROR, "Failed to autoload Model", "MODEL");
     }
     return loaded_model;
 }

@@ -4,6 +4,7 @@
 #include "Node.h"
 #include "Datapoint.h"
 #include "Storage.h"
+#include "Log.h"
 
 /*
 Host class for the entire selfplay.

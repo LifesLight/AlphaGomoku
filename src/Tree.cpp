@@ -38,8 +38,7 @@ void Tree::updateCurrentNode(index_t action)
     // We check for if node exists first, if it does the field will be alloctated
     if (!current_state->isCellEmpty(x, y) && chosen_child == nullptr)
     {
-        std::cout << "[Tree][E]: Error in update current child, missmatch between empty cell and child: (" << int(x) << "," << int(y) << ") on:" << std::endl;
-        ForcePrintln(current_state->toString());
+        Log::log(LogLevel::ERROR, "Error in update current child, missmatch between empty cell and child: (" + std::to_string(x) + "," + std::to_string(y) + ")", "TREE");
         return;
     }
 
@@ -61,7 +60,7 @@ void Tree::updateCurrentNode(index_t action)
 void Tree::collapseTree()
 {
     if (!current_node->isTerminal())
-        ForcePrintln("[Tree][W]: Collapsing non terminal tree!");
+        Log::log(LogLevel::WARNING, "Collapsing non terminal tree!", "TREE");
 
     for (Node* child : current_node->children)
     {
@@ -108,14 +107,14 @@ bool Tree::makeMove(uint8_t x, uint8_t y)
         (y < BoardSize)
         ))
     {
-        ForcePrintln("[Tree][W]: Tried to perform illegal move (Cords out of bounds " << int(x) << "," << int(y) << ")!");
+        Log::log(LogLevel::WARNING, "Tried to perform illegal move (Cords out of bounds " + std::to_string(x) + "," + std::to_string(y) + ")", "TREE");
         return false;
     }
 
     // Check if field is empty
     if (!current_node->state->isCellEmpty(x, y))
     {
-        ForcePrintln("[Tree][W]: Tried to perform illegal move (Cell " << int(x) << "," << int(y) << " already allocated)!");
+        Log::log(LogLevel::WARNING, "Tried to perform illegal move (Cell " + std::to_string(x) + "," + std::to_string(y) + " already allocated)", "TREE");
         return false;
     }
 
@@ -180,7 +179,7 @@ Node* Tree::getCurrentNode()
 Node* Tree::getParentNode()
 {
     if (current_node->parent == nullptr)
-        ForcePrintln("[Tree][W]: Got non existent parent");
+        Log::log(LogLevel::FATAL, "Got non existent parent", "TREE");
     return current_node->parent;
 }
 

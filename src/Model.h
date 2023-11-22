@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "Utilities.h"
+#include "Log.h"
 
 /*
 Wrapper around a pytorch multi module model.

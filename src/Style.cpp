@@ -25,7 +25,7 @@ void Style::setStone(std::string stone)
     }
     else
     {
-        std::cout << "[Style][W]: Tried to assign unknown Stone skin, falling back to default" << std::endl;
+        Log::log(LogLevel::WARNING, "Tried to assign unknown Stone skin, falling back to default", "STYLE");
     }
 }
 
@@ -37,7 +37,7 @@ void Style::setBoard(std::string board)
     }
     else
     {
-        std::cout << "[Style][W]: Tried to assign unknown Board skin, falling back to default" << std::endl;
+        Log::log(LogLevel::WARNING, "Tried to assign unknown Board skin, falling back to default", "STYLE");
     }
 }
 
