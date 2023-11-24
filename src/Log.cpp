@@ -12,6 +12,21 @@ LogLevel Log::getLogLevel()
     return log_level;
 }
 
+std::string Log::getLogLevelStr()
+{
+    switch (log_level)
+    {
+    case LogLevel::INFO:
+        return "INFO";
+    case LogLevel::WARNING:
+        return "WARNING";
+    case LogLevel::ERROR:
+        return "ERROR";
+    case LogLevel::FATAL:
+        return "FATAL";
+    }
+}
+
 void Log::log(LogLevel level, const std::string& message)
 {
     log(level, message, "");

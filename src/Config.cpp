@@ -19,6 +19,12 @@ int Config::max_batchsize = MaxBatchsize;
 bool Config::render_envs = RenderEnvs;
 bool Config::render_analytics = RenderAnalytics;
 int Config::render_envs_count = RenderEnvsCount;
+std::string Config::build_version = "unspecified";
+
+std::string Config::version()
+{
+    return build_version;
+}
 
 std::string Config::modelPath()
 {
@@ -208,4 +214,9 @@ void Config::setRenderAnalytics(bool render)
 void Config::setRenderEnvsCount(int count)
 {
     render_envs_count = count;
+}
+
+void Config::setVersion(std::string version)
+{
+    Config::build_version = version;
 }

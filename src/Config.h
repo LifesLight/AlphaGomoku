@@ -89,6 +89,7 @@ class Config
 private:
     static std::string model_path;
     static std::string datapoint_path;
+    static std::string build_version;
     static int history_depth;
     static int max_datapoints;
     static int default_simulations;
@@ -127,6 +128,7 @@ public:
     static bool renderEnvs();
     static bool renderAnalytics();
     static int renderEnvsCount();
+    static std::string version();
 
     static void setModelPath(std::string path);
     static void setDatapointPath(std::string path);
@@ -147,4 +149,5 @@ public:
     static void setRenderEnvs(bool render);
     static void setRenderAnalytics(bool render);
     static void setRenderEnvsCount(int count);
+    static void setVersion(std::string version);
 };

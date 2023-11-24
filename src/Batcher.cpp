@@ -570,6 +570,8 @@ void Batcher::humanplay(bool human_color)
 {
     runNetwork();
     // TODO: Random bug with 1 sim and human winning
+    std::cout << toString() << std::endl;
+
     while (!isTerminal())
     {
         if (environments[0]->getNextColor() == human_color)
@@ -813,10 +815,11 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
 
         for (int i = 0; i < BoardSize; i++)
             output << "#-#-";
+        output << std::endl << std::endl;
 
         if (amount > 1)
         {
-            output << std::endl << std::endl << "        ᐊ";
+            std::cout << "        ᐊ";
             for (int i = 0; i < BoardSize; i++)
                 output << "═";
             output << "╡ Environment: " << real_id << " ╞";

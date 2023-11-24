@@ -18,6 +18,7 @@ public:
 
     static void setLogLevel(LogLevel level);
     static LogLevel getLogLevel();
+    static std::string getLogLevelStr();
 
 private:
     static LogLevel log_level;

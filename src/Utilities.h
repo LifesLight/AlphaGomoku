@@ -204,7 +204,7 @@ public:
             }
             catch(const std::exception& e)
             {
-                Log::log(LogLevel::ERROR, "Invalid input format for cord input! Usage: x,y", "UTILITIES");
+                Log::log(LogLevel::ERROR, "Invalid format for cord input! Usage: x,y", "UTILITIES");
             }
         }
     }

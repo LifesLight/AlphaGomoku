@@ -7,10 +7,38 @@
 // TODO: Move state to TempData and change node to gamestate to create only from parent pointers
 // BATCHER stuck on deconstruction?!
 
+std::vector<std::string> valid_args = {
+    "help",
+    "mode",
+    "model",
+    "simulations",
+    "environments",
+    "randmoves",
+    "humancolor",
+    "stone",
+    "board",
+    "renderenvs",
+    "renderanalytics",
+    "renderenvscount",
+    "datapath",
+    "modelpath",
+    "device",
+    "scalar",
+    "threads",
+    "batchsize",
+    "policybias",
+    "valuebias",
+    "explorationbias",
+    "model1",
+    "model2"
+};
+
 int main(int argc, const char* argv[])
 {
+    Config::setVersion("pre-alpha");
+
     // Try to configure logging
-    if (Utils::getEnv("LOGGING") != "")
+    if (Utils::getEnv("LOGGING") != "NONE")
     {
         std::string log_level = Utils::getEnv("LOGGING");
         if (log_level == "info")
@@ -27,6 +55,8 @@ int main(int argc, const char* argv[])
             Log::setLogLevel(LogLevel::ERROR);
         }
     }
+
+    std::cout << "#### AlphaGomoku v." << Config::version() << " © Alexander Kurtz 2023 ####" << std::endl;
 
     std::map<std::string, std::string> args = Utils::parseArgv(argc, argv);
 
@@ -60,6 +90,13 @@ int main(int argc, const char* argv[])
             << "  --model1                   Name of the first model to use" << std::endl
             << "  --model2                   Name of the second model to use" << std::endl;
         return 0;
+    }
+
+    // Warn about invalid arguments
+    for (auto const& [key, value] : args)
+    {
+        if (std::find(valid_args.begin(), valid_args.end(), key) == valid_args.end())
+            Log::log(LogLevel::WARNING, "Invalid argument: " + key);
     }
 
     // Required
@@ -103,7 +140,10 @@ int main(int argc, const char* argv[])
 
     int simulations = DefaultSimulations, environments = DefaultEnvironments, randmoves = 0, humancolor = 0;
 
-    if (args.find("stone") != args.end())
+    // Kind of confusing naming otherwise :)
+    if (args.find("stones") != args.end())
+        Style::setStone(args["stones"]);
+    else if (args.find("stone") != args.end())
         Style::setStone(args["stone"]);
 
     if (args.find("board") != args.end())
