@@ -1,4 +1,12 @@
-# Self learning Gomoku AI (PREVIEW)
+# Self learning Gomoku AI
+
+## Patchnotes
+Initial early alpha release.<br>
+Still missing essential features but C++ engine is mostly functional!<br>
+
+TODO: 
+- Rewrite Python codebase: Goal selfplay / selftrain loop
+- Implement RIF ruleset in both Python and C++
 
 ## Basics
 **In Gomoku black starts.** In code:<br>
@@ -126,29 +134,31 @@ The AlphaGomoku executable can be called with 1 of 3 modes:<br>
 - FATAL: Logs terminal errors
 
 ## Parameters
-- help                    : Print help message
-- [mode](#rules)          : Mode to run the program in (duel, selfplay, human)
-- model                   : Name of the fallback model (if no specific ones are provided)
-- model1                  : Name of the first model to use
-- model2                  : Name of the second model to use
-- simulations             : Number of simulations to run per move
-- environments            : Number of environments to run in parallel
-- randmoves               : Number of random moves to make before starting
-- humancolor              : Color of the human player (0 = black, 1 = white)
-- stone                   : Stone skin to use for rendering
-- board                   : Board skin to use for rendering
-- renderenvs              : Render the environments
-- renderanalytics         : Render the analytics
-- renderenvscount         : Number of environments to render
-- datapath                : Path to store the data
-- modelpath               : Path to store the models
-- device                  : Device to use for inference (cpu, cuda, mps)
-- scalar                  : Scalar to use for inference (float16, float32)
-- threads                 : Number of threads to use for inference
-- batchsize               : Batchsize cap for inference
-- policybias              : Policy bias to use for MCTS
-- valuebias               : Value bias to use for MCTS
-- explorationbias         : Exploration bias to use for MCTS
+- help                    : Print help message.
+- [mode](#rules)          : Mode to run the program in (duel, selfplay, human).
+- *model*                 : Name of the model.
+- *simulations*           : Number of simulations to run per move.
+- environments            : Number of environments to run in parallel.
+- randmoves               : Number of random moves to make before starting.
+- humancolor              : Color of the human player (0 = black, 1 = white).
+- stones                  : Stone skin to use for rendering.
+- board                   : Board skin to use for rendering.
+- renderenvs              : Render the environments.
+- renderanalytics         : Render the analytics.
+- renderenvscount         : Number of environments to render.
+- datapath                : Path to store the data.
+- modelpath               : Path to store the models.
+- *device*                : Device to use for inference (cpu, cuda, mps).
+- *scalar*                : Scalar to use for inference (float16, float32).
+- threads                 : Number of threads to use for batching.
+- batchsize               : Batchsize cap for inference.
+- policybias              : Policy bias to use for MCTS.
+- valuebias               : Value bias to use for MCTS.
+- explorationbias         : Exploration bias to use for MCTS.
+- modelpath               : Where models are stored.
+- datapath                : Where datapoints are stored.
+
+*Italic* args can pe specified per model like: --device1 [model1 device] --device2 [model2 device].
 
 ## Compatibility
 **Tested with Pytorch 2.1.1 on:**<br>

@@ -11,34 +11,32 @@ std::vector<std::string> valid_args = {
     "help",
     "mode",
     "model",
+    "model1",
+    "model2",
     "simulations",
     "simulations1",
     "simulations2",
+    "device",
+    "device1",
+    "device2",
+    "scalar",
+    "scalar1",
+    "scalar2",
     "environments",
     "randmoves",
     "humancolor",
-    "stone",
+    "stones",
     "board",
     "renderenvs",
     "renderanalytics",
     "renderenvscount",
     "datapath",
     "modelpath",
-    "device",
-    "scalar",
     "threads",
     "batchsize",
     "policybias",
     "valuebias",
     "explorationbias",
-    "model1",
-    "model2",
-    "simulations1",
-    "simulations2",
-    "device1",
-    "device2",
-    "scalar1",
-    "scalar2",
     "gcptarget",
     "simtarget",
 };
@@ -70,9 +68,9 @@ bool checkForHelp(const std::map<std::string, std::string> args)
         std::cout << "Usage: ./AlphaGomoku [arguments]" << std::endl;
         // Print out all possible arguments
         std::cout << "Arguments:" << std::endl;
-        for (auto const& [key, value] : args)
+        for (std::string possible : valid_args)
         {
-            std::cout << key << std::endl;
+            std::cout << "--" << possible << std::endl;
         }
         return true;
     }
@@ -187,8 +185,6 @@ void applyStyleArgs(std::map<std::string, std::string>& args)
 {
     if (args.find("stones") != args.end())
         Style::setStone(args["stones"]);
-    else if (args.find("stone") != args.end())
-        Style::setStone(args["stone"]);
 
     if (args.find("board") != args.end())
         Style::setBoard(args["board"]);
@@ -310,7 +306,8 @@ bool runDuel(Model* model_1, Model* model_2)
 
     Batcher* batcher = new Batcher(Config::environmentCount(), model_1, model_2);
     batcher->swapModels();
-    batcher->makeRandomMoves(Config::randMoves(), true);
+    if (Config::randMoves() > 0)
+        batcher->makeRandomMoves(Config::randMoves(), true);
     batcher->duelModels();
 
     delete model_1;
@@ -327,7 +324,8 @@ bool runSelfplay(Model* model_1)
         return 1;
     }
     Batcher* batcher = new Batcher(Config::environmentCount(), model_1);
-    batcher->makeRandomMoves(Config::randMoves(), false);
+    if (Config::randMoves() > 0)
+        batcher->makeRandomMoves(Config::randMoves(), false);
     batcher->selfplay();
     batcher->storeData(Config::datapointPath());
 
@@ -344,6 +342,8 @@ bool runHumanplay(Model* model_1)
         return 1;
     }
     Batcher* batcher = new Batcher(1, model_1);
+    if (Config::randMoves() > 0)
+        batcher->makeRandomMoves(Config::randMoves(), false);
     batcher->humanplay(Config::humanColor());
 
     delete model_1;
@@ -368,7 +368,7 @@ bool runMode(std::string mode, Model* model_1, Model* model_2)
 
 int main(int argc, const char* argv[])
 {
-    Config::setVersion("pre-alpha");
+    Config::setVersion("0.1.0");
     printInfo();
     setupLogLevel();
 
