@@ -25,6 +25,8 @@ std::string Log::getLogLevelStr()
     case LogLevel::FATAL:
         return "FATAL";
     }
+
+    return "ERR";
 }
 
 void Log::log(LogLevel level, const std::string& message)

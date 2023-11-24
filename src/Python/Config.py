@@ -4,3 +4,4 @@ class Config:
     NN_RESNETLAYERS = 10
     HISTORYDEPTH = 8
     DEVICE = 'mps'
+    MODEL_PATH = '../../Models/Human/'

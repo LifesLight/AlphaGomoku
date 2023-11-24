@@ -93,7 +93,6 @@ private:
     static int history_depth;
     static int max_datapoints;
     static int default_simulations;
-    static int default_environments;
     static float exploration_bias;
     static float policy_bias;
     static float value_bias;
@@ -107,6 +106,9 @@ private:
     static bool render_envs;
     static bool render_analytics;
     static int render_envs_count;
+    static int randmoves;
+    static bool human_color;
+    static int environment_count;
 
 public:
     static std::string modelPath();
@@ -114,7 +116,6 @@ public:
     static int historyDepth();
     static int maxDatapoints();
     static int defaultSimulations();
-    static int defaultEnvironments();
     static float explorationBias();
     static float policyBias();
     static float valueBias();
@@ -129,13 +130,15 @@ public:
     static bool renderAnalytics();
     static int renderEnvsCount();
     static std::string version();
+    static int randMoves();
+    static bool humanColor();
+    static int environmentCount();
 
     static void setModelPath(std::string path);
     static void setDatapointPath(std::string path);
     static void setHistoryDepth(int depth);
     static void setMaxDatapoints(int datapoints);
     static void setDefaultSimulations(int sims);
-    static void setDefaultEnvironments(int envs);
     static void setExplorationBias(float bias);
     static void setPolicyBias(float bias);
     static void setValueBias(float bias);
@@ -150,4 +153,7 @@ public:
     static void setRenderAnalytics(bool render);
     static void setRenderEnvsCount(int count);
     static void setVersion(std::string version);
+    static void setRandMoves(int moves);
+    static void setHumanColor(bool color);
+    static void setEnvironmentCount(int count);
 };

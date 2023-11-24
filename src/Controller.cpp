@@ -12,6 +12,8 @@ std::vector<std::string> valid_args = {
     "mode",
     "model",
     "simulations",
+    "simulations1",
+    "simulations2",
     "environments",
     "randmoves",
     "humancolor",
@@ -30,14 +32,55 @@ std::vector<std::string> valid_args = {
     "valuebias",
     "explorationbias",
     "model1",
-    "model2"
+    "model2",
+    "simulations1",
+    "simulations2",
+    "device1",
+    "device2",
+    "scalar1",
+    "scalar2",
+    "gcptarget",
+    "simtarget",
 };
 
-int main(int argc, const char* argv[])
-{
-    Config::setVersion("pre-alpha");
+std::map<std::string, torch::Device> device_map = {
+    {"cpu", torch::kCPU},
+    {"cuda", torch::kCUDA},
+    {"mps", torch::kMPS}
+};
 
-    // Try to configure logging
+std::map<std::string, torch::ScalarType> scalar_map = {
+    {"float16", torch::kFloat16},
+    {"half", torch::kFloat16},
+    {"float32", torch::kFloat32},
+    {"float", torch::kFloat32},
+    {"full", torch::kFloat32}
+};
+
+void printInfo()
+{
+    std::cout << "#### AlphaGomoku v." << Config::version() << " © Alexander Kurtz 2023 ####" << std::endl;
+}
+
+// Returns if help was called
+bool checkForHelp(const std::map<std::string, std::string> args)
+{
+    if (args.find("help") != args.end() || args.find("?") != args.end())
+    {
+        std::cout << "Usage: ./AlphaGomoku [arguments]" << std::endl;
+        // Print out all possible arguments
+        std::cout << "Arguments:" << std::endl;
+        for (auto const& [key, value] : args)
+        {
+            std::cout << key << std::endl;
+        }
+        return true;
+    }
+    return false;
+}
+
+void setupLogLevel()
+{
     if (Utils::getEnv("LOGGING") != "NONE")
     {
         std::string log_level = Utils::getEnv("LOGGING");
@@ -55,66 +98,115 @@ int main(int argc, const char* argv[])
             Log::setLogLevel(LogLevel::ERROR);
         }
     }
+}
 
-    std::cout << "#### AlphaGomoku v." << Config::version() << " © Alexander Kurtz 2023 ####" << std::endl;
-
-    std::map<std::string, std::string> args = Utils::parseArgv(argc, argv);
-
-    // Check for help, will print out all possible arguments and refer to readme
-    if (args.find("help") != args.end() || args.find("?") != args.end())
+void applyConfigArgs(std::map<std::string, std::string>& args)
+{
+    try
     {
-        std::cout 
-            << "Usage: ./AlphaGomoku [arguments]" << std::endl
-            << "Arguments:" << std::endl
-            << "  --help, -?                 Print this help message" << std::endl
-            << "  --mode                     Mode to run the program in (duel, selfplay, human)" << std::endl
-            << "  --model                    Name of the model to use (can be overwritten)" << std::endl
-            << "  --simulations              Number of simulations to run per move" << std::endl
-            << "  --environments             Number of environments to run in parallel" << std::endl
-            << "  --randmoves                Number of random moves to make before starting" << std::endl
-            << "  --humancolor               Color of the human player (0 = black, 1 = white)" << std::endl
-            << "  --stone                    Stone skin to use for rendering" << std::endl
-            << "  --board                    Board skin to use for rendering" << std::endl
-            << "  --renderenvs               Render the environments" << std::endl
-            << "  --renderanalytics          Render the analytics" << std::endl
-            << "  --renderenvscount          Number of environments to render" << std::endl
-            << "  --datapath                 Path to store the data" << std::endl
-            << "  --modelpath                Path to store the models" << std::endl
-            << "  --device                   Device to use for inference (cpu, cuda, mps)" << std::endl
-            << "  --scalar                   Scalar to use for inference (float16, float32)" << std::endl
-            << "  --threads                  Number of threads to use for inference" << std::endl
-            << "  --batchsize                Batchsize cap for inference" << std::endl
-            << "  --policybias               Policy bias to use for MCTS" << std::endl
-            << "  --valuebias                Value bias to use for MCTS" << std::endl
-            << "  --explorationbias          Exploration bias to use for MCTS" << std::endl
-            << "  --model1                   Name of the first model to use" << std::endl
-            << "  --model2                   Name of the second model to use" << std::endl;
-        return 0;
+        if (args.find("simulations") != args.end())
+            Config::setDefaultSimulations(std::stoi(args["simulations"]));
+        if (args.find("device") != args.end())
+        {
+            auto it = device_map.find(args["device"]);
+            if (it != device_map.end())
+            {
+                Config::setTorchInferenceDevice(it->second);
+            }
+            else
+            {
+                Log::log(LogLevel::WARNING, "Invalid argument: device needs to be cpu, cuda or mps");
+            }
+        }
+        if (args.find("scalar") != args.end())
+        {
+            if (scalar_map.find(args["scalar"]) != scalar_map.end())
+                Config::setTorchScalar(scalar_map[args["scalar"]]);
+            else
+                Log::log(LogLevel::WARNING, "Invalid argument: scalar needs to be float16 or float32");
+        }
+        if (args.find("randmoves") != args.end())
+            Config::setRandMoves(std::stoi(args["randmoves"]));
+        if (args.find("humancolor") != args.end())
+        {
+            if (args["humancolor"] == "black" || args["humancolor"] == "0")
+                Config::setHumanColor(0);
+            else if (args["humancolor"] == "white" || args["humancolor"] == "1")
+                Config::setHumanColor(1);
+            else
+                Log::log(LogLevel::WARNING, "Invalid argument: humancolor needs to be black or white");
+        }
+        if (args.find("environments") != args.end())
+            Config::setEnvironmentCount(std::stoi(args["environments"]));
+        if (args.find("datapath") != args.end())
+            Config::setDatapointPath(args["datapath"]);
+        if (args.find("modelpath") != args.end())
+            Config::setModelPath(args["modelpath"]);
+        if (args.find("gcptarget") != args.end())
+            Config::setGamestatesPerThread(std::stoi(args["gcptarget"]));
+        if (args.find("simtarget") != args.end())
+            Config::setSimsPerThread(std::stoi(args["simtarget"]));
+        if (args.find("policybias") != args.end())
+            Config::setPolicyBias(std::stof(args["policybias"]));
+        if (args.find("valuebias") != args.end())
+            Config::setValueBias(std::stof(args["valuebias"]));
+        if (args.find("explorationbias") != args.end())
+            Config::setExplorationBias(std::stof(args["explorationbias"]));
+        if (args.find("threads") != args.end())
+            Config::setMaxThreads(std::stoi(args["threads"]));
+        if (args.find("batchsize") != args.end())
+            Config::setMaxBatchsize(std::stoi(args["batchsize"]));
+        if (args.find("renderenvs") != args.end())
+        {
+            if (args["renderenvs"] == "true")
+                Config::setRenderEnvs(true);
+            else if (args["renderenvs"] == "false")
+                Config::setRenderEnvs(false);
+            else
+                Log::log(LogLevel::WARNING, "Invalid argument: renderenvs needs to be a boolean");
+        }
+        if (args.find("renderanalytics") != args.end())
+        {
+            if (args["renderanalytics"] == "true")
+                Config::setRenderAnalytics(true);
+            else if (args["renderanalytics"] == "false")
+                Config::setRenderAnalytics(false);
+            else
+                Log::log(LogLevel::WARNING, "Invalid argument: renderanalytics needs to be a boolean");
+        }
+        if (args.find("renderenvscount") != args.end())
+            Config::setRenderEnvsCount(std::stoi(args["renderenvscount"]));
     }
+    catch(const std::exception& e)
+    {
+        Log::log(LogLevel::WARNING, "Invalid argument format: " + std::string(e.what()));
+    }
+}
 
-    // Warn about invalid arguments
+void applyStyleArgs(std::map<std::string, std::string>& args)
+{
+    if (args.find("stones") != args.end())
+        Style::setStone(args["stones"]);
+    else if (args.find("stone") != args.end())
+        Style::setStone(args["stone"]);
+
+    if (args.find("board") != args.end())
+        Style::setBoard(args["board"]);
+}
+
+void warnInvalidArgs(std::map<std::string, std::string>& args)
+{
     for (auto const& [key, value] : args)
     {
         if (std::find(valid_args.begin(), valid_args.end(), key) == valid_args.end())
             Log::log(LogLevel::WARNING, "Invalid argument: " + key);
     }
+}
 
-    // Required
-    std::string mode, model1_name = "!!UNDEFINED!!", model2_name = "!!UNDEFINED!!";
-    if (args.find("mode") != args.end())
-    {
-        mode = args["mode"];
-        if (mode != "duel" && mode != "selfplay" && mode != "human")
-        {
-            ForcePrintln("[FATAL]: Invalid argument: mode needs to be duel, selfplay or human");
-            return 1;
-        }
-    }
-    else
-    {
-        ForcePrintln("[FATAL]: Missing arguments: mode");
-        return 1;
-    }
+std::tuple<Model*, Model*> configModels(std::map<std::string, std::string>& args)
+{
+    std::string model1_name = "!!UNDEFINED!!";
+    std::string model2_name = "!!UNDEFINED!!";
 
     if (args.find("model") != args.end())
     {
@@ -125,248 +217,180 @@ int main(int argc, const char* argv[])
     {
         model1_name = args["model1"];
     }
+
+    if (args.find("model2") != args.end())
+    {
+        model2_name = args["model2"];
+    }
+
+    Model* model_1 = nullptr;
+    Model* model_2 = nullptr;
+
+    if (model1_name != "!!UNDEFINED!!")
+        model_1 = Model::autoloadModel(model1_name);
+
+    if (model2_name != "!!UNDEFINED!!")
+        model_2 = Model::autoloadModel(model2_name);
+
+    // Configure Models
+    if (model_1 != nullptr)
+    {
+        try
+        {
+            if (args.find("simulations1") != args.end())
+                model_1->setSimulations(std::stoi(args["simulations1"]));
+            if (args.find("device1") != args.end())
+            {
+                auto it = device_map.find(args["device1"]);
+                if (it != device_map.end())
+                {
+                    model_1->setDevice(it->second);
+                }
+                else
+                {
+                    Log::log(LogLevel::WARNING, "Invalid argument in model1 config: device1 needs to be cpu, cuda or mps");
+                }
+            }
+            if (args.find("scalar1") != args.end())
+            {
+                if (scalar_map.find(args["scalar1"]) != scalar_map.end())
+                    model_1->setPrec(scalar_map[args["scalar1"]]);
+                else
+                    Log::log(LogLevel::WARNING, "Invalid argument in model1 config: scalar1 needs to be float16 or float32");
+            }
+        }
+        catch(const std::exception& e)
+        {
+            Log::log(LogLevel::WARNING, "Invalid argument in model1 config: " + std::string(e.what()));
+        }
+    }
+
+    if (model_2 != nullptr)
+    {
+        try
+        {
+            if (args.find("simulations2") != args.end())
+                model_2->setSimulations(std::stoi(args["simulations2"]));
+            if (args.find("device2") != args.end())
+            {
+                auto it = device_map.find(args["device2"]);
+                if (it != device_map.end())
+                {
+                    model_2->setDevice(it->second);
+                }
+                else
+                {
+                    Log::log(LogLevel::WARNING, "Invalid argument in model2 config: device2 needs to be cpu, cuda or mps");
+                }
+            }
+            if (args.find("scalar2") != args.end())
+            {
+                if (scalar_map.find(args["scalar2"]) != scalar_map.end())
+                    model_2->setPrec(scalar_map[args["scalar2"]]);
+                else
+                    Log::log(LogLevel::WARNING, "Invalid argument in model2 config: scalar2 needs to be float16 or float32");
+            }
+        }
+        catch(const std::exception& e)
+        {
+            Log::log(LogLevel::WARNING, "Invalid argument in model2 config: " + std::string(e.what()));
+        }
+    }
+
+    return std::make_tuple(model_1, model_2);
+}
+
+bool runDuel(Model* model_1, Model* model_2)
+{
+    if (model_1 == nullptr || model_2 == nullptr)
+    {
+        Log::log(LogLevel::FATAL, "Missing argument: duel needs two models");
+        return 1;
+    }
+
+    Batcher* batcher = new Batcher(Config::environmentCount(), model_1, model_2);
+    batcher->swapModels();
+    batcher->makeRandomMoves(Config::randMoves(), true);
+    batcher->duelModels();
+
+    delete model_1;
+    delete model_2;
+    delete batcher;
+    return 0;
+}
+
+bool runSelfplay(Model* model_1)
+{
+    if (model_1 == nullptr)
+    {
+        Log::log(LogLevel::FATAL, "Missing argument: selfplay needs a model");
+        return 1;
+    }
+    Batcher* batcher = new Batcher(Config::environmentCount(), model_1);
+    batcher->makeRandomMoves(Config::randMoves(), false);
+    batcher->selfplay();
+    batcher->storeData(Config::datapointPath());
+
+    delete model_1;
+    delete batcher;
+    return 0;
+}
+
+bool runHumanplay(Model* model_1)
+{
+    if (model_1 == nullptr)
+    {
+        Log::log(LogLevel::FATAL, "Missing argument: humanplay needs a model");
+        return 1;
+    }
+    Batcher* batcher = new Batcher(1, model_1);
+    batcher->humanplay(Config::humanColor());
+
+    delete model_1;
+    delete batcher;
+    return 0;
+}
+
+bool runMode(std::string mode, Model* model_1, Model* model_2)
+{
+    if (mode == "duel")
+        return runDuel(model_1, model_2);
+    else if (mode == "selfplay")
+        return runSelfplay(model_1);
+    else if (mode == "human")
+        return runHumanplay(model_1);
     else
     {
-        ForcePrintln("[FATAL]: Missing arguments: no model1");
+        Log::log(LogLevel::FATAL, "Invalid argument: mode needs to be duel, selfplay or human");
+        return 1;
+    }
+}
+
+int main(int argc, const char* argv[])
+{
+    Config::setVersion("pre-alpha");
+    printInfo();
+    setupLogLevel();
+
+    std::map<std::string, std::string> args = Utils::parseArgv(argc, argv);
+    if (checkForHelp(args))
+        return 0;
+
+    applyConfigArgs(args);
+    applyStyleArgs(args);
+    warnInvalidArgs(args);
+
+    Model* model_1 = nullptr;
+    Model* model_2 = nullptr;
+    std::tuple<Model*, Model*> models = configModels(args);
+    model_1 = std::get<0>(models);
+    model_2 = std::get<1>(models);
+
+    if (args.find("mode") == std::end(args))
+    {
+        Log::log(LogLevel::FATAL, "Missing argument: mode");
         return 1;
     }
 
-    // Optional
-    // Check if overwrite for models is requested
-    if (args.find("model1") != args.end())
-        model1_name = args["model1"];
-    if (args.find("model2") != args.end())
-        model2_name = args["model2"];
-
-    int simulations = DefaultSimulations, environments = DefaultEnvironments, randmoves = 0, humancolor = 0;
-
-    // Kind of confusing naming otherwise :)
-    if (args.find("stones") != args.end())
-        Style::setStone(args["stones"]);
-    else if (args.find("stone") != args.end())
-        Style::setStone(args["stone"]);
-
-    if (args.find("board") != args.end())
-        Style::setBoard(args["board"]);
-
-    try 
-    {
-        if (args.find("simulations") != args.end())
-            simulations = std::stoi(args["simulations"]);
-    }
-    catch (const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: simulations needs to be a number");
-        return 1;
-    }
-
-    try
-    {
-        if (args.find("environments") != args.end())
-            environments = std::stoi(args["environments"]);
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: environments needs to be a number");
-        return 1;
-    }
-
-    try
-    {
-        if (args.find("randmoves") != args.end())
-            randmoves = std::stoi(args["randmoves"]);
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: randmoves needs to be a number");
-        return 1;
-    }
-
-    try
-    {
-        if (args.find("humancolor") != args.end())
-            humancolor = std::stoi(args["humancolor"]);
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: humancolor needs to be a number");
-        return 1;
-    }
-
-    try
-    {
-        if (args.find("threads") != args.end())
-            Config::setMaxThreads(std::stoi(args["threads"]));
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-
-    try
-    {
-        if (args.find("batchsize") != args.end())
-            Config::setMaxBatchsize(std::stoi(args["batchsize"]));
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: batchsize needs to be a number");
-    }
-
-    try
-    {
-        if (args.find("policybias") != args.end())
-            Config::setPolicyBias(std::stof(args["policybias"]));
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: policybias needs to be a number");
-    }
-
-    try
-    {
-        if (args.find("valuebias") != args.end())
-            Config::setValueBias(std::stof(args["valuebias"]));
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: valuebias needs to be a number");
-    }
-
-    try
-    {
-        if (args.find("explorationbias") != args.end())
-            Config::setExplorationBias(std::stof(args["explorationbias"]));
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: explorationbias needs to be a number");
-    }
-
-    if (args.find("renderenvs") != args.end())
-    {
-        if (args["renderenvs"] == "true")
-            Config::setRenderEnvs(true);
-        else if (args["renderenvs"] == "false")
-            Config::setRenderEnvs(false);
-        else
-            ForcePrintln("[FATAL]: Invalid argument: renderenvs needs to be a boolean");
-    }
-
-    if (args.find("renderanalytics") != args.end())
-    {
-        if (args["renderanalytics"] == "true")
-            Config::setRenderAnalytics(true);
-        else if (args["renderanalytics"] == "false")
-            Config::setRenderAnalytics(false);
-        else
-            ForcePrintln("[FATAL]: Invalid argument: renderanalytics needs to be a boolean");
-    }
-
-    try
-    {
-        if (args.find("renderenvscount") != args.end())
-            Config::setRenderEnvsCount(std::stoi(args["renderenvscount"]));
-    }
-    catch(const std::exception& e)
-    {
-        ForcePrintln("[FATAL]: Invalid argument: renderenvscount needs to be a number");
-    }
-
-
-    if (args.find("datapath") != args.end())
-        Config::setDatapointPath(args["datapath"]);
-
-    if (args.find("modelpath") != args.end())
-        Config::setModelPath(args["modelpath"]);
-
-    if (args.find("device") != args.end())
-    {
-        std::string device = args["device"];
-        if (device == "cpu")
-            Config::setTorchInferenceDevice(torch::kCPU);
-        else if (device == "cuda")
-            Config::setTorchInferenceDevice(torch::kCUDA);
-        else if (device == "mps")
-            Config::setTorchInferenceDevice(torch::kMPS);
-        else
-        {
-            ForcePrintln("[Warning]: Invalid argument: device needs to be cpu, cuda or mps --> Falling back to default");
-        }
-    }
-
-    if (args.find("scalar") != args.end())
-    {
-        std::string scalar = args["scalar"];
-        if (scalar == "float16" || scalar == "half")
-            Config::setTorchScalar(torch::kFloat16);
-        else if (scalar == "float32" || scalar == "float" || scalar == "full")
-            Config::setTorchScalar(torch::kFloat32);
-        else
-        {
-            ForcePrintln("[Warning]: Invalid argument: scalar needs to be float16 or float32 --> Falling back to default");
-        }
-
-        if (Config::torchInferenceDevice() == torch::kCPU && Config::torchScalar() == torch::kFloat16)
-        {
-            ForcePrintln("[Warning]: Invalid argument: scalar needs to be float32 when using cpu --> Falling back to default");
-            Config::setTorchScalar(torch::kFloat32);
-        }
-    }
-
-    // Duel is evaluate 2 models against each other
-    if (mode == "duel")
-    {
-        if (model2_name == "!!UNDEFINED!!")
-        {
-            ForcePrintln("[FATAL]: Missing arguments for duel: model2");
-            return 1;
-        }
-
-        Model* model_1 = Model::autoloadModel(model1_name);
-        Model* model_2 = Model::autoloadModel(model2_name);
-
-        model_1->setSimulations(simulations);
-        model_2->setSimulations(simulations);
-
-        Batcher* batcher = new Batcher(environments, model_1, model_2);
-        batcher->swapModels();
-        batcher->makeRandomMoves(randmoves, true);
-        batcher->duelModels();
-
-        delete model_1;
-        delete model_2;
-        delete batcher;
-    }
-
-    // Selfplay
-    if (mode == "selfplay")
-    {
-        Model* model_1 = Model::autoloadModel(model1_name);
-        model_1->setSimulations(simulations);
-
-        Batcher* batcher = new Batcher(environments, model_1);
-        batcher->makeRandomMoves(randmoves, false);
-        batcher->selfplay();
-        batcher->storeData(Config::datapointPath());
-
-        delete model_1;
-        delete batcher;
-    }
-
-    // Human play
-    if (mode == "human")
-    {
-        Model* model_1 = Model::autoloadModel(model1_name);
-
-        model_1->setSimulations(simulations);
-
-        Batcher* batcher = new Batcher(1, model_1);
-        batcher->humanplay(humancolor);
-
-        delete model_1;
-        delete batcher;
-    }
-
-    return 0;
+    return runMode(args["mode"], model_1, model_2);
 }

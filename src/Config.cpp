@@ -1,11 +1,11 @@
 #include "Config.h"
 
+// Default values
 std::string Config::model_path = ModelPath;
 std::string Config::datapoint_path = DatapointPath;
 int Config::history_depth = HistoryDepth;
 int Config::max_datapoints = MaxDatapoints;
 int Config::default_simulations = DefaultSimulations;
-int Config::default_environments = DefaultEnvironments;
 float Config::exploration_bias = ExplorationBias;
 float Config::policy_bias = PolicyBias;
 float Config::value_bias = ValueBias;
@@ -19,6 +19,9 @@ int Config::max_batchsize = MaxBatchsize;
 bool Config::render_envs = RenderEnvs;
 bool Config::render_analytics = RenderAnalytics;
 int Config::render_envs_count = RenderEnvsCount;
+int Config::randmoves = 0;
+bool Config::human_color = 0;
+int Config::environment_count = 10;
 std::string Config::build_version = "unspecified";
 
 std::string Config::version()
@@ -51,9 +54,9 @@ int Config::defaultSimulations()
     return default_simulations;
 }
 
-int Config::defaultEnvironments()
+int Config::environmentCount()
 {
-    return default_environments;
+    return environment_count;
 }
 
 float Config::explorationBias()
@@ -121,6 +124,16 @@ int Config::renderEnvsCount()
     return render_envs_count;
 }
 
+int Config::randMoves()
+{
+    return randmoves;
+}
+
+bool Config::humanColor()
+{
+    return human_color;
+}
+
 void Config::setModelPath(std::string path)
 {
     model_path = path;
@@ -146,9 +159,9 @@ void Config::setDefaultSimulations(int sims)
     default_simulations = sims;
 }
 
-void Config::setDefaultEnvironments(int envs)
+void Config::setEnvironmentCount(int envs)
 {
-    default_environments = envs;
+    environment_count = envs;
 }
 
 void Config::setExplorationBias(float bias)
@@ -219,4 +232,14 @@ void Config::setRenderEnvsCount(int count)
 void Config::setVersion(std::string version)
 {
     Config::build_version = version;
+}
+
+void Config::setRandMoves(int moves)
+{
+    randmoves = moves;
+}
+
+void Config::setHumanColor(bool color)
+{
+    human_color = color;
 }
