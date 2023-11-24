@@ -1,6 +1,7 @@
 # Self learning Gomoku AI
 
 ## Patchnotes
+**Pre Alpha -> v.0.1.0**<br>
 Initial early alpha release.<br>
 Still missing essential features but C++ engine is mostly functional!<br>
 
