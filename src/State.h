@@ -24,6 +24,14 @@ It has fast checks for if someone has one or if the Board is terminal (No moves 
 Is also the main interface for getting information about a Board.
 */
 
+enum class StateResult
+{
+    BLACKWIN,
+    WHITEWIN,
+    DRAW,
+    NONE
+};
+
 class State
 {
 public:
@@ -44,7 +52,7 @@ public:
     // Is terminal game state
     bool isTerminal();
     // Black is 0 White is 1 Draw is 2
-    uint8_t getResult();
+    StateResult getResult();
     // String representation of state
     std::string toString();
     // Value of field
@@ -57,8 +65,7 @@ public:
     bool getNextColor();
 
 private:
-    // 0:p0win 1:p1win 2:none
-    uint8_t result;
+    StateResult result;
 
     bool checkForWin();
     bool cellIsActiveColor(int x, int y);

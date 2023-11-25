@@ -49,7 +49,6 @@ public:
     // Deletes temp data
     void shrinkNode();
 
-
     // Provide model output
     void setModelOutput(torch::Tensor policy, torch::Tensor value);
 
@@ -95,7 +94,7 @@ public:
     Node* bestChild();
 
     // Black is 0, 1 is White, Draw is 2
-    uint8_t getResult();
+    StateResult getResult();
 
     // Removes a node from children
     void removeNodeFromChildren(Node* node);

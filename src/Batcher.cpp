@@ -481,6 +481,8 @@ void Batcher::renderEnvsHelper(bool force_render)
 
 void Batcher::runGameloop()
 {
+    runNetwork();
+
     // Gameplay Loop
     while(!isTerminal())
     {
@@ -526,18 +528,29 @@ float Batcher::duelModels()
     for (Environment* env : environments)
     {
         bool is_swapped = env->areModelsSwapped();
-        uint8_t winner_color = env->getResult();
+        StateResult result = env->getResult();
 
-        if (winner_color == 2)
-            continue;
-
-        if (is_swapped)
-            winner_color = !winner_color;
-
-        if (winner_color == 0)
-            model1_wins++;
-        else
-            model2_wins += 1;
+        switch(result)
+        {
+            case StateResult::BLACKWIN:
+                if (is_swapped)
+                    model2_wins++;
+                else
+                    model1_wins++;
+                break;
+            case StateResult::WHITEWIN:
+                if (is_swapped)
+                    model1_wins++;
+                else
+                    model2_wins++;
+                break;
+            case StateResult::DRAW:
+                draws++;
+                break;
+            default:
+                Log::log(LogLevel::ERROR, "Got non terminal result from env in duel models summary", "BATCHER");
+                break;
+        }
     }
 
     non_draws = model1_wins + model2_wins;
@@ -634,6 +647,9 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
     std::random_device rd;
     std::mt19937 rng(rd());
 
+    if (amount == 0)
+        return;
+
     if (mirrored)
     {
         if (environments.size() % 2 == 1)
@@ -722,12 +738,21 @@ float Batcher::averageWinner()
         if (!env->isTerminal())
             continue;
 
-        uint8_t result = env->getResult();
-
-        if      (result == 0)
-            delta -= 1;
-        else if (result == 1)
-            delta += 1;
+        StateResult result = env->getResult();
+        switch(result)
+        {
+            case StateResult::BLACKWIN:
+                delta -= 1;
+                break;
+            case StateResult::WHITEWIN:
+                delta += 1;
+                break;
+            case StateResult::DRAW:
+                break;
+            default:
+                Log::log(LogLevel::ERROR, "Got non terminal result from env in averageWinner", "BATCHER");
+                break;
+        }
     }
 
     delta = delta / total;
@@ -863,7 +888,7 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
     return output.str();
 }
 
-void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
+void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, StateResult winner)
 {
     // Ignore non fully explored nodes
     if (node->isFullyExpanded())
@@ -872,16 +897,26 @@ void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, uint8_t winner)
         data.moves = node->getMoveHistory();
         data.best_move = node->absBestChild()->getParentAction();
         // Change to reflect if current play won
-        if (winner == 2)
+        switch (winner)
         {
-            data.winner = winner;
-        }
-        else
-        {
-            if (node->getNextColor())
-                data.winner = winner;
-            else
-                data.winner = !winner;
+            case StateResult::BLACKWIN:
+                if (node->getNextColor())
+                    data.winner = 0;
+                else
+                    data.winner = 1;
+                break;
+            case StateResult::WHITEWIN:
+                if (node->getNextColor())
+                    data.winner = 1;
+                else
+                    data.winner = 0;
+                break;
+            case StateResult::DRAW:
+                data.winner = 2;
+                break;
+            default:
+                Log::log(LogLevel::ERROR, "Got non terminal result from env in duel models summary", "BATCHER");
+                break;
         }
 
         datapoints.push_back(data);
@@ -900,10 +935,10 @@ void Batcher::storeData(std::string Path)
     // Get all nodes which are fully expanded and convert them into datapoints
     for (Environment* env : environments)
     {
-        uint8_t winner = env->getResult();
+        StateResult result = env->getResult();
         for (Node* root_node : env->getRootNodes())
         {
-            nodeCrawler(datapoints, root_node, winner);
+            nodeCrawler(datapoints, root_node, result);
         }
     }
 

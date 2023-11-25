@@ -164,7 +164,7 @@ bool Environment::getNextColor()
     return next_color;
 }
 
-uint8_t Environment::getResult()
+StateResult Environment::getResult()
 {
     return getCurrentNode()->getResult();
 }

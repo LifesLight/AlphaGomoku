@@ -34,7 +34,7 @@ public:
     bool clearNetworkQueue();
     void forceClearNetworkQueue();
     // Black is 0, White is 1, Draw is 2
-    uint8_t getResult();
+    StateResult getResult();
 
     // Get all possible actions from node
     std::vector<index_t> getUntriedActions();

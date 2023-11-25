@@ -138,7 +138,7 @@ bool Node::isShrunk()
 void Node::removeNodeFromChildren(Node* node)
 {
     Utils::eraseFromVector(children, node);
-    // Maybe obsolete ?
+    // TODO Maybe obsolete ?
     children.shrink_to_fit();
 }
 
@@ -171,8 +171,13 @@ void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
     // Assign value
     float evaluation = value.item<float>();
     // Normaize for black is -1 white +1
+    #ifdef DEBUG_INVERT_MODEL_COLORS
+    if (getNextColor())
+        evaluation *= -1;
+    #else
     if (!getNextColor())
         evaluation *= -1;
+    #endif
     temp_data->evaluation = evaluation;
 
     // Store policy values
@@ -311,7 +316,7 @@ Node* Node::absBestChild()
     return best_child;
 }
 
-uint8_t Node::getResult()
+StateResult Node::getResult()
 {
     return state->getResult();
 }
@@ -329,7 +334,7 @@ float Node::getMeanEvaluation()
     if (getNextColor())
         return -getSummedEvaluation() / getVisits();
     else
-        return getSummedEvaluation() / getVisits();  
+        return getSummedEvaluation() / getVisits();
 }
 
 void Node::backpropagate(float eval)
@@ -345,15 +350,17 @@ void Node::backpropagate(float eval)
 
 float Node::valueProcessor(float normalized_value)
 {
-    if (isTerminal())
+    StateResult result = getResult();
+    switch (result)
     {
-        uint8_t result = getResult();
-        if (result == 2)
-            normalized_value = 0.0f;
-        else if (result == 0)
-            normalized_value = -1.0f;
-        else
-            normalized_value = 1.0f;
+        case StateResult::BLACKWIN:
+            return -1.0f;
+        case StateResult::WHITEWIN:
+            return 1.0f;
+        case StateResult::DRAW:
+            return 0.0f;
+        case StateResult::NONE:
+            break;
     }
 
     return normalized_value;
@@ -396,10 +403,17 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
     // Next color tensor
     torch::Tensor next_color;
 
+    #ifdef DEBUG_INVERT_MODEL_COLORS
+    if (!node->getNextColor())
+        next_color = torch::ones({BoardSize, BoardSize}, default_tensor_options);
+    else
+        next_color = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
+    #else
     if (node->getNextColor())
         next_color = torch::ones({BoardSize, BoardSize}, default_tensor_options);
     else
         next_color = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
+    #endif
     tensor[0] = next_color;
 
     // Get last actions from source

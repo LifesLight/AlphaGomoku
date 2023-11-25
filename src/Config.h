@@ -21,9 +21,20 @@
 #include <chrono>
 #include <condition_variable>
 
-/* These are the default values, can easily be overwritten by calling for changes in Config */
+//#define DEBUG_INVERT_MODEL_COLORS
 
-// External data paths
+/* -#-#-# Deep Settings, will trigger recompile #-#-#- */
+
+// Even numbers in BoardSize will break State due to inverted colors!
+#define BoardSize 15
+
+// Max children per node, 0 is no limit
+#define BranchingLimit 0
+
+/* -#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#- */
+
+/* These are the default values, can easily be overwritten by calling for changes in Config */
+// Standard Paths
 #define ModelPath "../Models/scripted/"
 #define DatapointPath "../Datasets/Selfplay/data.txt"
 
@@ -64,25 +75,12 @@
 #define MaxBatchsize 2048
 // -------------------------------
 
-#define RenderEnvs true
-#define RenderAnalytics false
-#define RenderEnvsCount 1
-
-/* These need to be pre compiler definitions, will need to recompile to change */
-
-// Even numbers in BoardSize will break State due to inverted colors!
-#define BoardSize 15
-
-// Max children per node, 0 is no limit
-#define BranchingLimit 0
-
 // Save memory if 2d -> 1d index mapping fits in 2^8
 #if Boardsize < 16
 typedef uint8_t index_t;
 #else
 typedef uint16_t index_t;
 #endif
-
 
 class Config
 {

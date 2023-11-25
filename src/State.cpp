@@ -1,7 +1,7 @@
 #include "State.h"
 
 State::State()
-    : last(0), empty(BoardSize * BoardSize), result(2)
+    : last(0), empty(BoardSize * BoardSize), result(StateResult::NONE)
 {
     memset(m_array, 0, sizeof(BLOCK) * BoardSize);
     memset(c_array, 0, sizeof(BLOCK) * BoardSize);
@@ -28,7 +28,16 @@ void State::makeMove(index_t index)
     for (index_t i = 0; i < BoardSize; i++) c_array[i] ^= m_array[i];
 
     // Check for 5-Stone alignment
-    result = checkForWin() ? empty % 2 : 2;
+    bool is_won = checkForWin();
+    if (is_won)
+    {
+        if (getNextColor())
+            result = StateResult::BLACKWIN;
+        else
+            result = StateResult::WHITEWIN;
+    }
+    else if (empty == 0)
+        result = StateResult::DRAW;
 }
 
 bool State::isCellEmpty(index_t index)
@@ -72,7 +81,7 @@ bool State::getNextColor()
     return !(empty % 2);
 }
 
-uint8_t State::getResult()
+StateResult State::getResult()
 {
     return result;
 }
@@ -92,7 +101,7 @@ std::vector<index_t> State::getPossible()
 
 bool State::isTerminal()
 {
-    return (empty == 0 || result < 2);
+    return (result != StateResult::NONE);
 }
 
 std::string State::toString()

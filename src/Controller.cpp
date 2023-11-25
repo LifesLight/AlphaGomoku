@@ -190,13 +190,17 @@ void applyStyleArgs(std::map<std::string, std::string>& args)
         Style::setBoard(args["board"]);
 }
 
-void warnInvalidArgs(std::map<std::string, std::string>& args)
+void cleanArgs(std::map<std::string, std::string>& args)
 {
+    std::map<std::string, std::string> new_args;
     for (auto const& [key, value] : args)
     {
         if (std::find(valid_args.begin(), valid_args.end(), key) == valid_args.end())
             Log::log(LogLevel::WARNING, "Invalid argument: " + key);
+        else
+            new_args[key] = value;
     }
+    args = new_args;
 }
 
 std::tuple<Model*, Model*> configModels(std::map<std::string, std::string>& args)
@@ -306,8 +310,8 @@ bool runDuel(Model* model_1, Model* model_2)
 
     Batcher* batcher = new Batcher(Config::environmentCount(), model_1, model_2);
     batcher->swapModels();
-    if (Config::randMoves() > 0)
-        batcher->makeRandomMoves(Config::randMoves(), true);
+    // Make mirrored random moves
+    batcher->makeRandomMoves(Config::randMoves(), true);
     batcher->duelModels();
 
     delete model_1;
@@ -324,8 +328,7 @@ bool runSelfplay(Model* model_1)
         return 1;
     }
     Batcher* batcher = new Batcher(Config::environmentCount(), model_1);
-    if (Config::randMoves() > 0)
-        batcher->makeRandomMoves(Config::randMoves(), false);
+    batcher->makeRandomMoves(Config::randMoves(), false);
     batcher->selfplay();
     batcher->storeData(Config::datapointPath());
 
@@ -342,8 +345,7 @@ bool runHumanplay(Model* model_1)
         return 1;
     }
     Batcher* batcher = new Batcher(1, model_1);
-    if (Config::randMoves() > 0)
-        batcher->makeRandomMoves(Config::randMoves(), false);
+    batcher->makeRandomMoves(Config::randMoves(), false);
     batcher->humanplay(Config::humanColor());
 
     delete model_1;
@@ -373,12 +375,19 @@ int main(int argc, const char* argv[])
     setupLogLevel();
 
     std::map<std::string, std::string> args = Utils::parseArgv(argc, argv);
+    cleanArgs(args);
+
+    if (args.size() == 0)
+    {
+        Log::log(LogLevel::FATAL, "Missing arguments! Try calling ./AlphaGomoku --help");
+        return 1;
+    }
+
     if (checkForHelp(args))
         return 0;
 
     applyConfigArgs(args);
     applyStyleArgs(args);
-    warnInvalidArgs(args);
 
     Model* model_1 = nullptr;
     Model* model_2 = nullptr;
