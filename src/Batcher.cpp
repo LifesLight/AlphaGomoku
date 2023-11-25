@@ -1,7 +1,7 @@
 #include "Batcher.h"
 
 Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
-    : gcp_data(nullptr), sim_data(nullptr)
+    : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0)
 {
     // Store models
     models[0] = NNB;
@@ -27,7 +27,7 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
 }
 
 Batcher::Batcher(int environment_count, Model* only_model)
-    : gcp_data(nullptr), sim_data(nullptr)
+    : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0)
 {
     // Store model
     models[0] = only_model;
@@ -487,6 +487,18 @@ void Batcher::runGameloop()
     while(!isTerminal())
     {
         runSimulations();
+        if (Config::outputTrees())
+        {
+            int id = 0;
+            Log::log(LogLevel::INFO, "Writing tree(s) to: " + Config::outputTreesPath(), "BATCHER");
+            for (Environment* env : non_terminal_environments)
+            {
+                Node* root = env->getCurrentNode();
+                outputTree(root, id);
+                id++;
+            }
+            tree_viz_id++;
+        }
         makeBestMoves();
         renderEnvsHelper(false);
         freeMemory();
@@ -599,6 +611,13 @@ void Batcher::humanplay(bool human_color)
         else
         {
             runSimulations();
+            if (Config::outputTrees())
+            {
+                Log::log(LogLevel::INFO, "Writing tree to: " + Config::outputTreesPath(), "BATCHER");
+                Node* root = getEnvironment(0)->getCurrentNode();
+                outputTree(root, -1);
+                tree_viz_id++;
+            }
             makeBestMoves();
         }
 
@@ -948,4 +967,16 @@ void Batcher::storeData(std::string Path)
     for (Datapoint data : datapoints)
         interface.storeDatapoint(data);
     interface.applyChanges();
+}
+
+void Batcher::outputTree(Node* root, int envid)
+{
+    std::string path = Config::outputTreesPath();
+    path += std::to_string(tree_viz_id);
+    if (envid != -1)
+        path += "_" + std::to_string(envid);
+    path += ".dot";
+    std::ofstream out(path);
+    TreeVisualizer::generateGraphvizCode(root, out);
+    out.close();
 }

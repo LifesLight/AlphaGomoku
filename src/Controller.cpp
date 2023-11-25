@@ -3,6 +3,7 @@
 #include "Batcher.h"
 #include "Style.h"
 #include "Log.h"
+#include "TreeVisualizer.h"
 
 // TODO: Move state to TempData and change node to gamestate to create only from parent pointers
 // BATCHER stuck on deconstruction?!
@@ -39,6 +40,8 @@ std::vector<std::string> valid_args = {
     "explorationbias",
     "gcptarget",
     "simtarget",
+    "outputtrees",
+    "outputtreespath"
 };
 
 std::map<std::string, torch::Device> device_map = {
@@ -134,6 +137,17 @@ void applyConfigArgs(std::map<std::string, std::string>& args)
             else
                 Log::log(LogLevel::WARNING, "Invalid argument: humancolor needs to be black or white");
         }
+        if (args.find("outputtrees") != args.end())
+        {
+            if (args["outputtrees"] == "true" || args["outputtrees"] == "1")
+                Config::setOutputTrees(true);
+            else if (args["outputtrees"] == "false" || args["outputtrees"] == "0")
+                Config::setOutputTrees(false);
+            else
+                Log::log(LogLevel::WARNING, "Invalid argument: outputtrees needs to be a boolean");
+        }
+        if (args.find("outputtreespath") != args.end())
+            Config::setOutputTreesPath(args["outputtreespath"]);
         if (args.find("environments") != args.end())
             Config::setEnvironmentCount(std::stoi(args["environments"]));
         if (args.find("datapath") != args.end())
@@ -371,6 +385,7 @@ bool runMode(std::string mode, Model* model_1, Model* model_2)
 int main(int argc, const char* argv[])
 {
     Config::setVersion("0.1.0");
+
     printInfo();
     setupLogLevel();
 

@@ -40,6 +40,8 @@ public:
 
     // Original evaluation
     float getValueHeadEval();
+    // Get processed eval
+    float getProcessedEval();
     // Sum of backprob evals
     float getSummedEvaluation();
     // How often node was visited

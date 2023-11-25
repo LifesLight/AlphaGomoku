@@ -23,6 +23,8 @@ int Config::randmoves = 0;
 bool Config::human_color = 0;
 int Config::environment_count = 10;
 std::string Config::build_version = "unspecified";
+bool Config::output_trees = false;
+std::string Config::output_trees_path = TreesPath;
 
 std::string Config::version()
 {
@@ -134,6 +136,16 @@ bool Config::humanColor()
     return human_color;
 }
 
+bool Config::outputTrees()
+{
+    return output_trees;
+}
+
+std::string Config::outputTreesPath()
+{
+    return output_trees_path;
+}
+
 void Config::setModelPath(std::string path)
 {
     model_path = path;
@@ -242,4 +254,14 @@ void Config::setRandMoves(int moves)
 void Config::setHumanColor(bool color)
 {
     human_color = color;
+}
+
+void Config::setOutputTrees(bool output)
+{
+    output_trees = output;
+}
+
+void Config::setOutputTreesPath(std::string path)
+{
+    output_trees_path = path;
 }

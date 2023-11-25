@@ -1,9 +1,8 @@
 # Self learning Gomoku AI
 
 ## Patchnotes
-**Pre Alpha -> v.0.1.0**<br>
-Initial early alpha release.<br>
-Still missing essential features but C++ engine is mostly functional!<br>
+**v.0.1.0 -> v.0.1.1**<br>
+Added graphviz output for trees!
 
 TODO: 
 - Rewrite Python codebase: Goal selfplay / selftrain loop
@@ -158,6 +157,8 @@ The AlphaGomoku executable can be called with 1 of 3 modes:<br>
 - explorationbias         : Exploration bias to use for MCTS.
 - modelpath               : Where models are stored.
 - datapath                : Where datapoints are stored.
+- outputrees              : Weather trees should be output as graphviz files
+- outputtreespath         : Where graphviz tree outputs are stored
 
 *Italic* args can pe specified per model like: --device1 [model1 device] --device2 [model2 device].
 

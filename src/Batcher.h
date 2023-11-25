@@ -5,6 +5,7 @@
 #include "Datapoint.h"
 #include "Storage.h"
 #include "Log.h"
+#include "TreeVisualizer.h"
 
 /*
 Host class for the entire selfplay.
@@ -202,4 +203,9 @@ private:
     std::vector<std::thread*> sim;
     GCPData* gcp_data;
     SIMData* sim_data;
+
+    void outputTree(Node* root, int envid);
+
+    // Tree viz
+    int tree_viz_id;
 };

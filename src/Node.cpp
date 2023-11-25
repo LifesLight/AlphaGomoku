@@ -321,6 +321,17 @@ StateResult Node::getResult()
     return state->getResult();
 }
 
+float Node::getProcessedEval()
+{
+    if (isShrunk())
+    {
+        Log::log(LogLevel::ERROR, "Tried to get processed eval from shrunk node", "NODE");
+        return 0;
+    }
+
+    return valueProcessor(getValueHeadEval());
+}
+
 // ------------ Value aggregation ------------
 
 float Node::getMeanEvaluation()
@@ -362,7 +373,6 @@ float Node::valueProcessor(float normalized_value)
         case StateResult::NONE:
             break;
     }
-
     return normalized_value;
 }
 

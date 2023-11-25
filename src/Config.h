@@ -37,6 +37,7 @@
 // Standard Paths
 #define ModelPath "../Models/scripted/"
 #define DatapointPath "../Datasets/Selfplay/data.txt"
+#define TreesPath "../Trees/"
 
 // At least 2 and even number
 #define HistoryDepth 8
@@ -107,6 +108,8 @@ private:
     static int randmoves;
     static bool human_color;
     static int environment_count;
+    static bool output_trees;
+    static std::string output_trees_path;
 
 public:
     static std::string modelPath();
@@ -131,6 +134,8 @@ public:
     static int randMoves();
     static bool humanColor();
     static int environmentCount();
+    static bool outputTrees();
+    static std::string outputTreesPath();
 
     static void setModelPath(std::string path);
     static void setDatapointPath(std::string path);
@@ -154,4 +159,6 @@ public:
     static void setRandMoves(int moves);
     static void setHumanColor(bool color);
     static void setEnvironmentCount(int count);
+    static void setOutputTrees(bool output);
+    static void setOutputTreesPath(std::string path);
 };
