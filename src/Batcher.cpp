@@ -3,6 +3,11 @@
 Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0)
 {
+    if (Config::seed() != -1)
+        rng = new std::mt19937(Config::seed());
+    else
+        rng = new std::mt19937(std::random_device()());
+
     // Store models
     models[0] = NNB;
     models[1] = NNW;
@@ -10,7 +15,6 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     environments.reserve(environment_count);
     non_terminal_environments.reserve(environment_count);
 
-    // Super simple, needs randomization for inital gamestates
     for (int i = 0; i < environment_count; i++)
     {
         Environment* env = new Environment(true);
@@ -29,6 +33,11 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
 Batcher::Batcher(int environment_count, Model* only_model)
     : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0)
 {
+    if (Config::seed() != -1)
+        rng = new std::mt19937(Config::seed());
+    else
+        rng = new std::mt19937(std::random_device()());
+
     // Store model
     models[0] = only_model;
     models[1] = nullptr;
@@ -663,9 +672,6 @@ void Batcher::makeBestMoves()
 
 void Batcher::makeRandomMoves(int amount, bool mirrored)
 {
-    std::random_device rd;
-    std::mt19937 rng(rd());
-
     if (amount == 0)
         return;
 
@@ -693,7 +699,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
                 int action_count = untried.size();
 
                 std::uniform_int_distribution<int> uni(0, action_count - 1);
-                index_t action_index = untried[uni(rng)];
+                index_t action_index = untried[uni(*rng)];
 
                 // Make move for both envs
                 env1->makeMove(action_index);
@@ -723,7 +729,7 @@ void Batcher::makeRandomMoves(int amount, bool mirrored)
 
                 std::uniform_int_distribution<int> uni(0, action_count - 1);
 
-                index_t action = untried[uni(rng)];
+                index_t action = untried[uni(*rng)];
                 env->makeMove(action);
             }
 

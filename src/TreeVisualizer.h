@@ -10,4 +10,7 @@ public:
 
 private:
     static void traverseAndGenerateCode(Node* node, std::ostream& out, int& nextId, std::unordered_map<Node*, int>& nodeIds);
+
+    // Prevent instantiation
+    TreeVisualizer() = delete;
 };

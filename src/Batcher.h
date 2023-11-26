@@ -208,4 +208,5 @@ private:
 
     // Tree viz
     int tree_viz_id;
+    std::mt19937* rng;
 };

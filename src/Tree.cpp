@@ -54,7 +54,13 @@ void Tree::updateCurrentNode(index_t action)
 
     if (current_node->parent)
         current_node->parent->shrinkNode();
+
     current_node = chosen_child;
+
+    if (Config::noCache())
+    {
+        current_node->reset();
+    }
 }
 
 void Tree::collapseTree()

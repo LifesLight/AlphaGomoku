@@ -25,6 +25,8 @@ int Config::environment_count = 10;
 std::string Config::build_version = "unspecified";
 bool Config::output_trees = false;
 std::string Config::output_trees_path = TreesPath;
+bool Config::nocache = false;
+int Config::rng_seed = -1;
 
 std::string Config::version()
 {
@@ -146,6 +148,16 @@ std::string Config::outputTreesPath()
     return output_trees_path;
 }
 
+bool Config::noCache()
+{
+    return nocache;
+}
+
+int Config::seed()
+{
+    return rng_seed;
+}
+
 void Config::setModelPath(std::string path)
 {
     model_path = path;
@@ -264,4 +276,14 @@ void Config::setOutputTrees(bool output)
 void Config::setOutputTreesPath(std::string path)
 {
     output_trees_path = path;
+}
+
+void Config::setNoCache(bool cache)
+{
+    nocache = cache;
+}
+
+void Config::setSeed(int seed)
+{
+    rng_seed = seed;
 }

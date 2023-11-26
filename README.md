@@ -1,8 +1,8 @@
 # Self learning Gomoku AI
 
 ## Patchnotes
-**v.0.1.0 -> v.0.1.1**<br>
-Added graphviz output for trees!
+**v.0.1.1 -> v.0.1.2**<br>
+Added seed option for randmoves!
 
 TODO: 
 - Rewrite Python codebase: Goal selfplay / selftrain loop
@@ -140,6 +140,7 @@ The AlphaGomoku executable can be called with 1 of 3 modes:<br>
 - *simulations*           : Number of simulations to run per move.
 - environments            : Number of environments to run in parallel.
 - randmoves               : Number of random moves to make before starting.
+- seed                    : Set seed for randmoves.
 - humancolor              : Color of the human player (0 = black, 1 = white).
 - stones                  : Stone skin to use for rendering.
 - board                   : Board skin to use for rendering.
@@ -152,13 +153,14 @@ The AlphaGomoku executable can be called with 1 of 3 modes:<br>
 - *scalar*                : Scalar to use for inference (float16, float32).
 - threads                 : Number of threads to use for batching.
 - batchsize               : Batchsize cap for inference.
+- nocache                 : Previous simulation cache should be deleted before next simulation.
 - policybias              : Policy bias to use for MCTS.
 - valuebias               : Value bias to use for MCTS.
 - explorationbias         : Exploration bias to use for MCTS.
 - modelpath               : Where models are stored.
 - datapath                : Where datapoints are stored.
-- outputrees              : Weather trees should be output as graphviz files
-- outputtreespath         : Where graphviz tree outputs are stored
+- outputtrees             : Trees should be output as graphviz files.
+- outputtreespath         : Where graphviz tree outputs are stored.
 
 *Italic* args can pe specified per model like: --device1 [model1 device] --device2 [model2 device].
 

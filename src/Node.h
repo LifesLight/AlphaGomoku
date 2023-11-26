@@ -80,6 +80,8 @@ public:
     void removeFromUntried(index_t action);
     // Has node recieved network data
     bool getNetworkStatus();
+    // Resets for algorithm
+    void reset();
 
     // Still in active MCTS tree
     bool isShrunk();

@@ -22,4 +22,7 @@ public:
 
 private:
     static LogLevel log_level;
+
+    // Prevent instantiation
+    Log() = delete;
 };

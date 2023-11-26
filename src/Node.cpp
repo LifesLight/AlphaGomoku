@@ -27,6 +27,14 @@ Node::~Node()
         delete child;
 }
 
+void Node::reset()
+{
+    temp_data->untried_actions = state->getPossible();
+    for (Node* child : children)
+        delete child;
+    children.clear();
+}
+
 void Node::deleteState()
 {
     delete state;

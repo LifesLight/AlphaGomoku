@@ -1,2 +1,2 @@
 ### Default output path for tree graphviz output
-To generate tree outputs add --outputrees true to your args
+To generate tree outputs add --outputtrees true to your args

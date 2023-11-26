@@ -26,6 +26,7 @@ std::vector<std::string> valid_args = {
     "environments",
     "randmoves",
     "humancolor",
+    "nocache",
     "stones",
     "board",
     "renderenvs",
@@ -41,7 +42,8 @@ std::vector<std::string> valid_args = {
     "gcptarget",
     "simtarget",
     "outputtrees",
-    "outputtreespath"
+    "outputtreespath",
+    "seed"
 };
 
 std::map<std::string, torch::Device> device_map = {
@@ -145,6 +147,23 @@ void applyConfigArgs(std::map<std::string, std::string>& args)
                 Config::setOutputTrees(false);
             else
                 Log::log(LogLevel::WARNING, "Invalid argument: outputtrees needs to be a boolean");
+        }
+        if (args.find("nocache") != args.end())
+        {
+            if (args["nocache"] == "true" || args["nocache"] == "1")
+                Config::setNoCache(true);
+            else if (args["nocache"] == "false" || args["nocache"] == "0")
+                Config::setNoCache(false);
+            else
+                Log::log(LogLevel::WARNING, "Invalid argument: nocache needs to be a boolean");
+        }
+        if (args.find("seed") != args.end())
+        {
+            int seed = std::stoi(args["seed"]);
+            if (seed >= 0)
+                Config::setSeed(seed);
+            else
+                Log::log(LogLevel::WARNING, "Invalid argument: seed needs to be a positive integer");
         }
         if (args.find("outputtreespath") != args.end())
             Config::setOutputTreesPath(args["outputtreespath"]);
@@ -384,7 +403,7 @@ bool runMode(std::string mode, Model* model_1, Model* model_2)
 
 int main(int argc, const char* argv[])
 {
-    Config::setVersion("0.1.0");
+    Config::setVersion("0.1.2");
 
     printInfo();
     setupLogLevel();

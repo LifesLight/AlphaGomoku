@@ -110,6 +110,8 @@ private:
     static int environment_count;
     static bool output_trees;
     static std::string output_trees_path;
+    static bool nocache;
+    static int rng_seed;
 
 public:
     static std::string modelPath();
@@ -136,6 +138,8 @@ public:
     static int environmentCount();
     static bool outputTrees();
     static std::string outputTreesPath();
+    static bool noCache();
+    static int seed();
 
     static void setModelPath(std::string path);
     static void setDatapointPath(std::string path);
@@ -161,4 +165,9 @@ public:
     static void setEnvironmentCount(int count);
     static void setOutputTrees(bool output);
     static void setOutputTreesPath(std::string path);
+    static void setNoCache(bool nocache);
+    static void setSeed(int seed);
+
+    // Prevent instantiation
+    Config() = delete;
 };

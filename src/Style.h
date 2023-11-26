@@ -38,4 +38,7 @@ public:
 private:
     static std::map<std::string, Stone> stone_to_enum;
     static std::map<std::string, Board> board_to_enum;
+
+    // Prevent instantiation
+    Style() = delete;
 };
