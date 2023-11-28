@@ -135,6 +135,7 @@ The AlphaGomoku executable can be called with 1 of 3 modes:<br>
 
 ## Parameters
 - help                    : Print help message.
+- version                 : Print version.
 - [mode](#rules)          : Mode to run the program in (duel, selfplay, human).
 - *model*                 : Name of the model.
 - *simulations*           : Number of simulations to run per move.

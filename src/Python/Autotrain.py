@@ -3,6 +3,7 @@ import subprocess
 import numpy as np
 from Utilities import Utilities as Utils
 from Config import Config as Conf
+from Model import Model
 import sys
 import random as rand
 
@@ -24,6 +25,8 @@ class Datapoint:
         self.moves = []
         for i, move in enumerate(rawMoves):
             # Convert string to int
+            if (move == ""):
+                continue
             intMove = int(move)
             x, y = Utils.indexToCords(intMove)
             self.moves.append(((x, y), i % 2))
@@ -31,6 +34,10 @@ class Datapoint:
 
     def getGamestate(self):
         moves = self.moves
+
+        if (len(moves) == 0):
+            return np.zeros((Conf.HISTORYDEPTH + 1, 15, 15), dtype=bool)
+
         HD = Conf.HISTORYDEPTH
         halfHistory = HD // 2
         numpyGamestate = np.zeros((HD + 1, 15, 15), dtype=bool)
@@ -81,6 +88,7 @@ class DatapointSampler:
 
     def sample(self):
         x = Datapoint(self.datapoints[self.itterator])
+
         self.itterator += 1
         if (self.itterator >= len(self.datapoints)):
             self.itterator = 0
@@ -88,8 +96,41 @@ class DatapointSampler:
             print("Reshuffled data")
         return x
 
+def makeGamestatesToDataset(gamestates, results, bestMoves):
+    X = np.zeros((len(gamestates), Conf.HISTORYDEPTH + 1, 15, 15), dtype=np.float32)
+    YPol = np.zeros((len(gamestates), 225), dtype=np.float32)
+    YVal = np.zeros((len(gamestates), 1), dtype=np.float32)
+    for i, gamestate in enumerate(gamestates):
+        X[i] = gamestate
+        bestMove = bestMoves[i]
+        x, y = Utils.indexToCords(int(bestMove))
+        YPol[i][Utils.cordsToIndex(x, y)] = 1.0
+        YVal[i] = float(results[i])
+    return X, YPol, YVal
+
+def makeDataset(sampleCount):
+    sampler = DatapointSampler(DATAPOINT_PATH)
+    gamestates = []
+    results = []
+    bestMoves = []
+    for i in range(sampleCount):
+        sample = sampler.sample()
+        gamestates.append(sample.getGamestate())
+        results.append(sample.getResult())
+        bestMoves.append(sample.getBestMove())
+    return makeGamestatesToDataset(gamestates, results, bestMoves)
+
 # Get commandline params
 argv = sys.argv
-sampler = DatapointSampler(DATAPOINT_PATH)
 
-print(sampler.sample().getGamestate())
+SourceModelName = 'test2.pt'
+
+TargetDatapoints = 107690
+dataset = makeDataset(TargetDatapoints)
+learningRate = 1e-6
+
+model = Model()
+model.loadScripted(SourceModelName)
+model.train(dataset, learningRate, learningRate)
+
+model.saveScripted('test4.pt')

@@ -13,7 +13,7 @@ class Utilities:
         HD = gamestate.shape[0] - 1
         if depth > HD - 2:
             print("[Utilities] WARNING: Gamestate sliced to deep")
-            
+
         output = ""
         halfDepth = HD // 2
         if HD == 2:
@@ -33,7 +33,7 @@ class Utilities:
 
             blackStones = gamestate[blackIndex][:][:]
             whiteStones = gamestate[whiteIndex][:][:]
-        
+
         output += "   --------------------------------------------------------------\n"
         for y in range(14, -1 ,-1):
             output += f'{y:2} |'
@@ -49,7 +49,7 @@ class Utilities:
         output += "     0   1   2   3   4   5   6   7   8   9  10  11  12  13  14\n"
 
         return output
-    
+
     def makeMove(gamestate, x, y):
         HD = gamestate.shape[0] - 1 
         turn = gamestate[0, 0, 0]
@@ -65,7 +65,7 @@ class Utilities:
             gamestate[HD//2][x][y] = True
 
         return gamestate
-    
+
     def indexToCords(index):
         x = index // 15
         y = index % 15
@@ -96,14 +96,14 @@ class Utilities:
         valueModel.to(Conf.DEVICE)
 
         return resnetModel, policyModel, valueModel
-    
+
     def loadDataset(Path, Shape, SourceType):
         return torch.from_numpy(np.fromfile(Path, dtype=SourceType).astype(np.float32).reshape((Shape)))
-    
+
     def toDataloader(X, Y, BatchSize=128, Shuffle=False):
         dataset = TensorDataset(X, Y)
         return DataLoader(dataset, batch_size=BatchSize, shuffle=Shuffle)
-    
+
     # Change this to take a model class as input
     def trainableParameterCount(model):
         pp = 0
@@ -114,7 +114,7 @@ class Utilities:
                     nn *= s
                 pp += nn
         return pp
-    
+
     def scriptModel(model, TargetPath = '../../Models/scripted/'):
         resnetExample = np.zeros((1, Conf.HISTORYDEPTH + 1, 15, 15), dtype=np.float32) 
         resnetExample = torch.tensor(resnetExample)
@@ -131,3 +131,10 @@ class Utilities:
         traced_resnet.save(f'{TargetPath}/ResNet/{model.name}.pt')
         traced_polhead.save(f'{TargetPath}/PolHead/{model.name}.pt')
         traced_valhead.save(f'{TargetPath}/ValHead/{model.name}.pt')
+
+    def parseDatasetFromDatapoints(self, path, amount):
+        lines = []
+        with open(path, 'r') as f:
+            lines = f.readlines()
+
+        print(lines)

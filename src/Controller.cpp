@@ -43,13 +43,14 @@ std::vector<std::string> valid_args = {
     "simtarget",
     "outputtrees",
     "outputtreespath",
-    "seed"
+    "seed",
+    "version"
 };
 
 std::map<std::string, torch::Device> device_map = {
     {"cpu", torch::kCPU},
     {"cuda", torch::kCUDA},
-    {"mps", torch::kMPS}
+    {"mps", torch::kMPS},
 };
 
 std::map<std::string, torch::ScalarType> scalar_map = {
@@ -81,6 +82,17 @@ bool checkForHelp(const std::map<std::string, std::string> args)
     }
     return false;
 }
+
+// Returns if version was called
+bool checkForVersion(const std::map<std::string, std::string> args)
+{
+    if (args.find("version") != args.end())
+    {
+        std::cout << "AlphaGomoku v." << Config::version() << std::endl;
+        return true;
+    }
+    return false;
+};
 
 void setupLogLevel()
 {
@@ -418,6 +430,9 @@ int main(int argc, const char* argv[])
     }
 
     if (checkForHelp(args))
+        return 0;
+
+    if (checkForVersion(args))
         return 0;
 
     applyConfigArgs(args);
