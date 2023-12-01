@@ -185,7 +185,18 @@ void Batcher::start_sim(int threads)
 
 bool Batcher::getNextModelIndex(Environment* env)
 {
-    bool model_index = env->getNextColor();
+    bool model_index;
+    switch (env->getNextColor())
+    {
+        case StateColor::BLACK:
+            model_index = 0;
+            break;
+        case StateColor::WHITE:
+            model_index = 1;
+            break;
+        default:
+            break;
+    }
 
     if (env->areModelsSwapped())
         model_index = !model_index;
@@ -606,9 +617,15 @@ void Batcher::humanplay(bool human_color)
     // TODO: Random bug with 1 sim and human winning
     std::cout << toString() << std::endl;
 
+    StateColor converted_color;
+    if (human_color)
+        converted_color = StateColor::WHITE;
+    else
+        converted_color = StateColor::BLACK;
+
     while (!isTerminal())
     {
-        if (environments[0]->getNextColor() == human_color)
+        if (environments[0]->getNextColor() == converted_color)
         {
             index_t x, y;
             Utils::keyboardCordsInput(x, y);
@@ -887,7 +904,10 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
         for (int i = 0; i < 3; i++)
             output << "═";
         output << "ᐅ" << std::endl << std::endl;
-        output << " Model: " << models[env->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
+        if (env->getNextColor() == StateColor::WHITE)
+            output << " Model: " << models[0]->getName() << std::endl;
+        else if (models[1] != nullptr)
+                output << " Model: " << models[1]->getName() << std::endl;
         output << Node::analytics(env->getCurrentNode(), distributions);
         output << std::endl;
 
@@ -904,7 +924,11 @@ std::string Batcher::toStringDist(const std::initializer_list<std::string> distr
             for (int i = 0; i < 4; i++)
                 output << "═";
             output << "ᐅ" << std::endl << std::endl;
-            output << " Model: " << models[!env->getNextColor() * (models[1] != nullptr)]->getName() << std::endl;
+            if (env->getNextColor() == StateColor::BLACK)
+                output << " Model: " << models[0]->getName() << std::endl;
+            else if (models[1] != nullptr)
+                output << " Model: " << models[1]->getName() << std::endl;
+
             output << Node::analytics(opposing_node, distributions);
             output << std::endl;
         }
@@ -925,13 +949,13 @@ void nodeCrawler(std::vector<Datapoint>& datapoints, Node* node, StateResult win
         switch (winner)
         {
             case StateResult::BLACKWIN:
-                if (node->getNextColor())
+                if (node->getNextColor() == StateColor::WHITE)
                     data.winner = 0;
                 else
                     data.winner = 1;
                 break;
             case StateResult::WHITEWIN:
-                if (node->getNextColor())
+                if (node->getNextColor() == StateColor::WHITE)
                     data.winner = 1;
                 else
                     data.winner = 0;

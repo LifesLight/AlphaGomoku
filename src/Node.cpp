@@ -150,7 +150,7 @@ void Node::removeNodeFromChildren(Node* node)
     children.shrink_to_fit();
 }
 
-bool Node::getNextColor()
+StateColor Node::getNextColor()
 {
     return state->getNextColor();
 }
@@ -179,13 +179,9 @@ void Node::setModelOutput(torch::Tensor policy, torch::Tensor value)
     // Assign value
     float evaluation = value.item<float>();
     // Normaize for black is -1 white +1
-    #ifdef DEBUG_INVERT_MODEL_COLORS
-    if (getNextColor())
+    if (getNextColor() == StateColor::BLACK)
         evaluation *= -1;
-    #else
-    if (!getNextColor())
-        evaluation *= -1;
-    #endif
+
     temp_data->evaluation = evaluation;
 
     // Store policy values
@@ -258,6 +254,23 @@ void Node::callBackpropagate()
 
     float value = valueProcessor(getValueHeadEval());
     backpropagate(value);
+/*
+    if (isTerminal())
+    {
+        StateResult result = getResult();
+        switch (result)
+        {
+            case StateResult::BLACKWIN:
+                if (parent->getNextColor() == StateColor::BLACK)
+                    setForcedTerminal(StateResult::BLACKWIN);
+                break;
+            break;
+
+        default:
+            break;
+        }
+    }
+*/
 }
 
 Node* Node::bestChild()
@@ -350,10 +363,15 @@ float Node::getMeanEvaluation()
         return 0;
     }
 
-    if (getNextColor())
+    if (getNextColor() == StateColor::WHITE)
         return -getSummedEvaluation() / getVisits();
     else
         return getSummedEvaluation() / getVisits();
+}
+
+void Node::setForcedTerminal(StateResult result)
+{
+
 }
 
 void Node::backpropagate(float eval)
@@ -421,17 +439,11 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
     // Next color tensor
     torch::Tensor next_color;
 
-    #ifdef DEBUG_INVERT_MODEL_COLORS
-    if (!node->getNextColor())
+    if (node->getNextColor() == StateColor::WHITE)
         next_color = torch::ones({BoardSize, BoardSize}, default_tensor_options);
     else
         next_color = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
-    #else
-    if (node->getNextColor())
-        next_color = torch::ones({BoardSize, BoardSize}, default_tensor_options);
-    else
-        next_color = torch::zeros({BoardSize, BoardSize}, default_tensor_options);
-    #endif
+
     tensor[0] = next_color;
 
     // Get last actions from source
@@ -482,7 +494,7 @@ torch::Tensor Node::nodeToGamestate(Node* node, torch::ScalarType dtype)
     tensor[index_white] = history_white.clone();
 
     // Init toggle for what color did what action
-    bool color_toggle = current_state->getNextColor();
+    bool color_toggle = current_state->getNextColor() == StateColor::WHITE ? true : false;
 
     // Embed histroy actions
     for (index_t history_move : move_history)
@@ -536,7 +548,15 @@ std::string distribution_helper(Node* child, float max_value, const std::string&
     else if (type == "VALUE")
     {
         // Un-normalize
-        float value = child->getValueHeadEval() * (1 - child->getNextColor() * 2);
+        float value = child->getValueHeadEval();
+        switch (child->getNextColor())
+        {
+            case StateColor::WHITE:
+                value *= -1;
+                break;
+            default:
+                break;
+        }
         if (value == max_value && color_me)
             result << "\033[1;33m";
         result << std::setw(3) << std::setfill(' ');
@@ -584,7 +604,21 @@ std::string distribution(Node* current_node, const std::string& type)
     {
         float val = 0;
         if (type == "VALUE")
-            val = child ->getValueHeadEval() * (1 - child->getNextColor() * 2);
+        {
+            switch (child->getNextColor())
+            {
+                case StateColor::WHITE:
+                    val = -child->getValueHeadEval();
+                    break;
+                case StateColor::BLACK:
+                    val = child->getValueHeadEval();
+                    break;
+                // Will never be reached
+                default:
+                    val = 0.0f;
+                    break;
+            }
+        }
         else if (type == "MEAN")
             val = child->getMeanEvaluation();
         else if (type == "POLICY")
@@ -694,7 +728,7 @@ std::string Node::analytics(Node* node, const std::initializer_list<std::string>
 
     output << " }" << std::endl;
 
-    if (node->getNextColor())
+    if (node->getNextColor() == StateColor::BLACK)
         output << "Color: Black" << std::endl;
     else
         output << "Color: White" << std::endl;

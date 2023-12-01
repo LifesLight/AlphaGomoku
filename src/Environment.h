@@ -44,7 +44,7 @@ public:
     std::string toString(uint8_t depth);
 
     bool isTerminal();
-    bool getNextColor();
+    StateColor getNextColor();
 
     // Collapses all trees
     void collapseEnvironment();

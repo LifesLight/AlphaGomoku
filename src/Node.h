@@ -117,11 +117,13 @@ public:
     std::vector<index_t> getMoveHistory();
 
     // Next player color
-    bool getNextColor();
+    StateColor getNextColor();
 
 private:
     // Get value from policy out tensor
     float getPolicyValue(index_t move);
+    // Set forced terminal of node due to terminality backprob
+    void setForcedTerminal(StateResult result);
     // Has network data or not
     bool network_status;
     // Gets called when network data is recieved

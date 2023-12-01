@@ -32,6 +32,13 @@ enum class StateResult
     NONE
 };
 
+enum class StateColor
+{
+    BLACK,
+    WHITE,
+    EMPTY
+};
+
 class State
 {
 public:
@@ -62,7 +69,7 @@ public:
     bool isCellEmpty(index_t index);
     bool isCellEmpty(uint8_t x, uint8_t y);
 
-    bool getNextColor();
+    StateColor getNextColor();
 
 private:
     StateResult result;

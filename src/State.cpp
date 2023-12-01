@@ -31,10 +31,17 @@ void State::makeMove(index_t index)
     bool is_won = checkForWin();
     if (is_won)
     {
-        if (getNextColor())
-            result = StateResult::BLACKWIN;
-        else
-            result = StateResult::WHITEWIN;
+        switch (getNextColor())
+        {
+            case StateColor::BLACK:
+                result = StateResult::BLACKWIN;
+                break;
+            case StateColor::WHITE:
+                result = StateResult::WHITEWIN;
+                break;
+            default:
+                break;
+        }
     }
     else if (empty == 0)
         result = StateResult::DRAW;
@@ -76,9 +83,11 @@ bool State::cellIsActiveColor(int x, int y)
     return (c_array[y] & (BLOCK(1) << x));
 }
 
-bool State::getNextColor()
+StateColor State::getNextColor()
 {
-    return !(empty % 2);
+    if (empty % 2)
+        return StateColor::BLACK;
+    return StateColor::WHITE;
 }
 
 StateResult State::getResult()

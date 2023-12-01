@@ -159,9 +159,11 @@ bool Environment::isTerminal()
     return getCurrentNode()->state->isTerminal();
 }
 
-bool Environment::getNextColor()
+StateColor Environment::getNextColor()
 {
-    return next_color;
+    if (next_color)
+        return StateColor::WHITE;
+    return StateColor::BLACK;
 }
 
 StateResult Environment::getResult()
