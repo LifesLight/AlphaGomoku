@@ -254,23 +254,6 @@ void Node::callBackpropagate()
 
     float value = valueProcessor(getValueHeadEval());
     backpropagate(value);
-/*
-    if (isTerminal())
-    {
-        StateResult result = getResult();
-        switch (result)
-        {
-            case StateResult::BLACKWIN:
-                if (parent->getNextColor() == StateColor::BLACK)
-                    setForcedTerminal(StateResult::BLACKWIN);
-                break;
-            break;
-
-        default:
-            break;
-        }
-    }
-*/
 }
 
 Node* Node::bestChild()
@@ -369,11 +352,6 @@ float Node::getMeanEvaluation()
         return getSummedEvaluation() / getVisits();
 }
 
-void Node::setForcedTerminal(StateResult result)
-{
-
-}
-
 void Node::backpropagate(float eval)
 {
     temp_data->visits++;
@@ -391,9 +369,9 @@ float Node::valueProcessor(float normalized_value)
     switch (result)
     {
         case StateResult::BLACKWIN:
-            return -1.0f;
-        case StateResult::WHITEWIN:
             return 1.0f;
+        case StateResult::WHITEWIN:
+            return -1.0f;
         case StateResult::DRAW:
             return 0.0f;
         case StateResult::NONE:
