@@ -1,8 +1,8 @@
 # Self learning Gomoku AI
 
 ## Patchnotes
-**v.0.1.1 -> v.0.1.2**<br>
-Added seed option for randmoves!
+**v.0.1.2 -> v.0.1.3**<br>
+Fixed random bugs.
 
 TODO: 
 - Rewrite Python codebase: Goal selfplay / selftrain loop
