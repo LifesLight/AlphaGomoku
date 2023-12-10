@@ -4,8 +4,9 @@
  * Copyright (c) Alexander Kurtz 2023
 */
 
+#include "torch/script.h"
+#include "torch/torch.h"
 
-#include "Config.h"
 #include "Utilities.h"
 #include "Log.h"
 
@@ -14,16 +15,15 @@ Wrapper around a pytorch multi module model.
 Used for simplifying the code.
 */
 
-class Model
-{
-public:
+class Model {
+ public:
     Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations, std::string name);
     Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, int simulations);
     Model(std::string resnet_path, std::string polhead_path, std::string valhead_path, std::string name);
     Model(std::string resnet_path, std::string polhead_path, std::string valhead_path);
 
     std::tuple<torch::Tensor, torch::Tensor> forward(torch::Tensor input);
-    
+
     // Name config
     void setName(std::string);
     std::string getName();

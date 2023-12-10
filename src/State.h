@@ -5,12 +5,18 @@
 */
 
 
+#include <string>
+#include <vector>
+
 #include "Config.h"
 #include "Utilities.h"
-#include "Style.h"
+#include "Types.h"
 
-// Optimized Gomoku game state interface for MCTS
-// This class is derived from my GomokuMCTS State class, but has been optimized for memory usage instead of speed
+/**
+ * Optimized Gomoku game state interface for MCTS
+ * This class is derived from my GomokuMCTS State class,
+ * but has been optimized for memory usage instead of speed
+ */
 
 #if BoardSize > 32
 typedef int64_t BLOCK;
@@ -29,24 +35,21 @@ It has fast checks for if someone has one or if the Board is terminal (No moves 
 Is also the main interface for getting information about a Board.
 */
 
-enum class StateResult
-{
+enum class StateResult {
     BLACKWIN,
     WHITEWIN,
     DRAW,
     NONE
 };
 
-enum class StateColor
-{
+enum class StateColor {
     BLACK,
     WHITE,
     EMPTY
 };
 
-class State
-{
-public:
+class State {
+ public:
     // Mask
     BLOCK m_array[BoardSize];
     // Color
@@ -55,7 +58,7 @@ public:
     index_t last, empty;
 
     State();
-    State(State*);
+    explicit State(State* source);
 
     // Make move
     void makeMove(index_t);
@@ -65,8 +68,6 @@ public:
     bool isTerminal();
     // Black is 0 White is 1 Draw is 2
     StateResult getResult();
-    // String representation of state
-    std::string toString();
     // Value of field
     int8_t getCellValue(index_t index);
     int8_t getCellValue(uint8_t x, uint8_t y);
@@ -76,7 +77,7 @@ public:
 
     StateColor getNextColor();
 
-private:
+ private:
     StateResult result;
 
     bool checkForWin();
