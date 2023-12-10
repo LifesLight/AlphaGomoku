@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Model.h"
 
 torch::jit::script::Module Model::load_module(std::string path)

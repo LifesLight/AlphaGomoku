@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Config.h"
 #include "Model.h"
 #include "Batcher.h"

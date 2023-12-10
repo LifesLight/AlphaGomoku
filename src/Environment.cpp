@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Environment.h"
 
 Environment::Environment(bool dual_tree)

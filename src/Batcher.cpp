@@ -1,8 +1,11 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
 #include "Batcher.h"
 
 Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
-    : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0)
-{
+    : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0) {
     if (Config::seed() != -1)
         rng = new std::mt19937(Config::seed());
     else
@@ -15,8 +18,7 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     environments.reserve(environment_count);
     non_terminal_environments.reserve(environment_count);
 
-    for (int i = 0; i < environment_count; i++)
-    {
+    for (int i = 0; i < environment_count; i++) {
         Environment* env = new Environment(true);
         environments.push_back(env);
 
@@ -27,12 +29,14 @@ Batcher::Batcher(int environment_count, Model* NNB, Model* NNW)
     // Threading init
     init_threads();
 
-    Log::log(LogLevel::INFO, "Created batcher with " + std::to_string(environment_count) + " dual tree env(s)", "BATCHER");
+    Log::log(LogLevel::INFO,
+        "Created batcher with " +
+        std::to_string(environment_count) +
+        " dual tree env(s)", "BATCHER");
 }
 
 Batcher::Batcher(int environment_count, Model* only_model)
-    : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0)
-{
+    : gcp_data(nullptr), sim_data(nullptr), tree_viz_id(0) {
     if (Config::seed() != -1)
         rng = new std::mt19937(Config::seed());
     else
@@ -46,8 +50,7 @@ Batcher::Batcher(int environment_count, Model* only_model)
     non_terminal_environments.reserve(environment_count);
 
     // Super simple, needs randomization for inital gamestates
-    for (int i = 0; i < environment_count; i++)
-    {
+    for (int i = 0; i < environment_count; i++) {
         Environment* env = new Environment(false);
         environments.push_back(env);
 
@@ -58,31 +61,31 @@ Batcher::Batcher(int environment_count, Model* only_model)
     // Threading init
     init_threads();
 
-    Log::log(LogLevel::INFO, "Created batcher with " + std::to_string(environment_count) + " single tree env(s)", "BATCHER");
+    Log::log(LogLevel::INFO,
+    "Created batcher with " +
+    std::to_string(environment_count) +
+    " single tree env(s)", "BATCHER");
 }
 
-Batcher::~Batcher()
-{
+Batcher::~Batcher() {
     Log::log(LogLevel::INFO, "Started deconstructing batcher", "BATCHER");
 
     for (Environment* env : environments)
         delete env;
 
     // Call to threads to finish
-    for (int i = 0; i < int(gcp.size()); i++)
-    {
+    for (int i = 0; i < static_cast<int>(gcp.size()); i++) {
         gcp_data->running[i]->store(false);
         gcp_data->cv[i]->notify_one();
     }
 
-    for (int i = 0; i < int(sim.size()); i++)
-    {
+    for (int i = 0; i < static_cast<int>(sim.size()); i++) {
         sim_data->running[i]->store(false);
         sim_data->cv[i]->notify_one();
     }
 
     // Join all threads
-    // TODO Better solution
+    // Todo Better solution
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Delete threading data
@@ -95,34 +98,40 @@ Batcher::~Batcher()
     Log::log(LogLevel::INFO, "Finished deconstructing batcher", "BATCHER");
 }
 
-void Batcher::init_threads()
-{
-    int gcp_threads = std::max(1, std::min(Config::maxThreads(), int(environments.size() / Config::gamestatesPerThread())));
-    int sim_threads = std::max(1, std::min(Config::maxThreads(), int(environments.size()) / Config::simsPerThread()));
+void Batcher::init_threads() {
+    int gcp_threads = std::max(1,
+        std::min(
+            Config::maxThreads(),
+            static_cast<int>(environments.size() /
+            Config::gamestatesPerThread())));
 
-    if (gcp_threads > 1)
-    {
+    int sim_threads = std::max(1,
+        std::min(
+            Config::maxThreads(),
+            static_cast<int>(environments.size()) /
+            Config::simsPerThread()));
+
+    if (gcp_threads > 1) {
         start_gcp(gcp_threads);
     }
 
-    if (sim_threads > 1)
-    {
+    if (sim_threads > 1) {
         start_sim(sim_threads);
     }
 }
 
-void Batcher::gcp_worker(GCPData* data, int id)
-{
+void Batcher::gcp_worker(GCPData* data, int id) {
     std::unique_lock<std::mutex> lock(*data->mutex[id]);
 
-    while (data->running[id]->load())
-    {
+    while (data->running[id]->load()) {
         // Wait for signal from thread manager
         data->cv[id]->wait(lock, [&]() { return data->waits[id]->load(); });
 
-        for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
-        {
-            (*data->target)[i] = Node::nodeToGamestate((*data->input)[i], data->dtype);
+        const int loop_start = data->starts[id]->load();
+        const int loop_end = data->ends[id]->load();
+        for (int i = loop_start; i < loop_end; i++) {
+            (*data->target)[i] =
+                Node::nodeToGamestate((*data->input)[i], data->dtype);
         }
         data->waits[id]->store(false);
 
@@ -134,17 +143,16 @@ void Batcher::gcp_worker(GCPData* data, int id)
     }
 }
 
-void Batcher::sim_worker(SIMData* data, int id)
-{
+void Batcher::sim_worker(SIMData* data, int id) {
     std::unique_lock<std::mutex> lock(*data->mutex[id]);
 
-    while (data->running[id]->load())
-    {
+    while (data->running[id]->load()) {
         // Wait for signal from thread manager
         data->cv[id]->wait(lock, [&]() { return data->waits[id]->load(); });
 
-        for (int i = data->starts[id]->load(); i < data->ends[id]->load(); i++)
-        {
+        const int loop_start = data->starts[id]->load();
+        const int loop_end = data->ends[id]->load();
+        for (int i = loop_start; i < loop_end; i++) {
             runPolicy((*data->input)[i]);
         }
         data->waits[id]->store(false);

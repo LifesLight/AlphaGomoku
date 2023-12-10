@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "State.h"
 
 State::State()

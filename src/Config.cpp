@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Config.h"
 
 // Default values

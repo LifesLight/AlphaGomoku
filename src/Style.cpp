@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Style.h"
 
 Stone Style::selected_stones = Stone::DEFAULT;

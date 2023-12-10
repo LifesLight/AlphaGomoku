@@ -1,5 +1,9 @@
 #pragma once
 
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
 #include "torch/script.h"
 #include "torch/torch.h"
 #include <iostream>

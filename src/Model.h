@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Config.h"
 #include "Utilities.h"
 #include "Log.h"

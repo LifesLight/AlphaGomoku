@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Utilities.h"
 #include "Node.h"
 #include "Model.h"

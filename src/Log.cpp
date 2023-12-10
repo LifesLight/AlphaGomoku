@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
 #include "Log.h"
 
 LogLevel Log::log_level = LogLevel::WARNING;

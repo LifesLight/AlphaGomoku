@@ -1,4 +1,9 @@
- #include "Node.h"
+/**
+ * Copyright (c) Alexander Kurtz 2023
+*/
+
+
+#include "Node.h"
 
 Node::Node(State* state, Node* parent)
     : parent(parent), state(state), network_status(0)
