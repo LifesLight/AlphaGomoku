@@ -11,8 +11,8 @@
 #include <algorithm>
 
 #include "Config.h"
-#include "Model.h"
 #include "Types.h"
+#include "Log.h"
 
 class Utils {
  public:
@@ -74,10 +74,10 @@ class Utils {
     }
 
     static std::map<std::string, std::string>
-        parseArgv(int argc, const char* argv[]) {
+        parseArgv(i32_t argc, const char* argv[]) {
         std::map<std::string, std::string> args;
 
-        for (int i = 0; i < argc; i++) {
+        for (i32_t i = 0; i < argc; i++) {
             std::string arg = argv[i];
             if (arg.find("--") == std::string::npos)
                 continue;

@@ -7,24 +7,30 @@
 
 State::State()
     : last(0), empty(BoardSize * BoardSize), result(StateResult::NONE) {
-    memset(m_array, 0, sizeof(BLOCK) * BoardSize);
-    memset(c_array, 0, sizeof(BLOCK) * BoardSize);
+    memset(m_array, 0, sizeof(block_t) * BoardSize);
+    memset(c_array, 0, sizeof(block_t) * BoardSize);
 }
 
 State::State(State* source)
     : last(source->last), empty(source->empty), result(source->result) {
-    memcpy(m_array, source->m_array, sizeof(BLOCK) * BoardSize);
-    memcpy(c_array, source->c_array, sizeof(BLOCK) * BoardSize);
+    memcpy(m_array, source->m_array, sizeof(block_t) * BoardSize);
+    memcpy(c_array, source->c_array, sizeof(block_t) * BoardSize);
+}
+
+void State::makeMove(u8_t x, u8_t y) {
+    index_t moveIndex;
+    Utils::cordsToIndex(moveIndex, x, y);
+    makeMove(x, y);
 }
 
 void State::makeMove(index_t index) {
     --empty;
     last = index;
-    BLOCK x, y;
+    block_t x, y;
     Utils::indexToCords(index, x, y);
 
     // Horizontal
-    m_array[y] |= (BLOCK(1) << x);
+    m_array[y] |= (block_t(1) << x);
 
     // Flip Colors
     for (index_t i = 0; i < BoardSize; i++) c_array[i] ^= m_array[i];
@@ -48,24 +54,24 @@ void State::makeMove(index_t index) {
 }
 
 bool State::isCellEmpty(index_t index) {
-    uint8_t x, y;
+    u8_t x, y;
     Utils::indexToCords(index, x, y);
     return isCellEmpty(x, y);
 }
 
-bool State::isCellEmpty(uint8_t x, uint8_t y) {
-    return !(m_array[y] & (BLOCK(1) << x));
+bool State::isCellEmpty(u8_t x, u8_t y) {
+    return !(m_array[y] & (block_t(1) << x));
 }
 
 int8_t State::getCellValue(index_t index) {
-    uint8_t x, y;
+    u8_t x, y;
     Utils::indexToCords(index, x, y);
     return getCellValue(x, y);
 }
 
-int8_t State::getCellValue(uint8_t x, uint8_t y) {
-    if (m_array[y] & (BLOCK(1) << x)) {
-        if (c_array[y] & (BLOCK(1) << x))
+int8_t State::getCellValue(u8_t x, u8_t y) {
+    if (m_array[y] & (block_t(1) << x)) {
+        if (c_array[y] & (block_t(1) << x))
             return empty % 2;
         return !(empty % 2);
     }
@@ -73,8 +79,8 @@ int8_t State::getCellValue(uint8_t x, uint8_t y) {
     return -1;
 }
 
-bool State::cellIsActiveColor(int x, int y) {
-    return (c_array[y] & (BLOCK(1) << x));
+bool State::cellIsActiveColor(i32_t x, i32_t y) {
+    return (c_array[y] & (block_t(1) << x));
 }
 
 StateColor State::getNextColor() {
@@ -90,7 +96,7 @@ StateResult State::getResult() {
 std::vector<index_t> State::getPossible() {
     std::vector<index_t> actions;
     actions.reserve(empty);
-    uint8_t x, y;
+    u8_t x, y;
     for (index_t i = 0; i < BoardSize * BoardSize; i++) {
         Utils::indexToCords(i, x, y);
         if (isCellEmpty(x, y)) actions.push_back(i);
@@ -103,19 +109,19 @@ bool State::isTerminal() {
 }
 
 bool State::checkForWin() {
-    uint8_t x, y;
+    u8_t x, y;
     Utils::indexToCords(last, x, y);
 
     // Horizontal
     // This is still performant since it uses the original code for the check
-    BLOCK m = c_array[y];
-    m = m & (m >> BLOCK(1));
-    m = (m & (m >> BLOCK(2)));
-    if (m & (m >> BLOCK(1))) return true;
+    block_t m = c_array[y];
+    m = m & (m >> block_t(1));
+    m = (m & (m >> block_t(2)));
+    if (m & (m >> block_t(1))) return true;
 
     // Vertical
-    int consecutive = 0;
-    for (int i = 0; i < BoardSize; i++) {
+    i32_t consecutive = 0;
+    for (i32_t i = 0; i < BoardSize; i++) {
         if (cellIsActiveColor(x, i)) {
             consecutive++;
             if (consecutive == 5) return true;
@@ -126,7 +132,7 @@ bool State::checkForWin() {
 
     // Diagonal
     consecutive = 0;
-    int x1 = x, y1 = y;
+    i32_t x1 = x, y1 = y;
     while (x1 > 0 && y1 > 0) {
         x1--;
         y1--;
