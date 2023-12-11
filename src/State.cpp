@@ -19,15 +19,15 @@ State::State(State* source)
 
 void State::makeMove(u8_t x, u8_t y) {
     index_t moveIndex;
-    Utils::cordsToIndex(moveIndex, x, y);
-    makeMove(x, y);
+    Utils::cordsToIndex(&moveIndex, x, y);
+    makeMove(moveIndex);
 }
 
 void State::makeMove(index_t index) {
     --empty;
     last = index;
     block_t x, y;
-    Utils::indexToCords(index, x, y);
+    Utils::indexToCords(index, &x, &y);
 
     // Horizontal
     m_array[y] |= (block_t(1) << x);
@@ -55,7 +55,7 @@ void State::makeMove(index_t index) {
 
 bool State::isCellEmpty(index_t index) {
     u8_t x, y;
-    Utils::indexToCords(index, x, y);
+    Utils::indexToCords(index, &x, &y);
     return isCellEmpty(x, y);
 }
 
@@ -65,7 +65,7 @@ bool State::isCellEmpty(u8_t x, u8_t y) {
 
 int8_t State::getCellValue(index_t index) {
     u8_t x, y;
-    Utils::indexToCords(index, x, y);
+    Utils::indexToCords(index, &x, &y);
     return getCellValue(x, y);
 }
 
@@ -98,7 +98,7 @@ std::vector<index_t> State::getPossible() {
     actions.reserve(empty);
     u8_t x, y;
     for (index_t i = 0; i < BoardSize * BoardSize; i++) {
-        Utils::indexToCords(i, x, y);
+        Utils::indexToCords(i, &x, &y);
         if (isCellEmpty(x, y)) actions.push_back(i);
     }
     return actions;
@@ -110,7 +110,7 @@ bool State::isTerminal() {
 
 bool State::checkForWin() {
     u8_t x, y;
-    Utils::indexToCords(last, x, y);
+    Utils::indexToCords(last, &x, &y);
 
     // Horizontal
     // This is still performant since it uses the original code for the check

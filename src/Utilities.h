@@ -17,15 +17,15 @@
 class Utils {
  public:
     template <typename T>
-    static void indexToCords(const index_t index, const T& x, const T& y) {
-        x = index / BoardSize;
-        y = index % BoardSize;
+    static void indexToCords(const index_t &index, T *x, T *y) {
+        *x = index / BoardSize;
+        *y = index % BoardSize;
     }
 
 
     template <typename T>
-    static void cordsToIndex(const index_t& index, const T x, const T y) {
-        index = x * BoardSize + y;
+    static void cordsToIndex(index_t *index, const T &x, const T &y) {
+        *index = x * BoardSize + y;
     }
 
     template <typename T>

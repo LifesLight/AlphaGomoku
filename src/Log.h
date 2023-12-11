@@ -29,6 +29,11 @@ enum class LogLevel {
     FATAL
 };
 
+/**
+ * @class Log
+ * @brief Class for logging messages.
+ * @details This class provides static methods for logging messages at different levels.
+*/
 class Log {
  public:
     /**

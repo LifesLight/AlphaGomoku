@@ -24,12 +24,11 @@ typedef i16_t block_t;
 typedef i8_t block_t;
 #endif
 
-/*
-State is a highly optimized representation of a singular Gomoku Board.
-It has fast checks for if someone has one or if the Board is terminal (No moves left or player won).
-
-Is also the main interface for getting information about a Board.
-*/
+/**
+ * Optimized Gomoku game state interface for MCTS
+ * This class is derived from my GomokuMCTS State class,
+ * but has been optimized for memory usage instead of speed
+ */
 
 enum class StateResult {
     BLACKWIN,
@@ -44,12 +43,12 @@ enum class StateColor {
     EMPTY
 };
 
+/*
+State is a highly optimized, memory efficient representation of a singular Gomoku Board.
+It has fast checks for if someone has won or if the Board is terminal (No moves left or player won).
 
-/**
- * Optimized Gomoku game state interface for MCTS
- * This class is derived from my GomokuMCTS State class,
- * but has been optimized for memory usage instead of speed
- */
+Is also the main interface for getting information about a Board.
+*/
 class State {
  public:
     /**

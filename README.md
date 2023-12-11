@@ -1,12 +1,11 @@
 # Self learning Gomoku AI
 
 ## Patchnotes
-**v.0.1.2 -> v.0.1.3**<br>
-Fixed random bugs.
+**Rules branch**<br>
+    -> This needs a total rewrite of the cpp codebase :D
 
 TODO: 
 - Rewrite Python codebase: Goal selfplay / selftrain loop
-- Implement RIF ruleset in both Python and C++
 
 ## Basics
 **In Gomoku black starts.** In code:<br>
