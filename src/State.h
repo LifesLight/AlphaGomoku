@@ -129,6 +129,12 @@ class State {
      */
     StateColor getNextColor();
 
+    /**
+     * Returns a string representation of the board
+     * @return A string which represents the current board
+    */
+    std::string str();
+
  private:
     // The mask-bitmap of stones on the board
     block_t m_array[BoardSize];

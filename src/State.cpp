@@ -172,3 +172,35 @@ bool State::checkForWin() {
 
     return false;
 }
+
+std::string State::str() {
+    const std::string stoneBlack = " ● ";
+    const std::string stoneWhite = " ● ";
+    const std::string colorBlack = "\033[0;34m";
+    const std::string colorWhite = "\033[0;31m";
+    const std::string resetColor = "\033[0m";
+
+    std::vector<std::vector<std::string>> cellValues;
+    for (int x = 0; x < BoardSize; x++) {
+        std::vector<std::string> collumn;
+        for (int y = 0; y < BoardSize; y++) {
+            std::string value;
+            i8_t index_value = getCellValue(x, y);
+            if (index_value == -1) {
+                value += "   ";
+            } else if (index_value == 0) {
+                value += colorBlack;
+                value += stoneBlack;
+                value += resetColor;
+            } else {
+                value += colorWhite;
+                value += stoneWhite;
+                value += resetColor;
+            }
+            collumn.push_back(value);
+        }
+        cellValues.push_back(collumn);
+    }
+
+    return Utils::cellsToString(cellValues);
+}

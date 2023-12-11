@@ -6,6 +6,9 @@
 
 #include <cstdint>
 
+// So it correctly works with BoardSize
+#include "Config.h"
+
 /**
  * This is for my convenience and to make code more readable
  */
@@ -24,7 +27,7 @@ typedef int64_t     i64_t;
  * Save memory if 2d -> 1d index mapping fits in 2^8
  */
 
-#if Boardsize < 16
+#if BoardSize < 16
 typedef u8_t        index_t;
 #else
 typedef u16_t       index_t;
