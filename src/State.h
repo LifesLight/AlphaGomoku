@@ -104,7 +104,7 @@ class State {
      * @param index The index of the cell.
      * @return The value of the cell.
      */
-    int8_t getCellValue(index_t index);
+    i8_t getCellValue(index_t index);
 
     /**
      * Returns the value of a cell on the board.
@@ -112,7 +112,7 @@ class State {
      * @param y The y-coordinate of the cell.
      * @return The value of the cell.
      */
-    int8_t getCellValue(u8_t x, u8_t y);
+    i8_t getCellValue(u8_t x, u8_t y);
 
     /**
      * Checks if a cell on the board is empty.

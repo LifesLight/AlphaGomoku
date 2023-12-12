@@ -150,23 +150,23 @@ class Utils {
         // Top line
         stringstream output;
         string three_lines = "";
-        for (int i = 0; i < 3; i++)
+        for (i32_t i = 0; i < 3; i++)
             three_lines += line0;
 
         output << "   " << cornor0;
-        for (int i = 0; i < BoardSize - 1; i++) {
+        for (i32_t i = 0; i < BoardSize - 1; i++) {
             output << three_lines << cross0;
         }
         output << three_lines << cornor1;
         output << endl;
 
         // Inner lines
-        for (int16_t y = BoardSize - 1; y >= 0; y--) {
+        for (i16_t y = BoardSize - 1; y >= 0; y--) {
             // Data line
             output << to_string(y);
             output << string(3 - to_string(y).length(), ' ');
 
-            for (int16_t x = 0; x < BoardSize; x++) {
+            for (i16_t x = 0; x < BoardSize; x++) {
                 output << line1;
                 output << cellValues[x][y];
             }
@@ -178,7 +178,7 @@ class Utils {
                 continue;
 
             output << "   " << cross1;
-            for (int i = 0; i < BoardSize - 1; i++) {
+            for (i32_t i = 0; i < BoardSize - 1; i++) {
                 output << three_lines << center;
             }
             output << three_lines << cross2;
@@ -187,14 +187,14 @@ class Utils {
 
         // Bottom line
         output << "   " << cornor2;
-        for (int i = 0; i < BoardSize - 1; i++) {
+        for (i32_t i = 0; i < BoardSize - 1; i++) {
             output << three_lines << cross3;
         }
         output << three_lines << cornor3;
         output << endl;
 
         output << "    ";
-        for (int i = 0; i < BoardSize; i++) {
+        for (i32_t i = 0; i < BoardSize; i++) {
             output << " ";
             output << to_string(i);
             output << string(3 - to_string(i).length(), ' ');

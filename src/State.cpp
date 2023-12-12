@@ -63,13 +63,13 @@ bool State::isCellEmpty(u8_t x, u8_t y) {
     return !(m_array[y] & (block_t(1) << x));
 }
 
-int8_t State::getCellValue(index_t index) {
+i8_t State::getCellValue(index_t index) {
     u8_t x, y;
     Utils::indexToCords(index, &x, &y);
     return getCellValue(x, y);
 }
 
-int8_t State::getCellValue(u8_t x, u8_t y) {
+i8_t State::getCellValue(u8_t x, u8_t y) {
     if (m_array[y] & (block_t(1) << x)) {
         if (c_array[y] & (block_t(1) << x))
             return empty % 2;
@@ -182,9 +182,9 @@ string State::str() {
     const string resetColor = "\033[0m";
 
     vector<vector<string>> cellValues;
-    for (int x = 0; x < BoardSize; x++) {
+    for (i32_t x = 0; x < BoardSize; x++) {
         vector<string> collumn;
-        for (int y = 0; y < BoardSize; y++) {
+        for (i32_t y = 0; y < BoardSize; y++) {
             string value;
             i8_t index_value = getCellValue(x, y);
             if (index_value == -1) {

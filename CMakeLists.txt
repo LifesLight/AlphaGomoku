@@ -10,4 +10,4 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(AlphaGomoku src/Log.cpp src/State.cpp src/Main.cpp)
 target_link_libraries(AlphaGomoku "${TORCH_LIBRARIES}")
 
-set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -pedantic -march=native")
