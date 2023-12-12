@@ -15,6 +15,21 @@
 #include "Log.h"
 
 /**
+ * Declarations for Utility
+*/
+using std::vector;
+using std::map;
+using std::string;
+using std::transform;
+using std::stringstream;
+using std::to_string;
+using std::endl;
+using std::cout;
+using std::cin;
+using std::getline;
+using std::exception;
+
+/**
  * Utility class for various functions
 */
 class Utils {
@@ -50,14 +65,9 @@ class Utils {
     */
     template <typename T>
     static void eraseFromVector(
-        const std::vector<T>& vector,
+        const vector<T>& vector,
         const T& element) {
-            vector.erase(
-                std::remove(
-                    vector.begin,
-                    vector.end,
-                    element),
-                vector.end);
+            vector.erase(remove(vector.begin, vector.end, element), vector.end);
     }
 
     /**
@@ -67,30 +77,29 @@ class Utils {
     */
     static void keyboardCordsInput(index_t *x, index_t *y) {
         while (true) {
-            std::string input;
+            string input;
 
-            std::cout << "[Move]: ";
-            std::getline(std::cin, input);
+            cout << "[Move]: ";
+            getline(cin, input);
 
             size_t pos = input.find_first_of(",; ");
 
-            if (pos == std::string::npos) {
+            if (pos == string::npos) {
                 Log::log(LogLevel::ERROR,
                     "Invalid input format for cord input! Usage: x,y",
                     "UTILITIES");
                 continue;
             }
 
-            std::string x_s = input.substr(0, pos);
-            std::string y_s = input.substr(pos + 1);
+            string x_s = input.substr(0, pos);
+            string y_s = input.substr(pos + 1);
 
             try {
-                *x = std::stoi(x_s);
-                *y = std::stoi(y_s);
-
+                *x = stoi(x_s);
+                *y = stoi(y_s);
                 break;
             }
-            catch(const std::exception& e) {
+            catch(const exception& e) {
                 Log::log(LogLevel::ERROR,
                     "Invalid format for cord input! Usage: x,y",
                     "UTILITIES");
@@ -98,28 +107,21 @@ class Utils {
         }
     }
 
-    static std::map<std::string, std::string>
+    static map<string, string>
         parseArgv(i32_t argc, const char* argv[]) {
-        std::map<std::string, std::string> args;
+        map<string, string> args;
 
         for (i32_t i = 0; i < argc; i++) {
-            std::string arg = argv[i];
-            if (arg.find("--") == std::string::npos)
+            string arg = argv[i];
+            if (arg.find("--") == string::npos)
                 continue;
 
-            std::string key = arg.substr(2);
-            std::string value = (i + 1 < argc) ? argv[i + 1] : "default_value";
+            string key = arg.substr(2);
+            string value = (i + 1 < argc) ? argv[i + 1] : "default_value";
 
             // Make keys and values lowercase
-            std::transform(key.begin(),
-                key.end(),
-                key.begin(),
-                ::tolower);
-            std::transform(value.begin(),
-                value.end(),
-                value.begin(),
-                ::tolower);
-
+            transform(key.begin(), key.end(), key.begin(), ::tolower);
+            transform(value.begin(), value.end(), value.begin(), ::tolower);
             args[key] = value;
         }
 
@@ -131,24 +133,23 @@ class Utils {
      * @param cellValues A vector of cell values.
      * @return A string representation of the board.
     */
-    static std::string cellsToString(
-        const std::vector<std::vector<std::string>>& cellValues) {
+    static string cellsToString(const vector<vector<string>>& cellValues) {
         // Constants for style render style
-        const std::string cornor0 = "╔";
-        const std::string cornor1 = "╗";
-        const std::string cornor2 = "╚";
-        const std::string cornor3 = "╝";
-        const std::string line0 = "═";
-        const std::string line1 = "║";
-        const std::string center = "╬";
-        const std::string cross0 = "╦";
-        const std::string cross1 = "╠";
-        const std::string cross2 = "╣";
-        const std::string cross3 = "╩";
+        const string cornor0 = "╔";
+        const string cornor1 = "╗";
+        const string cornor2 = "╚";
+        const string cornor3 = "╝";
+        const string line0 = "═";
+        const string line1 = "║";
+        const string center = "╬";
+        const string cross0 = "╦";
+        const string cross1 = "╠";
+        const string cross2 = "╣";
+        const string cross3 = "╩";
 
         // Top line
-        std::stringstream output;
-        std::string three_lines = "";
+        stringstream output;
+        string three_lines = "";
         for (int i = 0; i < 3; i++)
             three_lines += line0;
 
@@ -157,20 +158,20 @@ class Utils {
             output << three_lines << cross0;
         }
         output << three_lines << cornor1;
-        output << std::endl;
+        output << endl;
 
         // Inner lines
         for (int16_t y = BoardSize - 1; y >= 0; y--) {
             // Data line
-            output << std::to_string(y);
-            output << std::string(3 - std::to_string(y).length(), ' ');
+            output << to_string(y);
+            output << string(3 - to_string(y).length(), ' ');
 
             for (int16_t x = 0; x < BoardSize; x++) {
                 output << line1;
                 output << cellValues[x][y];
             }
             output << line1;
-            output << std::endl;
+            output << endl;
 
             // Row line
             if (y == 0)
@@ -181,7 +182,7 @@ class Utils {
                 output << three_lines << center;
             }
             output << three_lines << cross2;
-            output << std::endl;
+            output << endl;
         }
 
         // Bottom line
@@ -190,13 +191,13 @@ class Utils {
             output << three_lines << cross3;
         }
         output << three_lines << cornor3;
-        output << std::endl;
+        output << endl;
 
         output << "    ";
         for (int i = 0; i < BoardSize; i++) {
             output << " ";
-            output << std::to_string(i);
-            output << std::string(3 - std::to_string(i).length(), ' ');
+            output << to_string(i);
+            output << string(3 - to_string(i).length(), ' ');
         }
 
         return output.str();

@@ -15,7 +15,7 @@ LogLevel Log::getLogLevel() {
     return log_level;
 }
 
-std::string Log::getLogLevelStr() {
+string Log::getLogLevelStr() {
     switch (log_level) {
     case LogLevel::INFO:
         return "INFO";
@@ -30,19 +30,19 @@ std::string Log::getLogLevelStr() {
     return "ERR";
 }
 
-void Log::log(LogLevel level, const std::string& message) {
+void Log::log(LogLevel level, const string& message) {
     log(level, message, "");
 }
 
 void Log::log(
     LogLevel level,
-    const std::string& message,
-    const std::string& scope) {
+    const string& message,
+    const string& scope) {
 
     if (level >= log_level) {
-        std::stringstream output;
+        stringstream output;
 
-        std::string level_string;
+        string level_string;
         switch (level) {
         case LogLevel::INFO:
             level_string = "INFO";
@@ -67,11 +67,11 @@ void Log::log(
         if (scope != "")
             output << "[" << scope << "]";
 
-        output << ": " << message << "\033[0m" << std::endl;
+        output << ": " << message << "\033[0m" << endl;
 
         if (level == LogLevel::FATAL || level == LogLevel::ERROR)
-            output << std::flush;
+            output << flush;
 
-        std::cout << output.str();
+        cout << output.str();
     }
 }

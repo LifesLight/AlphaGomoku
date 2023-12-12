@@ -11,6 +11,15 @@
 #include <sstream>
 
 /**
+ * Declarations for Log
+*/
+using std::stringstream;
+using std::string;
+using std::cout;
+using std::endl;
+using std::flush;
+
+/**
  * @enum LogLevel
  * @brief Enumeration for different levels of logging.
  * @var LogLevel::INFO
@@ -43,7 +52,7 @@ class Log {
      */
     static void log(
         LogLevel level,
-        const std::string& message);
+        const string& message);
 
     /**
      * @brief Logs a message at the specified level with a specified scope.
@@ -53,8 +62,8 @@ class Log {
      */
     static void log(
         LogLevel level,
-        const std::string& message,
-        const std::string& scope);
+        const string& message,
+        const string& scope);
 
     /**
      * @brief Sets the current log level.
@@ -72,7 +81,7 @@ class Log {
      * @brief Returns the current log level as a string.
      * @return The current log level as a string.
      */
-    static std::string getLogLevelStr();
+    static string getLogLevelStr();
 
  private:
     // The current log level

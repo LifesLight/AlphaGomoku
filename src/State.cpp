@@ -93,8 +93,8 @@ StateResult State::getResult() {
     return result;
 }
 
-std::vector<index_t> State::getPossible() {
-    std::vector<index_t> actions;
+vector<index_t> State::getPossible() {
+    vector<index_t> actions;
     actions.reserve(empty);
     u8_t x, y;
     for (index_t i = 0; i < BoardSize * BoardSize; i++) {
@@ -173,18 +173,19 @@ bool State::checkForWin() {
     return false;
 }
 
-std::string State::str() {
-    const std::string stoneBlack = " ● ";
-    const std::string stoneWhite = " ● ";
-    const std::string colorBlack = "\033[0;34m";
-    const std::string colorWhite = "\033[0;31m";
-    const std::string resetColor = "\033[0m";
+string State::str() {
+    // Constants for rendering
+    const string stoneBlack = " ● ";
+    const string stoneWhite = " ● ";
+    const string colorBlack = "\033[0;34m";
+    const string colorWhite = "\033[0;31m";
+    const string resetColor = "\033[0m";
 
-    std::vector<std::vector<std::string>> cellValues;
+    vector<vector<string>> cellValues;
     for (int x = 0; x < BoardSize; x++) {
-        std::vector<std::string> collumn;
+        vector<string> collumn;
         for (int y = 0; y < BoardSize; y++) {
-            std::string value;
+            string value;
             i8_t index_value = getCellValue(x, y);
             if (index_value == -1) {
                 value += "   ";

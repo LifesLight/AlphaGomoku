@@ -8,6 +8,9 @@
 #include "Log.h"
 #include "Types.h"
 
+using std::cout;
+using std::endl;
+
 i32_t main(i32_t argc, char const* argv[]) {
     Log::setLogLevel(LogLevel::INFO);
 
@@ -15,6 +18,6 @@ i32_t main(i32_t argc, char const* argv[]) {
     s.makeMove(0, 0);
     s.makeMove(0, 1);
     s.makeMove(0, 2);
-    std::cout << s.str() << std::endl;
+    cout << s.str() << endl;
     return 0;
 }

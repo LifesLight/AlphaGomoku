@@ -12,6 +12,12 @@
 #include "Utilities.h"
 #include "Types.h"
 
+/**
+ * Declarations for State
+*/
+using std::string;
+using std::vector;
+
 
 // Block is a type that is large enough to store one board row/collumn
 #if BoardSize > 32
@@ -79,7 +85,7 @@ class State {
      * Returns a list of indices representing the remaining empty fields on the board.
      * @return A vector of indices for the empty fields.
      */
-    std::vector<index_t> getPossible();
+    vector<index_t> getPossible();
 
     /**
      * Checks if the game is in a terminal state.
@@ -133,7 +139,7 @@ class State {
      * Returns a string representation of the board
      * @return A string which represents the current board
     */
-    std::string str();
+    string str();
 
  private:
     // The mask-bitmap of stones on the board
