@@ -17,14 +17,14 @@ LogLevel Log::getLogLevel() {
 
 string Log::getLogLevelStr() {
     switch (log_level) {
-    case LogLevel::INFO:
-        return "INFO";
-    case LogLevel::WARNING:
-        return "WARNING";
-    case LogLevel::ERROR:
-        return "ERROR";
-    case LogLevel::FATAL:
-        return "FATAL";
+        case LogLevel::INFO:
+            return "INFO";
+        case LogLevel::WARNING:
+            return "WARNING";
+        case LogLevel::ERROR:
+            return "ERROR";
+        case LogLevel::FATAL:
+            return "FATAL";
     }
 
     return "ERR";
@@ -44,18 +44,18 @@ void Log::log(
 
         string level_string;
         switch (level) {
-        case LogLevel::INFO:
-            level_string = "INFO";
-            break;
-        case LogLevel::WARNING:
-            level_string = "WARNING";
-            break;
-        case LogLevel::ERROR:
-            level_string = "ERROR";
-            break;
-        case LogLevel::FATAL:
-            level_string = "FATAL";
-            break;
+            case LogLevel::INFO:
+                level_string = "INFO";
+                break;
+            case LogLevel::WARNING:
+                level_string = "WARNING";
+                break;
+            case LogLevel::ERROR:
+                level_string = "ERROR";
+                break;
+            case LogLevel::FATAL:
+                level_string = "FATAL";
+                break;
         }
 
         if (level == LogLevel::FATAL || level == LogLevel::ERROR)
