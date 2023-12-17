@@ -11,4 +11,4 @@
 class Node {
  public:
     Node();
-}
+};

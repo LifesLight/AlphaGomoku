@@ -15,4 +15,4 @@ class Module {
     Module();
     void loadNetwork(string name);
     void append(Node* node);
-}
+};
